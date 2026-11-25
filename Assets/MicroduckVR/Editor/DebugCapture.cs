@@ -122,5 +122,38 @@ namespace MicroduckVR.EditorTools
             RenderTexture.active = null; cam.targetTexture = null;
             Object.DestroyImmediate(rt); Object.DestroyImmediate(tex); Object.DestroyImmediate(go);
         }
+
+        /// <summary>A still with a choice of look: wireframe, with or without the ink outline, on any background.</summary>
+        public static void ShootStyled(string name, Vector3 from, Vector3 lookAt, int w, int h, float fov, int cullingMask, bool wire, bool ink, Color bg)
+        {
+            Directory.CreateDirectory(ShotDir);
+            var data = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRendererData>("Assets/MicroduckVR/Settings/MicroduckRenderer.asset");
+            UnityEngine.Rendering.Universal.ScriptableRendererFeature outline = null;
+            if (data != null) foreach (var f in data.rendererFeatures) if (f != null && f.name == "Comic Outline") outline = f;
+            bool wasOn = outline != null && outline.isActive;
+            if (outline != null) outline.SetActive(ink);
+            var go = new GameObject("ShotCam");
+            var cam = go.AddComponent<Camera>();
+            cam.fieldOfView = fov; cam.nearClipPlane = 0.01f; cam.farClipPlane = 20f; cam.cullingMask = cullingMask;
+            cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = bg;
+            go.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>().renderPostProcessing = false;
+            go.transform.position = from; go.transform.LookAt(lookAt);
+            var rt = new RenderTexture(w, h, 24) { antiAliasing = 8 };
+            cam.targetTexture = rt;
+            System.Action<UnityEngine.Rendering.ScriptableRenderContext, Camera> on = (c, k) => { if (k == cam) GL.wireframe = true; }, off = (c, k) => { if (k == cam) GL.wireframe = false; };
+            if (wire) { UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering += on; UnityEngine.Rendering.RenderPipelineManager.endCameraRendering += off; }
+            var vig = new System.Collections.Generic.List<Renderer>();
+            foreach (var v in Object.FindObjectsByType<MicroduckVR.Player.ComfortVignette>(FindObjectsSortMode.None)) { var r = v.GetComponent<Renderer>(); if (r != null && r.enabled) { r.enabled = false; vig.Add(r); } }
+            cam.Render();
+            foreach (var r in vig) r.enabled = true;
+            if (wire) { UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering -= on; UnityEngine.Rendering.RenderPipelineManager.endCameraRendering -= off; GL.wireframe = false; }
+            if (outline != null) outline.SetActive(wasOn);
+            RenderTexture.active = rt;
+            var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
+            tex.ReadPixels(new Rect(0, 0, w, h), 0, 0); tex.Apply();
+            File.WriteAllBytes(Path.Combine(ShotDir, name + ".png"), tex.EncodeToPNG());
+            RenderTexture.active = null; cam.targetTexture = null;
+            Object.DestroyImmediate(rt); Object.DestroyImmediate(tex); Object.DestroyImmediate(go);
+        }
     }
 }

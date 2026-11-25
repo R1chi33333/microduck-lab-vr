@@ -20,6 +20,7 @@ namespace MicroduckVR.Games
         public const float Half = 1.245f, GoalWidth = 0.34f, GoalHeight = 0.16f, GoalDepth = 0.12f;
 
         bool active; float cool; Rigidbody ball;
+        public Rigidbody Ball => ball;
         public readonly int[] Score = new int[2];
         public readonly Dictionary<DuckBrain, int> Team = new Dictionary<DuckBrain, int>();
         public int PlayerTeam => 0;
@@ -31,7 +32,6 @@ namespace MicroduckVR.Games
         }
 
         public Vector3 GoalCentre(int team) => Centre + new Vector3(0f, 0f, team == 0 ? -Half : Half);
-        public Rigidbody Ball => ball;
         public Vector3 BallPos => ball != null ? ball.position : Centre;
 
         public void StartGame()

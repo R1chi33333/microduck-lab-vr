@@ -112,6 +112,8 @@ namespace MicroduckVR.Games
 
         public void StopRace() { active = false; frozen = false; foreach (var (g, _) in gates) g.gameObject.SetActive(false); GameHud.Get().Clear(); }
 
+        /// <summary>The gate the player's duck should head for next (filming and tests).</summary>
+        public Vector3? PlayerTarget() { var pd = PlayerDuck.Instance; return pd != null && prog.TryGetValue(pd, out var P) && !P.done ? Cps[P.next].p : (Vector3?)null; }
         public Vector3 TargetFor(DuckBrain d) => prog.TryGetValue(d, out var P) && !P.done ? Cps[P.next].p : d.Pos;
         public bool Done(DuckBrain d) => prog.TryGetValue(d, out var P) && P.done;
 

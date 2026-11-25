@@ -15,6 +15,8 @@ namespace MicroduckVR.Comic
     public class ComicPop : MonoBehaviour
     {
         static Mesh burst; static Material burstMat;
+        /// <summary>Who the words face (filming); the main camera when not set.</summary>
+        public static Camera Viewer;
         float age, life, size; Transform tilt;
 
         public static void Spawn(string word, Vector3 at, string hex = "#FF5D73", float size = 1f, float life = 0.9f)
@@ -39,7 +41,7 @@ namespace MicroduckVR.Comic
 
         void Face()
         {
-            var cam = Camera.main; if (cam == null) return;
+            var cam = Viewer != null ? Viewer : Camera.main; if (cam == null) return;
             var d = transform.position - cam.transform.position;
             if (d.sqrMagnitude > 1e-6f) transform.rotation = Quaternion.LookRotation(d, Vector3.up);
         }

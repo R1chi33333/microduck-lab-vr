@@ -50,12 +50,15 @@ namespace MicroduckVR.Games
         }
 
         public TMP_FontAsset Font => font;
+        /// <summary>Filming: keep the HUD out of cinematic shots.</summary>
+        public static bool Hidden;
         public void Caption(string s) { capText = s ?? ""; card.gameObject.SetActive(capText.Length > 0); caption.text = capText; }
         public void Big(string s, string hex = "#FF5D73", float dur = 1.1f) { big.text = s; big.color = ComicLook.Hex(hex); bigT = 0f; bigDur = dur; big.gameObject.SetActive(true); }
         public void Clear() { Caption(""); big.gameObject.SetActive(false); }
 
         void LateUpdate()
         {
+            root.gameObject.SetActive(!Hidden); if (Hidden) return;
             if (cam == null) cam = Camera.main; if (cam == null) return;
             // lazy follow: sits 0.3 m ahead (duck scale) and catches up when the view drifts away
             var f = cam.transform.forward; f.y = 0f; if (f.sqrMagnitude < 1e-4f) f = Vector3.forward; f.Normalize();

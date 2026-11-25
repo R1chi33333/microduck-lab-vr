@@ -57,16 +57,20 @@ namespace MicroduckVR.Player
         Vector3 vel, headBaseline;
         bool turnLatched;
         float originYaw, turnVel;
-        Grabbable held; float lastYawDeg;
+        Grabbable held; float lastYawDeg, regrabWait;
         bool beakWasOpen;
         float chirpT, bedT;
 
         public static PlayerDuck Instance { get; private set; }
         /// <summary>Debug only: when set, the duck walks this world direction at full speed (used by editor tests).</summary>
         public static Vector3? DebugWalk;
+        public static float? DebugBeak;                    // editor tests and filming: the beak trigger
+        public static bool DebugChirp;
         public float Speed => new Vector2(vel.x, vel.z).magnitude;
         public DuckBody Body => body;
         public Grabbable Held => held;
+        /// <summary>Let go of whatever is in the beak, right now.</summary>
+        public void DropHeld() { if (held != null) { held.Release(Vector3.zero); held = null; DropCount++; body.JawStop = 0f; } }
 
         void Start()
         {
@@ -233,16 +237,17 @@ namespace MicroduckVR.Player
             Turned += Mathf.Abs(Mathf.DeltaAngle(lastYawDeg, yaw * Mathf.Rad2Deg)); lastYawDeg = yaw * Mathf.Rad2Deg;
 
             // ---- beak and grabbing
-            float trig = BagMenu.Busy || MicroduckVR.Custom.WorldPanel.AnyAimed ? 0f : input.Beak.ReadValue<float>();   // the trigger works the bag while it is open
+            float trig = BagMenu.Busy || MicroduckVR.Custom.WorldPanel.AnyAimed ? 0f : (DebugBeak ?? input.Beak.ReadValue<float>());   // the trigger works the bag while it is open
             bool open = trig > 0.35f;
             if (held == null)
             {
                 body.JawTarget = trig * 0.6f;
-                var near = Grabbable.Nearest(body.BeakGap(), 0.14f);
+                var near = Grabbable.Nearest(body.BeakGap(), 0.26f);                  // the head is well above the floor: look far enough down
                 bool reach = open && near != null && near.Centre.y < p.y + 0.1f;
                 body.ReachState.target = reach ? near.Centre : (Vector3?)null;
                 body.ReachState.weight = reach ? 1f : 0f;
-                if (beakWasOpen && !open)
+                regrabWait -= dt;
+                if (beakWasOpen && !open && regrabWait <= 0f)        // not straight after a drop: a quick squeeze must not bite the same thing again
                 {
                     var g = Grabbable.Nearest(body.BeakGap(), 0.03f);          // measured to the thing's surface, so big and off-centre things work too
                     if (g != null && g.TryHold(this)) { held = g; GrabCount++; body.JawStop = 0.12f; }
@@ -252,11 +257,11 @@ namespace MicroduckVR.Player
             {
                 body.ReachState.weight = 0f; body.ReachState.target = null;
                 body.JawTarget = 0f;
-                if (open && !beakWasOpen) { held.Release(realVel); held = null; DropCount++; body.JawStop = 0f; body.JawTarget = 0.5f; }
+                if (open && !beakWasOpen) { held.Release(realVel); held = null; DropCount++; regrabWait = 0.6f; body.JawStop = 0f; body.JawTarget = 0.5f; }
             }
             beakWasOpen = open;
 
-            if (!BagMenu.Busy && input.Chirp.WasPressedThisFrame()) { chirpT = 0.25f; ChirpCount++; var au = GetComponent<MicroduckVR.Audio.DuckAudio>(); if (au != null) au.Chirp(); }
+            if (!BagMenu.Busy && (input.Chirp.WasPressedThisFrame() || DebugChirp)) { DebugChirp = false; chirpT = 0.25f; ChirpCount++; var au = GetComponent<MicroduckVR.Audio.DuckAudio>(); if (au != null) au.Chirp(); }
             if (chirpT > 0f) { chirpT -= dt; if (held == null) body.JawTarget = Mathf.Max(body.JawTarget, 0.55f); }
             if (input.Emote.WasPressedThisFrame()) body.PlayEmote("dance");
             if (!BagMenu.Busy && input.Skates.WasPressedThisFrame()) skates.Toggle(yaw, vel);
