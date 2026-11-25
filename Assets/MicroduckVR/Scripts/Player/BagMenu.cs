@@ -25,6 +25,7 @@ namespace MicroduckVR.Player
         public static bool Busy { get; private set; }
         public enum Mode { Closed, Panel, Place, Trash }
         public Mode State { get; private set; } = Mode.Closed;
+        public int PlacedCount { get; private set; }
         public Vector3 TileWorld(string kind) { foreach (var t in tiles) if (t.kind == kind) return t.tile.position; return panel.position; }
         public string Selected { get; private set; }
 
@@ -83,7 +84,8 @@ namespace MicroduckVR.Player
             var entries = ToyCatalog.All;
             // toys, then the bin and help, then one row of actions (games, emotes, swap, view)
             int nA = entries.Count + 3, rowsA = Mathf.CeilToInt(nA / (float)Cols), n = nA + Actions.Length;
-            float w = Cols * (Tile + Gap) + Gap * 2f, h = (rowsA + 1) * (Tile + Gap) + 0.008f + 0.05f;
+            int rowsB = Mathf.CeilToInt(Actions.Length / (float)Cols);
+            float w = Cols * (Tile + Gap) + Gap * 2f, h = (rowsA + rowsB) * (Tile + Gap) + 0.008f + 0.05f;
             var slab = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(w, h, 0.006f), new ComicMesh.Style { radius = 0.01f, segments = 3 }), Unlit("#FFFFFF", "bag_slab"));
             slab.localPosition = new Vector3(0f, -0.004f, 0.004f);
             var tab = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(0.11f, 0.03f, 0.005f), new ComicMesh.Style { radius = 0.008f, segments = 3 }), Unlit("#FFC43D", "bag_tab"));
@@ -94,8 +96,8 @@ namespace MicroduckVR.Player
             float x0 = -(Cols - 1) * (Tile + Gap) / 2f, y0 = h / 2f - 0.045f;
             for (int i = 0; i < n; i++)
             {
-                int c = i < nA ? i % Cols : i - nA;
-                float yy = i < nA ? y0 - (i / Cols) * (Tile + Gap) : y0 - rowsA * (Tile + Gap) - 0.008f;
+                int c = i < nA ? i % Cols : (i - nA) % Cols;
+                float yy = i < nA ? y0 - (i / Cols) * (Tile + Gap) : y0 - (rowsA + (i - nA) / Cols) * (Tile + Gap) - 0.008f;
                 var tile = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(Tile, Tile, 0.004f), new ComicMesh.Style { radius = 0.005f, segments = 2 }), tileMat);
                 tile.localPosition = new Vector3(x0 + c * (Tile + Gap), yy, 0f);
                 Transform model; string kind;
@@ -182,6 +184,7 @@ namespace MicroduckVR.Player
         {
             ("football", "FOOTBALL", "#FF8A3D"), ("race", "RACE", "#7B61FF"), ("swap", "SWAP DUCK", "#1FA6A0"), ("view", "VIEW", "#3A86FF"),
             ("dance", "DANCE", "#FF5D73"), ("nod", "NOD", "#FF5D73"), ("shake", "SHAKE", "#FF5D73"), ("look", "LOOK", "#FF5D73"),
+            ("addduck", "ADD DUCK", "#FFC43D"), ("removeduck", "REMOVE DUCK", "#7B61FF"), ("mirror", "MY LOOK", "#FF8A3D"), ("tutorial", "TUTORIAL", "#8FD35A"),
         };
         readonly Dictionary<Transform, Material> baseMat = new Dictionary<Transform, Material>();
         static bool IsAction(string k) { if (k == "help" || k == "credits") return true; foreach (var a in Actions) if (a.kind == k) return true; return false; }
@@ -197,6 +200,10 @@ namespace MicroduckVR.Player
                 case "swap": if (pd != null) pd.SwapWithNearest(); break;
                 case "view": if (pd != null) pd.SetThirdPerson(!pd.thirdPerson); break;
                 case "help": TutorialCoach.ShowHelp(); break;
+                case "addduck": MicroduckVR.Flock.FlockSpawner.Add(); break;
+                case "removeduck": MicroduckVR.Flock.FlockSpawner.Remove(); break;
+                case "mirror": if (pd != null) { pd.SetThirdPerson(false); pd.Teleport(MicroduckVR.Custom.MirrorStation.StandPos, Mathf.PI); pd.FaceView(Mathf.PI); } break;
+                case "tutorial": TutorialCoach.Restart(); break;
                 case "credits": TutorialCoach.ShowSheet("CREDITS", TutorialCoach.CreditsText, "Y TO CLOSE"); break;
                 default: if (pd != null) pd.Body.PlayEmote(kind); break;
             }
@@ -271,7 +278,7 @@ namespace MicroduckVR.Player
                 else DropGhost();
                 if (press && ok)
                 {
-                    ToyCatalog.Spawn(Selected, hit.point, Yaw(hit.point));
+                    ToyCatalog.Spawn(Selected, hit.point, Yaw(hit.point)); PlacedCount++;
                     Play(popClip);
                 }
             }
@@ -307,6 +314,10 @@ namespace MicroduckVR.Player
             if (kind == "swap") return "BECOME THE DUCK IN FRONT";
             if (kind == "view") return "FIRST / THIRD PERSON";
             if (kind == "help") return "HOW TO PLAY";
+            if (kind == "addduck") return $"ANOTHER DUCK JOINS  ({MicroduckVR.Flock.DuckBrain.All.Count}/{MicroduckVR.Flock.FlockSpawner.Max})";
+            if (kind == "removeduck") return "SEND ONE DUCK HOME";
+            if (kind == "mirror") return "GO TO THE MIRROR: CHANGE YOUR DUCK";
+            if (kind == "tutorial") return "PLAY THE TUTORIAL AGAIN";
             if (kind == "credits") return "WHO MADE THIS";
             if (IsAction(kind)) return kind.ToUpperInvariant() + "!";
             var e = ToyCatalog.Get(kind);

@@ -190,7 +190,7 @@ namespace MicroduckVR.EditorTools
             S("hallway", "Floor hallway", 14.24f, 0.02f, 1.44f, hallM, 0f, -0.01f, 3.22f, 0f, "wood");
             S("kitchen", "Floor kitchen", 3.88f + 0.12f, 0.02f, 5.0f + 0.12f, tileM, 5.06f, -0.01f, -0.06f, 0f, "tile");
             S("bedroom", "Floor bedroom", 3.88f + 0.12f, 0.02f, 5.0f + 0.12f, bedM, -5.06f, -0.01f, -0.06f, 0f, "wood");
-            S("garden", "Lawn", 60f, 0.02f, 44f, M("lawn", "#6CBF4F"), 0f, -0.03f, 10f, 0f, "grass");
+            S("garden", "Lawn", 60f, 0.02f, 44f, GrassMat("lawn_soil", true), 0f, -0.03f, 10f, 0f, "grass");
             // ceilings over the rooms (no shadows, so the rooms stay sunlit; hidden from the debug top views)
             var ceil = M("ceiling", "#FFF6E4"); ceil.SetFloat("_Unlit", 1f);
             foreach (var (room, cx, cz, w, d) in new[] { ("living", 0f, 0f, 6.24f, 5.24f), ("kitchen", 5.06f, -0.06f, 4.12f, 5.24f), ("bedroom", -5.06f, -0.06f, 4.12f, 5.24f), ("hallway", 0f, 3.22f, 14.36f, 1.56f) })
@@ -199,7 +199,7 @@ namespace MicroduckVR.EditorTools
                 c.layer = MicroduckVR.Duck.DuckSetup.LayerCeiling;
                 c.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             }
-            S("garden", "Grass", 7.0f, 0.02f, 3.66f, M("grass", "#7CCB5A"), 0f, -0.009f, 5.77f, 0f, "grass");
+            S("garden", "Grass", 7.0f, 0.02f, 3.66f, GrassMat("lawn_soil", true), 0f, -0.009f, 5.77f, 0f, "grass");
 
             // living back wall with the window
             float bz = -2.5f - WT / 2f;
@@ -414,11 +414,21 @@ namespace MicroduckVR.EditorTools
                 Cyl(R, "Stepping stone", r, 0.012f, stone, x, 0.006f, z, "stone");
             }
             // puddle (splashable, slows you down)
-            var pud = Cyl(R, "Puddle", 1f, 0.003f, M("puddle", "#5BC0EB"), 1.45f, 0.0015f, 5.2f, "water");
+            var pud = Cyl(R, "Puddle", 1f, 0.003f, M("puddle_rim", "#3A86FF"), 1.45f, 0.0015f, 5.2f, "water");
             pud.transform.localScale = new Vector3(0.84f, 0.0015f, 0.56f);
+            // comic water: a lighter inside, so the darker rim reads as a drawn edge, and white shine strokes
+            var pudIn = Cyl(R, "Puddle inside", 1f, 0.003f, M("puddle", "#5BC0EB"), 1.45f, 0.0024f, 5.2f, null, false);
+            pudIn.transform.localScale = new Vector3(0.84f * 0.9f, 0.0015f, 0.56f * 0.88f);
+            var shine = M("puddle_shine", "#FFFFFF"); shine.SetFloat("_Unlit", 1f);
+            foreach (var (sx, sz, len, rot) in new[] { (1.2f, 5.05f, 0.2f, 18f), (1.62f, 5.3f, 0.13f, 18f), (1.78f, 5.12f, 0.07f, 18f) })
+            {
+                var st = Cyl(R, "Puddle shine", 1f, 0.003f, shine, sx, 0.0032f, sz, null, false);
+                st.transform.localScale = new Vector3(len, 0.0015f, 0.022f); st.transform.localRotation = Quaternion.Euler(0f, rot, 0f);
+                st.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
             // gentle grassy slope with a plateau by the fence
-            Wedge(R, "Garden slope", 1.7f, 0f, 2.9f, 0.17f, 6.7f, 1.6f, M("grass_slope", "#7CCB5A"), 0f, "grass");
-            B(R, "Slope plateau", 3.45f - 2.9f, 0.17f, 1.6f, M("grass_slope", "#7CCB5A"), (2.9f + 3.45f) / 2f, 0.085f, 6.7f, 0f, "grass");
+            Wedge(R, "Garden slope", 1.7f, 0f, 2.9f, 0.17f, 6.7f, 1.6f, GrassMat("lawn_soil", true), 0f, "grass");
+            B(R, "Slope plateau", 3.45f - 2.9f, 0.17f, 1.6f, GrassMat("lawn_soil", true), (2.9f + 3.45f) / 2f, 0.085f, 6.7f, 0f, "grass");
             // picket fence
             var fence = M("fence", "#FFFFFF");
             void Run(float ax, float az, float bx, float bz)

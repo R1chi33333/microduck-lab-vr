@@ -15,7 +15,24 @@ namespace MicroduckVR.World
         public Object Holder { get; private set; }
         public bool IsHeld => Holder != null;
 
-        void Awake() { Body = GetComponent<Rigidbody>(); }
+        Collider col;
+        /// <summary>Centre of the thing in its own space and its rough radius (for holding it by the middle).</summary>
+        public Vector3 CentreLocal { get; private set; }
+        public float Radius { get; private set; } = 0.01f;
+
+        void Awake()
+        {
+            Body = GetComponent<Rigidbody>(); col = GetComponentInChildren<Collider>();
+            if (col != null) { CentreLocal = transform.InverseTransformPoint(col.bounds.center); var e = col.bounds.extents; Radius = Mathf.Min(e.x, Mathf.Min(e.y, e.z)); }
+        }
+
+        /// <summary>How far a point is from the surface of the thing (0 inside it).</summary>
+        public float DistanceTo(Vector3 p)
+        {
+            if (col == null || !col.enabled) return Vector3.Distance(transform.position, p);
+            return Vector3.Distance(col.ClosestPoint(p), p);
+        }
+        public Vector3 Centre => col != null ? col.bounds.center : transform.position;
         void OnEnable() { All.Add(this); }
         void OnDisable() { All.Remove(this); }
 
@@ -43,7 +60,7 @@ namespace MicroduckVR.World
             foreach (var g in All)
             {
                 if (g.IsHeld) continue;
-                float d = Vector3.Distance(g.transform.position, p);
+                float d = g.DistanceTo(p);
                 if (d < bd) { bd = d; best = g; }
             }
             return best;

@@ -134,7 +134,7 @@ namespace MicroduckVR.Flock
             // which bubbles may show: nearest MAX_ON, in front, in range, not behind walls
             Vector3 eye = viewer.transform.position;
             var live = new List<Bubble>();
-            foreach (var b in pool) if (b.live) live.Add(b);
+            foreach (var b in pool) { if (b.live && b.duck == null) { b.live = false; b.go.SetActive(false); } if (b.live) live.Add(b); }   // a duck may have been sent home
             live.Sort((a, c) => Vector3.Distance(eye, a.duck.Pos).CompareTo(Vector3.Distance(eye, c.duck.Pos)));
             int shown = 0;
             foreach (var b in pool)

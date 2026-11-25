@@ -26,7 +26,9 @@ namespace MicroduckVR.EditorTools
                 AssetDatabase.CreateAsset(mat, OutlineMatPath);
             }
 
-            mat.SetFloat("_LineWidth", 1.8f);
+            mat.SetFloat("_LineWidth", 2.7f);
+            mat.SetFloat("_FadeStart", 16f); mat.SetFloat("_FadeEnd", 70f);
+            mat.SetFloat("_GrassInkNear", 1.0f); mat.SetFloat("_GrassInkFar", 3.0f);
             mat.SetFloat("_NormalThreshold", 0.58f);
             mat.SetFloat("_DepthThreshold", 0.07f);
             EditorUtility.SetDirty(mat);

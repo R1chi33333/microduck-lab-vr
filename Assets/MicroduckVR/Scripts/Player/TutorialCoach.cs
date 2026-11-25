@@ -10,24 +10,34 @@ using UnityEngine.InputSystem;
 namespace MicroduckVR.Player
 {
     /// <summary>
-    /// How to play: on the first run a comic card walks you through the controls one at a time, moving on as soon
-    /// as you have done each thing (or after a while, so nobody gets stuck). HELP in the toy bag shows the whole
+    /// How to play: on the first run a comic card walks you through the controls one at a time, starting at the
+    /// mirror (first you make your duck), each card waiting until you have really done the thing it asks. The
+    /// controller picture on the card presses and lets go like a flip-book. Hold the left menu button to skip. HELP in the toy bag shows the whole
     /// control sheet again; Y closes it. The card floats low in front of you and lazily follows your view.
     /// </summary>
     public class TutorialCoach : MonoBehaviour
     {
         public Camera cam;
         public Font font;
-        const string DoneKey = "microduck_tutorial_done_v1";
+        const string DoneKey = "microduck_tutorial_done_v2";
 
-        class Step { public string pic = "pads"; public string title, body; public Func<bool> done; public float max = 60f; public Action enter; }
+        class Step
+        {
+            public string pic = "pads"; public (int frame, float secs)[] seq;   // the controller flip-book and its timing
+            public string title, body; public Func<bool> done; public Action enter;
+            public float max = float.PositiveInfinity;                           // only the talking cards time out
+            public Func<bool> lost; public int back = 1;                         // precondition gone: step back
+            public Vector2 offset;                                               // card shift (right, up) so it never covers what you work on
+        }
+        static readonly (int, float)[] Press = { (0, 0.55f), (1, 0.45f) }, Hold = { (0, 0.4f), (1, 1.3f) }, LetGo = { (1, 1.0f), (0, 0.8f) },
+                                       LeftRight = { (0, 0.35f), (1, 0.5f), (0, 0.35f), (2, 0.5f) };
         Step[] steps;
-        int index = -1; float stepT, holdT; bool help;
-        Transform picture; Material picMat;
+        int index = -1; float stepT, holdT, animT, heldT; int animI; bool help;
+        Transform picture; Material picMat; readonly System.Collections.Generic.Dictionary<string, Texture2D> texCache = new System.Collections.Generic.Dictionary<string, Texture2D>();
         Transform root, card; TextMeshPro title, body, counter; TMP_FontAsset fa;
         PlayerDuck pd; PlayerSkates sk; BagMenu bag;
-        int snap0, chirp0, grab0, view0; float walk0; bool bagWasOpen, sawBag, laserSeen;
-        InputAction skipA;
+        int snap0, chirp0, grab0, drop0, view0, save0, placed0; float walk0, turn0, skipT;
+        InputAction skipA, skipHoldA;
 
         static TutorialCoach inst;
         public static void ShowHelp() { if (inst != null) inst.OpenHelp(); }
@@ -39,6 +49,7 @@ namespace MicroduckVR.Player
             "BUILT WITH UNITY, URP, OPENXR\n" +
             "HOUSE, TOYS AND SOUNDS: MADE IN CODE\n" +
             "THANKS FOR PLAYING!";
+        public static string DebugTitle => inst != null && inst.card.gameObject.activeSelf ? inst.title.text + " [" + inst.counter.text + "]" : "(none)";
         public static void Restart() { if (inst != null) inst.Begin(); }
         public static void HideAll() { if (inst != null) { inst.help = false; inst.index = -1; inst.card.gameObject.SetActive(false); } }
 
@@ -50,38 +61,66 @@ namespace MicroduckVR.Player
             if (font == null && bag != null) font = bag.font;
             if (font != null) fa = TMP_FontAsset.CreateFontAsset(font);
             skipA = new InputAction("TutorialSkip", InputActionType.Button); skipA.AddBinding("<Keyboard>/escape"); skipA.Enable();
+            skipHoldA = new InputAction("TutorialSkipHold", InputActionType.Button);
+            skipHoldA.AddBinding("<XRController>{LeftHand}/menu"); skipHoldA.AddBinding("<XRController>{LeftHand}/menuButton"); skipHoldA.Enable();
             BuildCard();
+            // Every step waits until you have really done the thing; nothing moves on by itself except the talking cards.
             steps = new[]
             {
-                new Step { title = "HI, LITTLE DUCK!", body = "YOU ARE THE DUCK.\nLOOK AROUND THE GIANT HOUSE!", max = 6f, done = () => stepT > 5f },
-                new Step { pic = "walk", title = "WADDLE", body = "PUSH THE LEFT STICK TO WALK\nTOWARDS WHERE YOU LOOK.", done = () => pd.Walked - walk0 > 0.35f },
-                new Step { pic = "turn", title = "TURN", body = "FLICK THE RIGHT STICK\nLEFT OR RIGHT TO TURN.", done = () => pd.SnapCount > snap0 },
-                new Step { pic = "beak", title = "BEAK", body = "HOLD THE RIGHT TRIGGER TO OPEN YOUR BEAK.\nLET GO NEXT TO A TOY TO GRAB IT.\nSQUEEZE AGAIN TO DROP IT.", max = 90f,
-                           done = () => pd.GrabCount > grab0, enter = SpawnPracticeToy },
-                new Step { pic = "chirp", title = "QUACK!", body = "PRESS A TO CHIRP.", done = () => pd.ChirpCount > chirp0 },
-                new Step { pic = "bag", title = "TOY BAG", body = "PRESS Y TO OPEN YOUR TOY BAG.\nPOINT WITH THE RIGHT HAND, PULL THE TRIGGER\nTO PICK A TOY, AGAIN TO DROP IT. Y TO CLOSE.", max = 90f,
-                           done = () => sawBag && !BagMenu.Busy },
-                new Step { pic = "skates", title = "ROLLER SKATES", body = "PRESS B TO PUT ON SKATES.\nLEFT GRIP: DRIFT.  LEFT TRIGGER: BOOST.\nB AGAIN TO TAKE THEM OFF.", done = () => sk != null && sk.On && stepT > 4f },
-                new Step { pic = "laser", title = "LASER DOT", body = "HOLD THE RIGHT GRIP FOR A LASER DOT.\nTHE OTHER DUCKS LOVE CHASING IT!", done = () => laserSeen && stepT > 2f },
-                new Step { pic = "view", title = "THIRD PERSON", body = "CLICK THE LEFT STICK TO SEE YOURSELF.\nTHERE THE RIGHT STICK MOVES YOUR HEAD,\nRIGHT STICK CLICK PUTS THE VIEW BEHIND YOU.", done = () => pd.ViewToggles > view0 && stepT > 3f },
-                new Step { title = "YOU'RE READY!", body = "FOOTBALL, RACES, DANCES AND MORE\nARE IN THE TOY BAG. HELP IS THERE TOO.", max = 7f, done = () => stepT > 6.5f },
+                new Step { title = "HI, LITTLE DUCK!", body = "YOU ARE THE DUCK.\nFIRST, LET'S MAKE YOU LOOK\nTHE WAY YOU LIKE!", max = 4.5f, done = () => stepT > 4f, enter = ToMirror, offset = new Vector2(-0.12f, -0.02f) },
+                new Step { pic = "trigger_r", seq = Press, title = "MAKE YOUR DUCK", offset = new Vector2(-0.12f, -0.02f),
+                           body = "THAT'S YOU IN THE MIRROR!\nPOINT YOUR RIGHT HAND AT THE BOARD,\nPULL THE TRIGGER TO PICK COLOURS.\nPRESS DONE! WHEN YOU LIKE IT.",
+                           done = () => MicroduckVR.Custom.MirrorStation.SaveCount > save0 },
+                new Step { pic = "stick_l", seq = Hold, title = "WADDLE", body = "PUSH THE LEFT STICK TO WALK\nTOWARDS WHERE YOU LOOK.\nGO FOR A LITTLE WALK!", done = () => pd.Walked - walk0 > 0.4f },
+                new Step { pic = "stick_r", seq = LeftRight, title = "TURN", body = "FLICK THE RIGHT STICK\nLEFT OR RIGHT TO TURN ROUND.", done = () => pd.SnapCount > snap0 || pd.Turned - turn0 > 40f },
+                new Step { pic = "trigger_r", seq = Hold, title = "OPEN YOUR BEAK", body = "HOLD THE RIGHT TRIGGER:\nYOUR BEAK OPENS. KEEP IT OPEN!", enter = SpawnPracticeToy,
+                           done = () => { heldT = pd.Body.JawTarget > 0.3f ? heldT + Time.deltaTime : 0f; return heldT > 0.7f; } },
+                new Step { pic = "trigger_r", seq = LetGo, title = "GRAB IT", body = "WALK UP TO THE RUBBER DUCK.\nHOLD THE TRIGGER, PUT YOUR BEAK ON IT,\nTHEN LET GO TO BITE!", done = () => pd.Held != null },
+                new Step { pic = "trigger_r", seq = Press, title = "DROP IT", body = "CARRY IT WHEREVER YOU LIKE.\nSQUEEZE THE TRIGGER AGAIN TO DROP IT.", done = () => pd.DropCount > drop0, lost = () => pd.Held == null && pd.DropCount == drop0 },
+                new Step { pic = "a", seq = Press, title = "QUACK!", body = "PRESS A TO QUACK.", done = () => pd.ChirpCount > chirp0 },
+                new Step { pic = "y", seq = Press, title = "TOY BAG", body = "PRESS Y TO OPEN YOUR TOY BAG.", done = () => bag != null && bag.State == BagMenu.Mode.Panel },
+                new Step { pic = "trigger_r", seq = Press, title = "PICK A TOY", body = "POINT YOUR RIGHT HAND AT A TOY\nAND PULL THE TRIGGER.", offset = new Vector2(-0.31f, 0.04f),
+                           done = () => bag.State == BagMenu.Mode.Place, lost = () => bag.State == BagMenu.Mode.Closed },
+                new Step { pic = "trigger_r", seq = Press, title = "PUT IT DOWN", body = "POINT AT THE FLOOR NEAR YOU.\nPULL THE TRIGGER TO DROP THE TOY THERE.",
+                           done = () => bag.PlacedCount > placed0, lost = () => bag.State != BagMenu.Mode.Place, back = 2 },
+                new Step { pic = "y", seq = Press, title = "CLOSE THE BAG", body = "PRESS Y TO PUT THE BAG AWAY.", done = () => !BagMenu.Busy },
+                new Step { pic = "b", seq = Press, title = "ROLLER SKATES", body = "PRESS B TO PUT ON YOUR SKATES.", done = () => sk != null && sk.On },
+                new Step { pic = "stick_l", seq = Hold, title = "ROLL!", body = "PUSH THE LEFT STICK TO SKATE.\nTAKE A LAP!", done = () => pd.Walked - walk0 > 1.5f, lost = () => !sk.On },
+                new Step { pic = "trigger_l", seq = Press, title = "BOOST", body = "PULL THE LEFT TRIGGER\nFOR A BURST OF SPEED.", done = () => sk.Boosting, lost = () => !sk.On, back = 2 },
+                new Step { pic = "drift", seq = Hold, title = "DRIFT", body = "GET SOME SPEED, THEN HOLD THE LEFT GRIP\nAND STEER TO SLIDE ROUND A CORNER.", done = () => sk.Drifting, lost = () => !sk.On, back = 3, max = 75f },
+                new Step { pic = "b", seq = Press, title = "SKATES OFF", body = "PRESS B AGAIN TO TAKE THEM OFF.", done = () => !sk.On },
+                new Step { pic = "grip_r", seq = Hold, title = "LASER DOT", body = "HOLD THE RIGHT GRIP AND POINT AT THE FLOOR.\nTHE OTHER DUCKS LOVE CHASING THE DOT!",
+                           done = () => { heldT = LaserPointer.Active ? heldT + Time.deltaTime : heldT; return heldT > 1.5f; } },
+                new Step { pic = "click_l", seq = Press, title = "SEE YOURSELF", body = "CLICK THE LEFT STICK IN\nTO STEP OUT AND SEE YOUR DUCK.", done = () => pd.thirdPerson },
+                new Step { pic = "stick_r", seq = LeftRight, title = "LOOK AROUND", body = "OUT HERE THE RIGHT STICK\nMOVES YOUR DUCK'S HEAD. TRY IT!", done = () => pd.HeadAimAmount > 0.6f, lost = () => !pd.thirdPerson },
+                new Step { pic = "click_l", seq = Press, title = "BACK INSIDE", body = "CLICK THE LEFT STICK AGAIN\nTO SEE THROUGH YOUR DUCK'S EYES.", done = () => !pd.thirdPerson },
+                new Step { title = "YOU'RE READY!", body = "FOOTBALL, RACES, DANCES, MORE DUCKS\nAND HELP ARE ALL IN THE TOY BAG (Y).", max = 7f, done = () => stepT > 6.5f },
             };
             bool done = false; try { done = PlayerPrefs.GetInt(DoneKey, 0) == 1; } catch { }
             if (!done) Invoke(nameof(Begin), 1.5f);
         }
 
-        void OnDestroy() { skipA?.Disable(); if (inst == this) inst = null; }
+        /// <summary>The tutorial opens at the mirror, so the first thing you do is choose your duck's look.</summary>
+        void ToMirror()
+        {
+            pd.SetThirdPerson(false);
+            pd.Teleport(MicroduckVR.Custom.MirrorStation.StandPos, Mathf.PI);
+            pd.FaceView(Mathf.PI);
+        }
+
+        void OnDestroy() { skipA?.Disable(); skipHoldA?.Disable(); if (inst == this) inst = null; }
 
         public void Begin() { help = false; Go(0); }
 
         void Go(int i)
         {
-            index = i; stepT = 0f;
+            index = Mathf.Max(0, i); stepT = 0f; heldT = 0f;
             if (index >= steps.Length) { Finish(); return; }
-            snap0 = pd.SnapCount; chirp0 = pd.ChirpCount; grab0 = pd.GrabCount; view0 = pd.ViewToggles; walk0 = pd.Walked; sawBag = false; laserSeen = false;
+            snap0 = pd.SnapCount; chirp0 = pd.ChirpCount; grab0 = pd.GrabCount; drop0 = pd.DropCount; view0 = pd.ViewToggles; walk0 = pd.Walked; turn0 = pd.Turned;
+            save0 = MicroduckVR.Custom.MirrorStation.SaveCount; placed0 = bag != null ? bag.PlacedCount : 0;
             steps[index].enter?.Invoke();
             Show(steps[index].title, steps[index].body, $"{index + 1}/{steps.Length}");
-            SetPicture(steps[index].pic);
+            animI = 0; animT = 0f; SetFrame();
         }
 
         void Finish()
@@ -150,9 +189,12 @@ namespace MicroduckVR.Player
             return t;
         }
 
-        void SetPicture(string name)
+        /// <summary>Shows the current frame of the step's controller flip-book (rest, pressed, rest...).</summary>
+        void SetFrame()
         {
-            var tex = Resources.Load<Texture2D>("Tutorial/pads_" + name);
+            var st = steps[index];
+            string name = st.seq == null ? "pads_" + st.pic + "_0" : "pads_" + st.pic + "_" + st.seq[animI % st.seq.Length].frame;
+            if (!texCache.TryGetValue(name, out var tex)) { tex = Resources.Load<Texture2D>("Tutorial/" + name); texCache[name] = tex; }
             if (tex != null) { picMat.SetTexture("_BaseMap", tex); picMat.mainTexture = tex; }
         }
 
@@ -175,6 +217,8 @@ namespace MicroduckVR.Player
             if (cam == null) return;
             var f = cam.transform.forward; f.y = 0f; if (f.sqrMagnitude < 1e-4f) f = Vector3.forward; f.Normalize();
             var want = cam.transform.position + f * 0.3f + Vector3.down * 0.07f;
+            // some steps keep the card out of the way of what you are doing (the mirror board, the open toy bag)
+            if (!help && index >= 0 && index < steps.Length) { var o = steps[index].offset; want += Vector3.Cross(Vector3.up, f) * o.x + Vector3.up * o.y; }
             float angle = Vector3.Angle(root.position - cam.transform.position, f);
             if (snap || Vector3.Distance(root.position, want) > 0.5f) root.position = want;
             else if (angle > 30f || Vector3.Distance(root.position, want) > 0.1f) root.position = Vector3.Lerp(root.position, want, 1f - Mathf.Exp(-3f * Time.deltaTime));
@@ -186,25 +230,31 @@ namespace MicroduckVR.Player
             if (cam == null) cam = Camera.main;
             if (sk == null && pd != null) sk = pd.Skates;
             if (!card.gameObject.activeSelf) return;
-            bool hide = BagMenu.Busy && !help;                 // the bag panel takes the same spot; step back while it is open
-            if (root.gameObject.activeSelf == hide) { root.gameObject.SetActive(!hide); if (!hide) Place(true); }
             Place(false);
             holdT += Time.deltaTime;
             card.localScale = Vector3.one * (holdT < 0.2f ? Mathf.SmoothStep(0.3f, 1f, holdT / 0.2f) : 1f);
             if (skipA.WasPressedThisFrame()) { if (help) { help = false; card.gameObject.SetActive(false); } else Finish(); return; }
             if (help) return;
             if (index < 0) return;
+            // holding the left menu button for a moment skips the whole tutorial
+            skipT = skipHoldA.IsPressed() ? skipT + Time.deltaTime : 0f;
+            if (skipT > 1.2f) { skipT = 0f; Finish(); return; }
             stepT += Time.deltaTime;
-            if (BagMenu.Busy) sawBag = true;
-            if (LaserPointer.Active) laserSeen = true;
             var s = steps[index];
-            if (s.done() || stepT > s.max) Go(index + 1);
+            // the picture presses and lets go
+            if (s.seq != null)
+            {
+                animT += Time.deltaTime;
+                if (animT >= s.seq[animI % s.seq.Length].secs) { animT = 0f; animI = (animI + 1) % s.seq.Length; SetFrame(); }
+            }
+            if (s.done() || stepT > s.max) { Go(index + 1); return; }
+            if (s.lost != null && stepT > 0.5f && s.lost()) Go(index - s.back);
         }
 
         /// <summary>The help sheet closes when the bag is opened (Y) again.</summary>
         void Update()
         {
-            if (help && BagMenu.Busy) { help = false; card.gameObject.SetActive(false); var b = GetComponent<BagMenu>(); if (b != null) b.Close(); }
+            if (help && BagMenu.Busy && holdT > 0.3f) { help = false; card.gameObject.SetActive(false); var b = GetComponent<BagMenu>(); if (b != null) b.Close(); }
         }
     }
 }

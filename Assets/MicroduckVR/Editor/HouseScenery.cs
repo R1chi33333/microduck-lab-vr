@@ -1,4 +1,7 @@
+using System.Collections.Generic;
 using MicroduckVR.Comic;
+using MicroduckVR.Duck;
+using UnityEditor;
 using UnityEngine;
 
 namespace MicroduckVR.EditorTools
@@ -15,6 +18,29 @@ namespace MicroduckVR.EditorTools
             const string R = "garden";
             var rnd = new System.Random(808);
             float Rf(float a, float b) => a + (float)rnd.NextDouble() * (b - a);
+
+            // the sky: a big drum painted with a blue gradient and halftone dots fading up from the horizon
+            {
+                var skyM = M("sky_drum", "#FFFFFF"); skyM.SetFloat("_Unlit", 1f);
+                var tex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/MicroduckVR/Textures/sky_halftone.png");
+                if (tex != null) { skyM.SetTexture("_BaseMap", tex); skyM.SetTextureScale("_BaseMap", new Vector2(6f, 1f)); EditorUtility.SetDirty(skyM); }
+                const int N = 48; const float SR = 52f, Y0 = -5f, Y1 = 45f;
+                var v = new List<Vector3>(); var n = new List<Vector3>(); var uv = new List<Vector2>(); var t = new List<int>();
+                for (int i = 0; i <= N; i++)
+                {
+                    float a = i / (float)N * Mathf.PI * 2f; var d = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                    v.Add(d * SR + Vector3.up * Y0); v.Add(d * SR + Vector3.up * Y1); n.Add(-d); n.Add(-d);
+                    uv.Add(new Vector2(i / (float)N, 0.02f)); uv.Add(new Vector2(i / (float)N, 0.97f));
+                    if (i < N) { int q = i * 2; t.Add(q); t.Add(q + 1); t.Add(q + 2); t.Add(q + 2); t.Add(q + 1); t.Add(q + 3); t.Add(q); t.Add(q + 2); t.Add(q + 1); t.Add(q + 2); t.Add(q + 3); t.Add(q + 1); }
+                }
+                int c0 = v.Count; v.Add(Vector3.up * Y1); n.Add(Vector3.down); uv.Add(new Vector2(0.5f, 0.97f));
+                for (int i = 0; i < N; i++) { t.Add(c0); t.Add(i * 2 + 3); t.Add(i * 2 + 1); t.Add(c0); t.Add(i * 2 + 1); t.Add(i * 2 + 3); }
+                var mesh = new Mesh { name = "sky drum" }; mesh.SetVertices(v); mesh.SetNormals(n); mesh.SetUVs(0, uv); mesh.SetTriangles(t, 0); mesh.RecalculateBounds();
+                var sky = new GameObject("Sky drum") { layer = DuckSetup.LayerWorld };
+                sky.transform.SetParent(rooms[R], false); sky.transform.position = new Vector3(0f, 0f, 3f);
+                sky.AddComponent<MeshFilter>().sharedMesh = SaveMesh(mesh);
+                var smr = sky.AddComponent<MeshRenderer>(); smr.sharedMaterial = skyM; smr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; smr.receiveShadows = false;
+            }
 
             // clouds: clusters of fat white puffs, flat-lit (the ink pass draws their outlines)
             var cloudMat = M("cloud", "#FFFFFF"); cloudMat.SetFloat("_Unlit", 1f);

@@ -41,7 +41,10 @@ namespace MicroduckVR.Player
         Vector3 thirdPos, thirdVel; bool thirdSnap = true; Vector2 headAim;
 
         // what the player has done (the tutorial watches these)
-        public int SnapCount, ChirpCount, GrabCount, ViewToggles; public float Walked;
+        public int SnapCount, ChirpCount, GrabCount, DropCount, ViewToggles; public float Walked, Turned;
+        public float HeadAimAmount => headAim.magnitude;
+        /// <summary>Turn the view (not the duck) to face a heading, in one step.</summary>
+        public void FaceView(float yawRad) { if (cam != null) originYaw += Mathf.DeltaAngle(cam.transform.eulerAngles.y, yawRad * Mathf.Rad2Deg); }
         [Range(0f, 1f)] public float vignetteStrength = 0.6f;
 
         DuckSetup setup;
@@ -54,7 +57,7 @@ namespace MicroduckVR.Player
         Vector3 vel, headBaseline;
         bool turnLatched;
         float originYaw, turnVel;
-        Grabbable held;
+        Grabbable held; float lastYawDeg;
         bool beakWasOpen;
         float chirpT, bedT;
 
@@ -227,6 +230,7 @@ namespace MicroduckVR.Player
             Vector3 p = mover.transform.position;
             Vector3 realVel = new Vector3(vel.x, 0f, vel.z);
             Walked += realVel.magnitude * dt;
+            Turned += Mathf.Abs(Mathf.DeltaAngle(lastYawDeg, yaw * Mathf.Rad2Deg)); lastYawDeg = yaw * Mathf.Rad2Deg;
 
             // ---- beak and grabbing
             float trig = BagMenu.Busy || MicroduckVR.Custom.WorldPanel.AnyAimed ? 0f : input.Beak.ReadValue<float>();   // the trigger works the bag while it is open
@@ -234,13 +238,13 @@ namespace MicroduckVR.Player
             if (held == null)
             {
                 body.JawTarget = trig * 0.6f;
-                var near = Grabbable.Nearest(body.BeakGap(), 0.16f);
-                bool reach = open && near != null && near.transform.position.y < p.y + 0.08f;
-                body.ReachState.target = reach ? near.transform.position : (Vector3?)null;
+                var near = Grabbable.Nearest(body.BeakGap(), 0.14f);
+                bool reach = open && near != null && near.Centre.y < p.y + 0.1f;
+                body.ReachState.target = reach ? near.Centre : (Vector3?)null;
                 body.ReachState.weight = reach ? 1f : 0f;
                 if (beakWasOpen && !open)
                 {
-                    var g = Grabbable.Nearest(body.BeakGap(), 0.035f);
+                    var g = Grabbable.Nearest(body.BeakGap(), 0.03f);          // measured to the thing's surface, so big and off-centre things work too
                     if (g != null && g.TryHold(this)) { held = g; GrabCount++; body.JawStop = 0.12f; }
                 }
             }
@@ -248,7 +252,7 @@ namespace MicroduckVR.Player
             {
                 body.ReachState.weight = 0f; body.ReachState.target = null;
                 body.JawTarget = 0f;
-                if (open && !beakWasOpen) { held.Release(realVel); held = null; body.JawStop = 0f; body.JawTarget = 0.5f; }
+                if (open && !beakWasOpen) { held.Release(realVel); held = null; DropCount++; body.JawStop = 0f; body.JawTarget = 0.5f; }
             }
             beakWasOpen = open;
 
@@ -269,8 +273,10 @@ namespace MicroduckVR.Player
 
             if (held != null)
             {
-                held.transform.position = body.BeakGap();
-                held.transform.rotation = Quaternion.LookRotation(body.HeadDir(), Vector3.up);
+                // held by its middle, just in front of the beak (not by its pivot, which may be at its foot)
+                var hr = Quaternion.LookRotation(body.HeadDir(), Vector3.up);
+                held.transform.rotation = hr;
+                held.transform.position = body.BeakGap() + body.HeadDir() * Mathf.Min(held.Radius * 0.6f, 0.02f) - hr * Vector3.Scale(held.CentreLocal, held.transform.lossyScale);
             }
 
             if (vignette != null)

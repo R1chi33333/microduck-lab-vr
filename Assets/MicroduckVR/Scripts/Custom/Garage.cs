@@ -56,6 +56,7 @@ namespace MicroduckVR.Custom
             go.transform.position = Turntable + new Vector3(0f, 0.24f, -0.5f);
             go.transform.rotation = Quaternion.LookRotation(go.transform.position - (Turntable + new Vector3(0f, 0.3f, 0.2f)), Vector3.up);
             board = go.AddComponent<WorldPanel>(); board.font = font; board.cam = pd.cam; board.reach = 1.5f;
+            MirrorStation.Sign(font, "DUCK GARAGE", Turntable + new Vector3(0f, 0.62f, -0.56f), Quaternion.LookRotation(Vector3.back, Vector3.up), 0.6f, "#FF8A3D");
             var bag = pd.GetComponent<BagMenu>(); if (bag != null) board.rightHand = bag.rightHand;
             const float bw = 0.34f, bh = 0.3f;
             board.panelRect = new Rect(-bw / 2f, -bh / 2f, bw, bh);

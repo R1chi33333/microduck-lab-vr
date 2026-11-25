@@ -104,8 +104,8 @@ namespace MicroduckVR.EditorTools
             Directory.CreateDirectory(ShotDir);
             var go = new GameObject("ShotCam");
             var cam = go.AddComponent<Camera>();
-            cam.fieldOfView = fov; cam.nearClipPlane = 0.005f; cam.farClipPlane = 50f; cam.cullingMask = cullingMask;
-            cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = new Color(1f, 0.97f, 0.91f);
+            cam.fieldOfView = fov; cam.nearClipPlane = 0.005f; cam.farClipPlane = 90f; cam.cullingMask = cullingMask;
+            cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = MicroduckVR.Comic.ComicLook.Hex("#9AD8F2");
             var urp = go.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>(); urp.renderPostProcessing = false;
             go.transform.position = from; go.transform.LookAt(lookAt);
             var rt = new RenderTexture(w, h, 24) { antiAliasing = 4 };

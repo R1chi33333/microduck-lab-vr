@@ -7,89 +7,115 @@ using UnityEngine;
 namespace MicroduckVR.EditorTools
 {
     /// <summary>
-    /// Real comic grass on the lawn: tufts of 3-5 fat, tapered, slightly curved blades, two greens, tall enough to
-    /// reach a duck's knees (so in VR you see it standing up around you). Blades get the ink outline like everything
-    /// else and are lit flat (normals point up) so the whole lawn reads as clean cel colour, not noise. Paths, the
-    /// puddle, flower beds and other things on the ground are left clear. Built into a few combined meshes.
+    /// The comic lawn: thousands of tufts, each a fan of fat leaf-shaped blades, packed so the soil never shows.
+    /// The blades use Microduck/ToonGrass (flat colour bands, big two-tone patches, wind waves, parting around
+    /// ducks) and are not outlined one by one; a sprinkling of darker "ink tufts" with the normal toon material
+    /// gets the usual outline, the way a comic artist dots a lawn with a few drawn clumps. Paths, the puddle,
+    /// flower beds and other things on the ground are left clear. Built into combined meshes per 1 m tile.
     /// </summary>
     public static partial class HouseBuilder
     {
+        internal static Material GrassMat(string name, bool ground)
+        {
+            string p = $"{MatDir}/{name}.mat";
+            var shader = Shader.Find("Microduck/ToonGrass");
+            var m = AssetDatabase.LoadAssetAtPath<Material>(p);
+            if (m == null) { m = new Material(shader); AssetDatabase.CreateAsset(m, p); }
+            m.shader = shader; m.SetFloat("_Ground", ground ? 1f : 0f); m.SetFloat("_InkTufts", 0.8f); m.enableInstancing = true;
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
         static void Grass()
         {
             var r = new System.Random(4242);
-            var dark = M("grass_blade_dark", "#3E9A45"); var light = M("grass_blade_light", "#6CBF4F"); var tip = M("grass_blade_tip", "#8FD35A");
-            var mats = new[] { dark, light, tip };
-            // inside the fence: dense; outside it, a sparser band so the lawn beyond is not bare
-            Scatter(r, mats, new Rect(-3.45f, 3.98f, 6.9f, 3.58f), 0.075f, 1f);
-            Scatter(r, mats, new Rect(-9f, 7.75f, 18f, 5f), 0.22f, 1.25f);
-            Scatter(r, mats, new Rect(-9f, 3.98f, 5.4f, 3.7f), 0.22f, 1.25f);
-            Scatter(r, mats, new Rect(3.6f, 3.98f, 5.4f, 3.7f), 0.22f, 1.25f);
+            var blades = GrassMat("grass_blades", false);
+            var ink = M("grass_ink_tuft", "#2F8F40");
+            // inside the fence: a thick carpet; outside it, bigger and sparser tufts so the lawn beyond is not bare
+            Scatter(r, blades, ink, new Rect(-3.45f, 3.98f, 6.9f, 3.58f), 0.04f, 1f, 6);
+            Scatter(r, blades, ink, new Rect(-9f, 7.75f, 18f, 5f), 0.1f, 1.9f, 4);
+            Scatter(r, blades, ink, new Rect(-9f, 3.98f, 5.4f, 3.7f), 0.1f, 1.9f, 4);
+            Scatter(r, blades, ink, new Rect(3.6f, 3.98f, 5.4f, 3.7f), 0.1f, 1.9f, 4);
         }
 
-        static void Scatter(System.Random r, Material[] mats, Rect area, float spacing, float scale)
+        class GrassChunk { public List<Vector3> v = new List<Vector3>(); public List<Vector3> n = new List<Vector3>(); public List<Vector2> uv = new List<Vector2>(); public List<Vector4> blade = new List<Vector4>(); public List<int> t = new List<int>(); }
+
+        static void Scatter(System.Random r, Material blades, Material ink, Rect area, float spacing, float scale, int maxBlades)
         {
             Physics.SyncTransforms();
-            // one mesh builder per 1 m chunk per material
-            var chunks = new Dictionary<(int, int, int), (List<Vector3> v, List<Vector3> n, List<Vector2> uv, List<int> t)>();
+            var chunks = new Dictionary<(int, int, int), GrassChunk>();
             float Rf(float a, float b) => a + (float)r.NextDouble() * (b - a);
             for (float z = area.yMin; z < area.yMax; z += spacing)
                 for (float x = area.xMin; x < area.xMax; x += spacing)
                 {
-                    float px = x + Rf(-0.45f, 0.45f) * spacing, pz = z + Rf(-0.45f, 0.45f) * spacing;
+                    float px = x + Rf(-0.5f, 0.5f) * spacing, pz = z + Rf(-0.5f, 0.5f) * spacing;
                     // only on bare lawn: whatever the down-ray hits first must be grass ground
                     if (!Physics.Raycast(new Vector3(px, 1.2f, pz), Vector3.down, out var hit, 2f, ~0, QueryTriggerInteraction.Ignore)) continue;
                     var tag = hit.collider.GetComponent<MicroduckVR.World.SurfaceTag>();
                     if (tag == null || tag.type != "grass" || hit.normal.y < 0.95f) continue;
-                    int blades = 3 + r.Next(3);
-                    float size = Rf(0.75f, 1.25f) * scale;
-                    for (int b = 0; b < blades; b++)
+                    bool inked = false;                       // ink silhouettes now come from the shader (see ToonGrass / ComicOutline)
+                    int n = inked ? 5 : maxBlades - r.Next(2);
+                    float size = Rf(0.8f, 1.2f) * scale * (inked ? 1.25f : 1f);
+                    var key = (Mathf.FloorToInt(px), Mathf.FloorToInt(pz), inked ? 1 : 0);
+                    if (!chunks.TryGetValue(key, out var c)) { c = new GrassChunk(); chunks[key] = c; }
+                    var root = new Vector3(px, hit.point.y - 0.003f, pz);
+                    float a0 = Rf(0f, Mathf.PI * 2f);
+                    for (int b = 0; b < n; b++)
                     {
-                        int mi = b == 0 ? 0 : r.Next(3);
-                        var key = (Mathf.FloorToInt(px), Mathf.FloorToInt(pz), mi);
-                        if (!chunks.TryGetValue(key, out var c)) { c = (new List<Vector3>(), new List<Vector3>(), new List<Vector2>(), new List<int>()); chunks[key] = c; }
-                        float a = Rf(0f, Mathf.PI * 2f), lean = Rf(0.15f, 0.55f);
+                        // one upright blade in the middle, the rest fanned out around it
+                        bool centre = b == 0;
+                        float a = a0 + b * (Mathf.PI * 2f / (n - 1)) + Rf(-0.4f, 0.4f);
                         var dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
-                        var basePos = new Vector3(px, hit.point.y - 0.002f, pz) + dir * Rf(0f, 0.012f) * size;
-                        Blade(c.v, c.n, c.uv, c.t, basePos, dir, Rf(0.035f, 0.07f) * size, Rf(0.007f, 0.011f) * size, lean);
+                        float h = (centre ? Rf(0.052f, 0.066f) : Rf(0.036f, 0.054f)) * size;
+                        float w = Rf(0.015f, 0.021f) * size;
+                        float lean = centre ? Rf(0.02f, 0.12f) : Rf(0.3f, 0.6f);
+                        var p = root + (centre ? Vector3.zero : dir * Rf(0.004f, 0.012f) * size);
+                        // the blade's flat side faces a random way so the tuft looks full from everywhere
+                        float fa = Rf(0f, Mathf.PI); var face = new Vector3(Mathf.Cos(fa), 0f, Mathf.Sin(fa));
+                        Blade(c, p, dir, face, h, w, lean, new Vector4(px, pz, h, Rf(0f, 1f)), inked);
                     }
                 }
-            var root = new GameObject("Grass " + area.center.ToString("F0")).transform; root.SetParent(rooms["garden"], false);
+            var rootT = new GameObject("Grass " + area.center.ToString("F0")).transform; rootT.SetParent(rooms["garden"], false);
             foreach (var kv in chunks)
             {
-                var (v, n, uv, t) = kv.Value;
+                var c = kv.Value; bool inked = kv.Key.Item3 == 1;
                 var mesh = new Mesh { name = $"grass {kv.Key}", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
-                mesh.SetVertices(v); mesh.SetNormals(n); mesh.SetUVs(0, uv); mesh.SetTriangles(t, 0); mesh.RecalculateBounds();
-                var go = new GameObject("grass chunk") { layer = DuckSetup.LayerWorld, isStatic = true };
-                go.transform.SetParent(root, false);
+                mesh.SetVertices(c.v); mesh.SetNormals(c.n); mesh.SetUVs(0, c.uv); mesh.SetUVs(1, c.blade); mesh.SetTriangles(c.t, 0); mesh.RecalculateBounds();
+                var bb = mesh.bounds; bb.Expand(new Vector3(0.2f, 0.1f, 0.2f)); mesh.bounds = bb;      // room for the sway
+                var go = new GameObject(inked ? "grass ink tufts" : "grass chunk") { layer = DuckSetup.LayerWorld };
+                go.transform.SetParent(rootT, false);
                 go.AddComponent<MeshFilter>().sharedMesh = SaveMesh(mesh);
-                var mr = go.AddComponent<MeshRenderer>(); mr.sharedMaterial = mats[kv.Key.Item3];
+                var mr = go.AddComponent<MeshRenderer>(); mr.sharedMaterial = inked ? ink : blades;
                 mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             }
         }
 
-        /// <summary>A fat tapered blade with a little bend, both faces, normals up (flat cel lighting).</summary>
-        static void Blade(List<Vector3> v, List<Vector3> n, List<Vector2> uv, List<int> t, Vector3 p, Vector3 dir, float h, float w, float lean)
+        /// <summary>A leaf-shaped blade (narrow foot, fat belly, pointed tip) that curves over along dir; uv.y = height fraction.</summary>
+        static void Blade(GrassChunk c, Vector3 p, Vector3 dir, Vector3 face, float h, float w, float lean, Vector4 data, bool twoSided)
         {
-            var side = new Vector3(-dir.z, 0f, dir.x);
-            const int segs = 3;
-            int b0 = v.Count;
-            for (int i = 0; i <= segs; i++)
+            var side = new Vector3(-face.z, 0f, face.x);
+            int b0 = c.v.Count;
+            float[] us = { 0f, 0.35f, 0.7f }; float[] ws = { 0.5f, 1f, 0.66f };
+            for (int i = 0; i < 3; i++)
             {
-                float u = i / (float)segs;
-                float bend = lean * u * u;                                   // curves over towards the tip
-                var c = p + Vector3.up * h * u * (1f - 0.25f * bend) + dir * h * bend * 0.8f;
-                float half = w * 0.5f * (1f - u) + 0.0006f;
-                v.Add(c - side * half); v.Add(c + side * half);
-                n.Add(Vector3.up); n.Add(Vector3.up);
-                uv.Add(new Vector2(0f, u)); uv.Add(new Vector2(1f, u));
+                float u = us[i];
+                var m = p + Vector3.up * h * u * (1f - 0.3f * lean * u) + dir * h * lean * u * u;
+                float half = w * 0.5f * ws[i];
+                c.v.Add(m - side * half); c.v.Add(m + side * half);
+                c.n.Add(Vector3.up); c.n.Add(Vector3.up);
+                c.uv.Add(new Vector2(0f, u)); c.uv.Add(new Vector2(1f, u));
+                c.blade.Add(data); c.blade.Add(data);
             }
-            for (int i = 0; i < segs; i++)
+            c.v.Add(p + Vector3.up * h * (1f - 0.3f * lean) + dir * h * lean); c.n.Add(Vector3.up); c.uv.Add(new Vector2(0.5f, 1f)); c.blade.Add(data);
+            for (int i = 0; i < 2; i++)
             {
                 int q = b0 + i * 2;
-                // front and back faces
-                t.Add(q); t.Add(q + 2); t.Add(q + 1); t.Add(q + 1); t.Add(q + 2); t.Add(q + 3);
-                t.Add(q); t.Add(q + 1); t.Add(q + 2); t.Add(q + 1); t.Add(q + 3); t.Add(q + 2);
+                c.t.Add(q); c.t.Add(q + 2); c.t.Add(q + 1); c.t.Add(q + 1); c.t.Add(q + 2); c.t.Add(q + 3);
+                // the ink tufts use the toon shader, which culls back faces: give them both sides
+                if (twoSided) { c.t.Add(q); c.t.Add(q + 1); c.t.Add(q + 2); c.t.Add(q + 1); c.t.Add(q + 3); c.t.Add(q + 2); }
             }
+            c.t.Add(b0 + 4); c.t.Add(b0 + 6); c.t.Add(b0 + 5);
+            if (twoSided) { c.t.Add(b0 + 4); c.t.Add(b0 + 5); c.t.Add(b0 + 6); }
         }
     }
 }

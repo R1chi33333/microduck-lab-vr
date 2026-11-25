@@ -115,6 +115,13 @@ namespace MicroduckVR.EditorTools
             rb.linearDamping = 0.15f; rb.angularDamping = sphere ? 0.25f : 0.6f;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            // anything a duck could get its beak round can be picked up and carried
+            float big = Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z)), small = Mathf.Min(b.size.x, Mathf.Min(b.size.y, b.size.z));
+            if (big <= 0.14f && small <= 0.07f && rb.mass <= 0.25f)
+            {
+                var g = root.gameObject.AddComponent<MicroduckVR.World.Grabbable>();
+                g.label = root.name.ToLowerInvariant(); g.gripWidth = Mathf.Clamp(small, 0.008f, 0.03f);
+            }
             return root;
         }
 

@@ -10,6 +10,7 @@ namespace MicroduckVR.Comic
     {
         readonly Transform tube, dot, core;
         public float radius;
+        bool shown;
 
         public ComicBeam(string name, string hex, float radius = 0.0016f, float dotRadius = 0.007f)
         {
@@ -32,12 +33,13 @@ namespace MicroduckVR.Comic
             return go.transform;
         }
 
-        public void Show(bool on) { tube.gameObject.SetActive(on); dot.gameObject.SetActive(on); core.gameObject.SetActive(on); }
+        public void Show(bool on) { shown = on; if (tube == null) return; tube.gameObject.SetActive(on); dot.gameObject.SetActive(on); core.gameObject.SetActive(on); }
         public void ShowDot(bool on) { dot.gameObject.SetActive(on); core.gameObject.SetActive(on); }
 
         /// <summary>From a to b; the dot lies on the surface with the given normal (or faces back up the beam).</summary>
         public void Set(Vector3 a, Vector3 b, Vector3? normal = null)
         {
+            if (!shown) return;                          // a late Set after Show(false) must not bring the beam back
             var d = b - a; float len = d.magnitude;
             var cam = Camera.main;
             bool fromEye = cam != null && (a - cam.transform.position).sqrMagnitude < 0.04f * 0.04f;   // desktop fallback: a tube out of your own eye is just a smear

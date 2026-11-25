@@ -49,6 +49,7 @@ namespace MicroduckVR.Games
             return t;
         }
 
+        public TMP_FontAsset Font => font;
         public void Caption(string s) { capText = s ?? ""; card.gameObject.SetActive(capText.Length > 0); caption.text = capText; }
         public void Big(string s, string hex = "#FF5D73", float dur = 1.1f) { big.text = s; big.color = ComicLook.Hex(hex); bigT = 0f; bigDur = dur; big.gameObject.SetActive(true); }
         public void Clear() { Caption(""); big.gameObject.SetActive(false); }

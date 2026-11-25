@@ -66,7 +66,7 @@ namespace MicroduckVR.EditorTools
             var camGo = new GameObject("Main Camera"); camGo.tag = "MainCamera";
             camGo.transform.SetParent(origin.transform, false);
             var cam = camGo.AddComponent<Camera>();
-            cam.nearClipPlane = 0.01f; cam.farClipPlane = 60f;
+            cam.nearClipPlane = 0.01f; cam.farClipPlane = 90f;
             cam.backgroundColor = MicroduckVR.Comic.ComicLook.Hex("#9AD8F2"); cam.clearFlags = CameraClearFlags.SolidColor;
             camGo.AddComponent<AudioListener>();
             SceneBuilder.AddHeadTracking(camGo);

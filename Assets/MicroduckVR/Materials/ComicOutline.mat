@@ -26,9 +26,12 @@ Material:
     m_Ints: []
     m_Floats:
     - _DepthThreshold: 0.07
-    - _FadeEnd: 14
-    - _FadeStart: 6
-    - _LineWidth: 1.8
+    - _FadeEnd: 70
+    - _FadeStart: 16
+    - _GrassInkFar: 3
+    - _GrassInkNear: 1
+    - _GrassStep: 0.012
+    - _LineWidth: 2.7
     - _NormalThreshold: 0.58
     m_Colors:
     - _InkColor: {r: 0.10599997, g: 0.07799999, b: 0.18799996, a: 1}

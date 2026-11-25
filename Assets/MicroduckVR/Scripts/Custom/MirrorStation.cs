@@ -17,9 +17,14 @@ namespace MicroduckVR.Custom
         public static MirrorStation Instance { get; private set; }
         // Unity space: mirror on the bedroom's north wall, facing into the room (+z)
         static readonly Vector3 MirrorCentre = new Vector3(4.42f, 0.75f, -2.42f);   // clear of the toy box
+        /// <summary>Where a duck stands to see itself and reach the board; face yaw = pi (towards the mirror).</summary>
+        public static readonly Vector3 StandPos = new Vector3(4.42f, 0.05f, -1.85f);
+        /// <summary>How many times DONE! has been pressed on the board (the tutorial waits for the first).</summary>
+        public static int SaveCount { get; private set; }
         const float W = 0.6f, H = 1.4f;
 
         public WorldPanel Board => board;
+        readonly System.Collections.Generic.List<Renderer> hidden = new System.Collections.Generic.List<Renderer>();
         Camera mirrorCam; RenderTexture rt; Transform glass; readonly System.Collections.Generic.List<GameObject> glints = new System.Collections.Generic.List<GameObject>();
         WorldPanel board; DuckCustom custom; PlayerDuck pd;
         readonly System.Random rng = new System.Random();
@@ -76,6 +81,21 @@ namespace MicroduckVR.Custom
             var urp = cg.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>(); urp.renderPostProcessing = false;
 
             BuildBoard(font);
+            Sign(font, "MAKE YOUR DUCK!", MirrorCentre + new Vector3(0f, H / 2f + 0.26f, 0.03f), Quaternion.LookRotation(Vector3.back, Vector3.up), 0.9f, "#FFC43D");
+        }
+
+        /// <summary>A comic name plate: a tilted colour tab with ink lettering (used over the mirror and the garage).</summary>
+        public static void Sign(TMP_FontAsset font, string text, Vector3 at, Quaternion facing, float size, string hex)
+        {
+            var go = new GameObject("Sign " + text); go.transform.SetPositionAndRotation(at, facing * Quaternion.Euler(0f, 0f, 3f));
+            float w = (text.Length * 0.034f + 0.06f) * size, h = 0.09f * size;
+            ToyKit.Box(go.transform, new Vector3(0f, 0f, 0.012f * size), new Vector3(w + 0.03f * size, h + 0.03f * size, 0.016f * size), "#1B1430", 0.35f);
+            ToyKit.Box(go.transform, Vector3.zero, new Vector3(w, h, 0.02f * size), hex, 0.35f);
+            foreach (var mr in go.GetComponentsInChildren<MeshRenderer>()) { mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.gameObject.layer = MicroduckVR.Duck.DuckSetup.LayerWorld; }
+            var tg = new GameObject("text"); tg.transform.SetParent(go.transform, false); tg.transform.localPosition = new Vector3(0f, 0f, -0.012f * size);
+            var t = tg.AddComponent<TextMeshPro>(); if (font != null) t.font = font;
+            t.text = text; t.fontSize = 0.62f * size; t.alignment = TextAlignmentOptions.Center; t.textWrappingMode = TextWrappingModes.NoWrap; t.color = ComicLook.Ink;
+            t.rectTransform.sizeDelta = new Vector2(w, h);
         }
 
         // ------------------------------------------------------------------ customise board
@@ -94,13 +114,13 @@ namespace MicroduckVR.Custom
             board.panelRect = new Rect(-bw / 2f, -bh / 2f, bw, bh);
             board.Slab(new Vector2(bw, bh), "#FFFDF5", new Vector3(0f, 0f, 0.003f), 0.15f);
             board.Slab(new Vector2(bw, 0.03f), "#FF5D73", new Vector3(0f, bh / 2f - 0.015f, 0f), 0.4f);
-            board.Label("MIRROR, MIRROR!", new Vector3(0f, bh / 2f - 0.016f, -0.004f), 0.17f, "#FFFFFF", bw);
+            board.Label("MAKE YOUR DUCK!", new Vector3(0f, bh / 2f - 0.016f, -0.004f), 0.17f, "#FFFFFF", bw);
 
             float y = bh / 2f - 0.05f;
-            board.Label("COLOUR", new Vector3(-bw / 2f + 0.035f, y, -0.004f), 0.09f, "#1B1430", 0.07f);
+            board.Label("BODY", new Vector3(-bw / 2f + 0.035f, y, -0.004f), 0.09f, "#1B1430", 0.07f);
             for (int i = 0; i < 4; i++) { var s = DuckCustom.SkinIds[i]; Swatch("skin_" + s, new Vector2(-0.06f + i * 0.045f, y), s, () => { custom.skin = s; Apply(); }); }
             y -= 0.04f;
-            board.Label("PAINT", new Vector3(-bw / 2f + 0.035f, y, -0.004f), 0.09f, "#1B1430", 0.07f);
+            board.Label("PAINT\nA PART", new Vector3(-bw / 2f + 0.035f, y - 0.016f, -0.004f), 0.075f, "#1B1430", 0.07f);
             for (int i = 0; i < 4; i++) { var p = DuckCustom.PartIds[i]; board.Add("part_" + p, p.ToUpperInvariant(), new Vector2(-0.06f + i * 0.045f, y), new Vector2(0.04f, 0.026f), "#E6E9F0", () => { paintPart = paintPart == p ? "" : p; Refresh(); }, 0.06f); }
             y -= 0.035f;
             for (int i = 0; i < 4; i++) { var s = DuckCustom.SkinIds[i]; Swatch("paint_" + s, new Vector2(-0.06f + i * 0.045f, y), s, () => { if (paintPart != "") { custom.SetPart(paintPart, s); Apply(); } }, 0.02f); }
@@ -110,7 +130,7 @@ namespace MicroduckVR.Custom
             for (int i = 0; i < 4; i++) { int v = i; board.Add("voice_" + v, DuckCustom.Voices[v].name, new Vector2(-0.06f + v * 0.045f, y), new Vector2(0.043f, 0.026f), "#C9F0E2", () => { custom.voice = v; Apply(); }, 0.045f); }
             y -= 0.045f;
             board.Add("random", "RANDOM!", new Vector2(-0.07f, y), new Vector2(0.11f, 0.032f), "#E5CCF5", () => { custom.Randomise(rng); Apply(); }, 0.09f);
-            board.Add("save", "SAVE", new Vector2(0.07f, y), new Vector2(0.11f, 0.032f), "#8FD35A", () => { custom.Save(); MicroduckVR.Games.GameHud.Get().Big("LOOKING GOOD!", "#FF5D73", 1.2f); pd.Body.PlayEmote("dance"); }, 0.1f);
+            board.Add("save", "DONE!", new Vector2(0.07f, y), new Vector2(0.11f, 0.032f), "#8FD35A", () => { custom.Save(); SaveCount++; MicroduckVR.Games.GameHud.Get().Big("LOOKING GOOD!", "#FF5D73", 1.2f); pd.Body.PlayEmote("dance"); }, 0.1f);
             Refresh();
         }
 
@@ -156,7 +176,11 @@ namespace MicroduckVR.Custom
             mirrorCam.projectionMatrix = Matrix4x4.Frustum(l, rr, b, t, n, f);
             mirrorCam.nearClipPlane = n; mirrorCam.farClipPlane = f;
             foreach (var gg in glints) gg.SetActive(false);          // the reflection must not see its own glints
+            // ... nor the comfort vignette that rides on your head: in the mirror it showed up as a dark box round the head
+            hidden.Clear();
+            foreach (var v in FindObjectsByType<ComfortVignette>(FindObjectsSortMode.None)) { var vr = v.GetComponent<Renderer>(); if (vr != null && vr.enabled) { vr.enabled = false; hidden.Add(vr); } }
             mirrorCam.Render();
+            foreach (var hr in hidden) hr.enabled = true;
             foreach (var gg in glints) gg.SetActive(true);
         }
 
