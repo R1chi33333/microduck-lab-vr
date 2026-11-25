@@ -5,11 +5,11 @@ namespace MicroduckVR.Player
 {
     /// <summary>
     /// Input for the player's duck. Quest Touch Pro controllers through OpenXR, with a keyboard
-    /// fallback so the scene can be tried on the desktop (WASD walk, Q/E snap turn, Space beak, C chirp).
+    /// fallback so the scene can be tried on the desktop (WASD walk, Q/E snap turn, Space beak, C chirp, V view).
     /// </summary>
     public class DuckInput
     {
-        public readonly InputAction Move, Turn, Beak, Chirp, Skates, Menu, Emote;
+        public readonly InputAction Move, Turn, Beak, Chirp, Skates, Menu, Emote, View;
 
         public DuckInput()
         {
@@ -37,6 +37,10 @@ namespace MicroduckVR.Player
             Emote.AddBinding("<XRController>{LeftHand}/{PrimaryButton}");
             Emote.AddBinding("<Keyboard>/x");
 
+            View = new InputAction("View", InputActionType.Button);           // first / third person
+            View.AddBinding("<XRController>{LeftHand}/{Primary2DAxisClick}");
+            View.AddBinding("<Keyboard>/v");
+
             Menu = new InputAction("Menu", InputActionType.Button);
             Menu.AddBinding("<XRController>{LeftHand}/{SecondaryButton}");
             Menu.AddBinding("<Keyboard>/tab");
@@ -44,6 +48,6 @@ namespace MicroduckVR.Player
 
         public void Enable() { foreach (var a in All) a.Enable(); }
         public void Disable() { foreach (var a in All) a.Disable(); }
-        InputAction[] All => new[] { Move, Turn, Beak, Chirp, Skates, Menu, Emote };
+        InputAction[] All => new[] { Move, Turn, Beak, Chirp, Skates, Menu, Emote, View };
     }
 }

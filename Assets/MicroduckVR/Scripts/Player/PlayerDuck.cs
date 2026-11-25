@@ -33,6 +33,12 @@ namespace MicroduckVR.Player
         public float snapDegrees = 30f;
         public float speedScale = 1f;
         public float bodyFollowDeg = 55f;                          // body turns to face where you look past this
+
+        [Header("Third person")]
+        public bool thirdPerson;                                   // left stick click / V toggles
+        public float thirdBack = 0.42f, thirdUp = 0.2f;            // camera offset behind and above the duck (duck-scale m)
+        public float thirdLag = 0.25f;                             // follow smoothing (s); the view never rotates by itself
+        Vector3 thirdPos, thirdVel; bool thirdSnap = true;
         [Range(0f, 1f)] public float vignetteStrength = 0.6f;
 
         DuckSetup setup;
@@ -82,6 +88,13 @@ namespace MicroduckVR.Player
             eyeY = body.BaseY + eyeHeight; eyeYVel = 0f;
         }
 
+        public void SetThirdPerson(bool on)
+        {
+            thirdPerson = on; thirdSnap = true;
+            if (cam != null) { if (on) cam.cullingMask |= 1 << DuckSetup.LayerPlayerHead; else cam.cullingMask &= ~(1 << DuckSetup.LayerPlayerHead); }
+            if (vignette != null) vignette.Pulse(0.6f);
+        }
+
         void OnDestroy() { input?.Disable(); if (Instance == this) Instance = null; }
 
         static void TrySetDeviceOrigin()
@@ -114,6 +127,7 @@ namespace MicroduckVR.Player
                     float d = Mathf.Sign(tx) * snapDegrees;
                     originYaw += d; yaw += d * Mathf.Deg2Rad;
                     if (vignette != null) vignette.Pulse(0.35f);
+                    thirdSnap = true;                                  // third person: jump to the new side, no orbiting glide
                 }
                 else if (Mathf.Abs(tx) < 0.3f) turnLatched = false;
             }
@@ -189,6 +203,7 @@ namespace MicroduckVR.Player
             if (chirpT > 0f) { chirpT -= dt; if (held == null) body.JawTarget = Mathf.Max(body.JawTarget, 0.55f); }
             if (input.Emote.WasPressedThisFrame()) body.PlayEmote("dance");
             if (!BagMenu.Busy && input.Skates.WasPressedThisFrame()) skates.Toggle(yaw, vel);
+            if (input.View.WasPressedThisFrame()) SetThirdPerson(!thirdPerson);
 
             // ---- gaze from the head
             if (cam != null) body.LookAt.gazeDir = cam.transform.forward;
@@ -223,6 +238,19 @@ namespace MicroduckVR.Player
             if (Mathf.Abs(target - eyeY) > 0.3f) { eyeY = target; eyeYVel = 0f; }
 
             Vector3 eye = new Vector3(mover.transform.position.x, eyeY, mover.transform.position.z);
+            if (thirdPerson)
+            {
+                // behind and above the duck, in the view's own heading (it only turns with snap turns), smoothly following
+                Vector3 back = Quaternion.Euler(0f, originYaw, 0f) * new Vector3(0f, thirdUp, -thirdBack);
+                Vector3 want = eye + back;
+                // never inside a wall: pull in towards the duck's head if something is in the way
+                Vector3 head = eye + Vector3.up * 0.02f, d = want - head;
+                if (Physics.SphereCast(head, 0.03f, d.normalized, out var hit, d.magnitude, WorldQueries.WorldMask, QueryTriggerInteraction.Ignore))
+                    want = head + d.normalized * Mathf.Max(0.06f, hit.distance - 0.01f);
+                if (thirdSnap) { thirdPos = want; thirdVel = Vector3.zero; thirdSnap = false; }
+                else thirdPos = Vector3.SmoothDamp(thirdPos, want, ref thirdVel, thirdLag, Mathf.Infinity, dt);
+                eye = thirdPos;
+            }
             // Only a slowly drifting baseline of the head position goes into the origin. The tracked pose
             // itself (applied by the TrackedPoseDriver right before rendering) stays untouched on top of it,
             // so head motion is never a frame late: no judder when turning the head.
