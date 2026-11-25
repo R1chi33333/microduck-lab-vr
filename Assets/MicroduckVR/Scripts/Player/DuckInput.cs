@@ -9,7 +9,7 @@ namespace MicroduckVR.Player
     /// </summary>
     public class DuckInput
     {
-        public readonly InputAction Move, Turn, Beak, Chirp, Skates, Menu, Emote, View;
+        public readonly InputAction Move, Turn, Beak, Chirp, Skates, Menu, Emote, View, Recenter;
 
         public DuckInput()
         {
@@ -41,6 +41,10 @@ namespace MicroduckVR.Player
             View.AddBinding("<XRController>{LeftHand}/{Primary2DAxisClick}");
             View.AddBinding("<Keyboard>/v");
 
+            Recenter = new InputAction("Recenter", InputActionType.Button);   // third person: swing the view behind the duck
+            Recenter.AddBinding("<XRController>{RightHand}/{Primary2DAxisClick}");
+            Recenter.AddBinding("<Keyboard>/t");
+
             Menu = new InputAction("Menu", InputActionType.Button);
             Menu.AddBinding("<XRController>{LeftHand}/{SecondaryButton}");
             Menu.AddBinding("<Keyboard>/tab");
@@ -48,6 +52,6 @@ namespace MicroduckVR.Player
 
         public void Enable() { foreach (var a in All) a.Enable(); }
         public void Disable() { foreach (var a in All) a.Disable(); }
-        InputAction[] All => new[] { Move, Turn, Beak, Chirp, Skates, Menu, Emote, View };
+        InputAction[] All => new[] { Move, Turn, Beak, Chirp, Skates, Menu, Emote, View, Recenter };
     }
 }

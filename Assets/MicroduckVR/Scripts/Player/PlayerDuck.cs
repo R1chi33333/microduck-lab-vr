@@ -38,7 +38,10 @@ namespace MicroduckVR.Player
         public bool thirdPerson;                                   // left stick click / V toggles
         public float thirdBack = 0.42f, thirdUp = 0.2f;            // camera offset behind and above the duck (duck-scale m)
         public float thirdLag = 0.25f;                             // follow smoothing (s); the view never rotates by itself
-        Vector3 thirdPos, thirdVel; bool thirdSnap = true;
+        Vector3 thirdPos, thirdVel; bool thirdSnap = true; Vector2 headAim;
+
+        // what the player has done (the tutorial watches these)
+        public int SnapCount, ChirpCount, GrabCount, ViewToggles; public float Walked;
         [Range(0f, 1f)] public float vignetteStrength = 0.6f;
 
         DuckSetup setup;
@@ -72,6 +75,7 @@ namespace MicroduckVR.Player
             skates.Init(body);
             var lp = GetComponent<MicroduckVR.Games.LaserPointer>(); if (lp == null) lp = gameObject.AddComponent<MicroduckVR.Games.LaserPointer>();
             lp.cam = cam; var bag = GetComponent<BagMenu>(); if (bag != null) lp.rightHand = bag.rightHand;
+            if (GetComponent<TutorialCoach>() == null) gameObject.AddComponent<TutorialCoach>().cam = cam;
             yaw = body.Yaw;
             eyeHeight = body.EyePosition.y - body.transform.position.y;
             eyeY = body.transform.position.y + eyeHeight;
@@ -119,7 +123,7 @@ namespace MicroduckVR.Player
 
         public void SetThirdPerson(bool on)
         {
-            thirdPerson = on; thirdSnap = true;
+            thirdPerson = on; thirdSnap = true; ViewToggles++; headAim = Vector2.zero;
             if (cam != null) { if (on) cam.cullingMask |= 1 << DuckSetup.LayerPlayerHead; else cam.cullingMask &= ~(1 << DuckSetup.LayerPlayerHead); }
             if (vignette != null) vignette.Pulse(0.6f);
         }
@@ -139,9 +143,20 @@ namespace MicroduckVR.Player
         {
             float dt = Mathf.Min(Time.deltaTime, 1f / 30f);
 
-            // ---- turning: smooth (default) or snap; the view pivots around the eye
-            float tx = input.Turn.ReadValue<Vector2>().x;
-            if (turnMode == TurnMode.Smooth)
+            // ---- right stick: in third person it aims the duck's head; otherwise it turns (smooth or snap)
+            Vector2 rs = input.Turn.ReadValue<Vector2>();
+            float tx = rs.x;
+            if (thirdPerson)
+            {
+                headAim = Vector2.MoveTowards(headAim, rs.magnitude > 0.15f ? rs : Vector2.zero, 4f * dt);
+                if (input.Recenter.WasPressedThisFrame() && cam != null)
+                {
+                    // swing the view round behind the duck (a cut, not a glide)
+                    originYaw += Mathf.DeltaAngle(cam.transform.eulerAngles.y, yaw * Mathf.Rad2Deg);
+                    thirdSnap = true; if (vignette != null) vignette.Pulse(0.4f);
+                }
+            }
+            else if (turnMode == TurnMode.Smooth)
             {
                 float wantTurn = Mathf.Abs(tx) > 0.2f ? Mathf.Sign(tx) * Mathf.InverseLerp(0.2f, 1f, Mathf.Abs(tx)) * smoothTurnDegPerSec : 0f;
                 turnVel = Mathf.MoveTowards(turnVel, wantTurn, smoothTurnDegPerSec * 4f * dt);   // eased start and stop
@@ -154,7 +169,7 @@ namespace MicroduckVR.Player
                 {
                     turnLatched = true;
                     float d = Mathf.Sign(tx) * snapDegrees;
-                    originYaw += d; yaw += d * Mathf.Deg2Rad;
+                    originYaw += d; yaw += d * Mathf.Deg2Rad; SnapCount++;
                     if (vignette != null) vignette.Pulse(0.35f);
                     thirdSnap = true;                                  // third person: jump to the new side, no orbiting glide
                 }
@@ -192,6 +207,7 @@ namespace MicroduckVR.Player
                 // ---- body facing: walk direction, or follow the head when it looks far away
                 float targetYaw = yaw;
                 if (vel.magnitude > 0.02f) targetYaw = Mathf.Atan2(vel.x, vel.z);
+                else if (thirdPerson) { if (Mathf.Abs(headAim.x) > 0.85f) targetYaw = yaw + Mathf.Sign(headAim.x) * 0.6f; }   // full stick: the duck turns round
                 else if (Mathf.Abs(Mathf.DeltaAngle(yaw * Mathf.Rad2Deg, hy * Mathf.Rad2Deg)) > bodyFollowDeg) targetYaw = hy;
                 float dy = Mathf.DeltaAngle(yaw * Mathf.Rad2Deg, targetYaw * Mathf.Rad2Deg) * Mathf.Deg2Rad;
                 yaw += Mathf.Clamp(dy, -Gait.MaxYawRate * 1.4f * dt, Gait.MaxYawRate * 1.4f * dt);
@@ -205,6 +221,7 @@ namespace MicroduckVR.Player
             if (skates.On) skates.AfterMove(step, mover.transform.position - before);
             Vector3 p = mover.transform.position;
             Vector3 realVel = new Vector3(vel.x, 0f, vel.z);
+            Walked += realVel.magnitude * dt;
 
             // ---- beak and grabbing
             float trig = BagMenu.Busy ? 0f : input.Beak.ReadValue<float>();   // the trigger works the bag while it is open
@@ -219,7 +236,7 @@ namespace MicroduckVR.Player
                 if (beakWasOpen && !open)
                 {
                     var g = Grabbable.Nearest(body.BeakGap(), 0.035f);
-                    if (g != null && g.TryHold(this)) { held = g; body.JawStop = 0.12f; }
+                    if (g != null && g.TryHold(this)) { held = g; GrabCount++; body.JawStop = 0.12f; }
                 }
             }
             else
@@ -230,14 +247,15 @@ namespace MicroduckVR.Player
             }
             beakWasOpen = open;
 
-            if (!BagMenu.Busy && input.Chirp.WasPressedThisFrame()) { chirpT = 0.25f; var au = GetComponent<MicroduckVR.Audio.DuckAudio>(); if (au != null) au.Chirp(); }
+            if (!BagMenu.Busy && input.Chirp.WasPressedThisFrame()) { chirpT = 0.25f; ChirpCount++; var au = GetComponent<MicroduckVR.Audio.DuckAudio>(); if (au != null) au.Chirp(); }
             if (chirpT > 0f) { chirpT -= dt; if (held == null) body.JawTarget = Mathf.Max(body.JawTarget, 0.55f); }
             if (input.Emote.WasPressedThisFrame()) body.PlayEmote("dance");
             if (!BagMenu.Busy && input.Skates.WasPressedThisFrame()) skates.Toggle(yaw, vel);
             if (input.View.WasPressedThisFrame()) SetThirdPerson(!thirdPerson);
 
             // ---- gaze from the head
-            if (cam != null) body.LookAt.gazeDir = cam.transform.forward;
+            if (thirdPerson) body.LookAt.gazeDir = Quaternion.Euler(-headAim.y * 35f, yaw * Mathf.Rad2Deg + headAim.x * 75f, 0f) * Vector3.forward;
+            else if (cam != null) body.LookAt.gazeDir = cam.transform.forward;
 
             // bed: boing boing (the body hops; the camera only follows a damped fraction of it)
             bedT = surfType == "bed" ? bedT + dt : 0f;
