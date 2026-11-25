@@ -48,10 +48,17 @@ namespace MicroduckVR.EditorTools
             string[] lines;
             try { lines = File.ReadAllLines(CmdPath); File.Delete(CmdPath); }
             catch (IOException) { return; }
+            // a batch carries an id; a batch already run (seen again after a domain reload) is skipped
+            if (lines.Length > 0 && lines[0].StartsWith("#id "))
+            {
+                string id = lines[0].Substring(4).Trim();
+                if (SessionState.GetString("microduck_cmd_last", "") == id) return;
+                SessionState.SetString("microduck_cmd_last", id);
+            }
             foreach (var raw in lines)
             {
                 var line = raw.Trim();
-                if (line.Length == 0) continue;
+                if (line.Length == 0 || line.StartsWith("#")) continue;
                 try { Run(line); }
                 catch (Exception e) { Log("FAILED " + line + " : " + (e.InnerException ?? e)); }
             }

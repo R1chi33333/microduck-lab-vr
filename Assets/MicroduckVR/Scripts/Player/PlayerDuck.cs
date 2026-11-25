@@ -70,6 +70,8 @@ namespace MicroduckVR.Player
             input = new DuckInput(); input.Enable();
             skates = GetComponent<PlayerSkates>(); if (skates == null) skates = gameObject.AddComponent<PlayerSkates>();
             skates.Init(body);
+            var lp = GetComponent<MicroduckVR.Games.LaserPointer>(); if (lp == null) lp = gameObject.AddComponent<MicroduckVR.Games.LaserPointer>();
+            lp.cam = cam; var bag = GetComponent<BagMenu>(); if (bag != null) lp.rightHand = bag.rightHand;
             yaw = body.Yaw;
             eyeHeight = body.EyePosition.y - body.transform.position.y;
             eyeY = body.transform.position.y + eyeHeight;
@@ -85,7 +87,34 @@ namespace MicroduckVR.Player
             mover.enabled = false; mover.transform.position = pos; mover.enabled = true;
             vel = Vector3.zero; vy = 0f; yaw = yawRad;
             body.Teleport(new Vector3(pos.x, WorldQueries.GroundNear(pos.x, pos.z, pos.y), pos.z), yawRad);
-            eyeY = body.BaseY + eyeHeight; eyeYVel = 0f;
+            eyeY = body.BaseY + eyeHeight; eyeYVel = 0f; thirdSnap = true;
+        }
+
+        /// <summary>Become another duck: swap places, headings and looks with the duck most in front of you (or the nearest).</summary>
+        public void SwapWithNearest()
+        {
+            MicroduckVR.Flock.DuckBrain best = null; float bs = -1e9f;
+            var f = cam != null ? cam.transform.forward : GltfSpace.Forward(yaw); f.y = 0f; f.Normalize();
+            foreach (var b in MicroduckVR.Flock.DuckBrain.All)
+            {
+                var to = b.Pos - body.Pos; to.y = 0f; float d = to.magnitude; if (d < 1e-3f) continue;
+                float score = Vector3.Dot(to / d, f) * 2f - d;          // in front and close
+                if (score > bs) { bs = score; best = b; }
+            }
+            if (best == null) return;
+            var otherSetup = best.GetComponent<DuckSetup>();
+            Vector3 myPos = body.Pos, hisPos = best.Pos; float myYaw = yaw, hisYaw = best.Body.Yaw;
+            bool skating = skates.On; if (skating) skates.Toggle(yaw, Vector3.zero);        // the skates' own colours stay out of the reskin
+            (setup.skin, otherSetup.skin) = (otherSetup.skin, setup.skin);
+            MicroduckVR.Comic.ComicLook.ApplyToDuck(body.Model.GetChild(0), setup.skin);
+            MicroduckVR.Comic.ComicLook.ApplyToDuck(best.Body.Model.GetChild(0), otherSetup.skin);
+            best.Teleport(myPos, myYaw);
+            Teleport(hisPos + Vector3.up * 0.02f, hisYaw);
+            originYaw += Mathf.DeltaAngle(myYaw * Mathf.Rad2Deg, hisYaw * Mathf.Rad2Deg);   // keep looking the way the new duck faces
+            thirdSnap = true;
+            var au = GetComponent<MicroduckVR.Audio.DuckAudio>(); if (au != null) au.Chirp();
+            body.PlayEmote("nod");
+            if (skating) skates.Toggle(yaw, Vector3.zero);
         }
 
         public void SetThirdPerson(bool on)
@@ -135,11 +164,13 @@ namespace MicroduckVR.Player
             // ---- walk, relative to where the player looks
             Vector2 stick = input.Move.ReadValue<Vector2>();
             if (stick.magnitude < 0.15f) stick = Vector2.zero;
+            if (MicroduckVR.Games.RaceGame.Frozen) stick = Vector2.zero;                 // 3, 2, 1...
             float hy = HeadYaw;
             Vector3 fwd = GltfSpace.Forward(hy), right = new Vector3(fwd.z, 0f, -fwd.x);
             Vector3 want = (fwd * stick.y + right * stick.x) * (Gait.MaxSpeed * speedScale);
             if (want.magnitude > Gait.MaxSpeed * speedScale) want = want.normalized * Gait.MaxSpeed * speedScale;
             if (DebugWalk.HasValue) want = DebugWalk.Value.normalized * Gait.MaxSpeed * speedScale;
+            if (MicroduckVR.Games.RaceGame.Active) want *= 1.9f;                                 // race pace (skates are faster still)
             var surf = SurfaceTag.At(mover.transform.position);
             string surfType = surf != null ? surf.type : "wood";
             float prevYaw = yaw;

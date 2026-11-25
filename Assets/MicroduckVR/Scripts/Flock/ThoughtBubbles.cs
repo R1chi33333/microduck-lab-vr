@@ -33,6 +33,9 @@ namespace MicroduckVR.Flock
             { "bed",      new[] { "Boing boing!", "Bouncy!", "Wheee, bed!" } },
             { "water",    new[] { "Splashy!", "Puddle!", "Splish splash!" } },
             { "tile",     new[] { "Wheee, slippery!", "Sliiide!", "Whoa, tiles!" } },
+            { "race",     new[] { "Zoom zoom!", "Catch me!", "Gotta go fast!" } },
+            { "football", new[] { "Pass it!", "My ball!", "Go team!" } },
+            { "laser",    new[] { "Red dot!", "I'll get it!", "Pounce!" } },
         };
 
         class Bubble

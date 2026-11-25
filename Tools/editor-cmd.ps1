@@ -5,7 +5,7 @@ $Commands = (($Commands -join '|') -split '\|') | ForEach-Object { $_.Trim() } |
 $root = Split-Path -Parent $PSScriptRoot
 $log = Join-Path $root "Logs\microduck_cmd.log"
 $before = if (Test-Path $log) { (Get-Content $log).Count } else { 0 }
-[IO.File]::WriteAllLines((Join-Path $root "Temp\microduck_cmd.txt"), $Commands)
+[IO.File]::WriteAllLines((Join-Path $root "Temp\microduck_cmd.txt"), @("#id " + [guid]::NewGuid().ToString()) + $Commands)
 $deadline = (Get-Date).AddSeconds($TimeoutSec); $lastCount = -1; $stable = 0
 while ((Get-Date) -lt $deadline) {
   Start-Sleep -Milliseconds 1500

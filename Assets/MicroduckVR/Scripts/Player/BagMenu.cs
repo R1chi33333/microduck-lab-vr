@@ -81,7 +81,7 @@ namespace MicroduckVR.Player
         {
             panel = new GameObject("Bag panel").transform;
             var entries = ToyCatalog.All;
-            int n = entries.Count + 1, rows = Mathf.CeilToInt(n / (float)Cols);
+            int n = entries.Count + 1 + Actions.Length, rows = Mathf.CeilToInt(n / (float)Cols);
             float w = Cols * (Tile + Gap) + Gap * 2f, h = rows * (Tile + Gap) + 0.05f;
             var slab = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(w, h, 0.006f), new ComicMesh.Style { radius = 0.01f, segments = 3 }), Unlit("#FFFFFF", "bag_slab"));
             slab.localPosition = new Vector3(0f, -0.004f, 0.004f);
@@ -106,6 +106,15 @@ namespace MicroduckVR.Player
                     vis.transform.localScale = Vector3.one * s; vis.transform.localPosition = -b.center * s;
                     model.localPosition = new Vector3(0f, 0f, -0.014f); model.localRotation = Quaternion.Euler(-20f, 0f, 0f);
                 }
+                else if (i > entries.Count)
+                {
+                    var (akind, alabel, acol) = Actions[i - entries.Count - 1];
+                    kind = akind;
+                    tile.GetComponent<MeshRenderer>().sharedMaterial = Unlit(acol, "bag_action_" + akind);
+                    model = new GameObject("label").transform; model.SetParent(tile, false); model.localPosition = new Vector3(0f, 0f, -0.0035f);
+                    var lt = Text(model, alabel, alabel.Length > 6 ? 0.045f : 0.06f, Vector3.zero);
+                    lt.rectTransform.sizeDelta = new Vector2(Tile, Tile);
+                }
                 else
                 {
                     kind = "trash";
@@ -116,6 +125,7 @@ namespace MicroduckVR.Player
                     model.localRotation = Quaternion.Euler(-20f, 0f, 0f);
                 }
                 foreach (var mr in model.GetComponentsInChildren<MeshRenderer>()) { mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.receiveShadows = false; }
+                baseMat[tile] = tile.GetComponent<MeshRenderer>().sharedMaterial;
                 tiles.Add((tile, model, kind));
             }
             panel.gameObject.SetActive(false);
@@ -129,11 +139,13 @@ namespace MicroduckVR.Player
             return go.transform;
         }
 
+        TMP_FontAsset fontAsset;
         TextMeshPro Text(Transform parent, string s, float size, Vector3 at)
         {
             var go = new GameObject("text"); go.transform.SetParent(parent, false); go.transform.localPosition = at;
             var t = go.AddComponent<TextMeshPro>();
-            if (font != null) t.font = TMP_FontAsset.CreateFontAsset(font);
+            if (fontAsset == null && font != null) fontAsset = TMP_FontAsset.CreateFontAsset(font);
+            if (fontAsset != null) t.font = fontAsset;
             t.text = s; t.fontSize = size; t.alignment = TextAlignmentOptions.Center; t.color = ComicLook.Ink;
             t.textWrappingMode = TextWrappingModes.NoWrap; t.rectTransform.sizeDelta = new Vector2(0.24f, 0.03f);
             return t;
@@ -166,8 +178,32 @@ namespace MicroduckVR.Player
         public void SetDebugAim(Ray? r) => debugAim = r;
         public void DebugPress() => debugPress = true;
         bool debugPress;
+        // the bottom rows: games, emotes, swapping duck, the view
+        static readonly (string kind, string label, string col)[] Actions =
+        {
+            ("football", "FOOTBALL", "#FFD9A8"), ("race", "RACE", "#E5CCF5"), ("swap", "SWAP DUCK", "#C9F0E2"), ("view", "VIEW", "#CDE8FF"),
+            ("dance", "DANCE", "#FFE2EC"), ("nod", "NOD", "#FFE2EC"), ("shake", "SHAKE", "#FFE2EC"), ("look", "LOOK", "#FFE2EC"),
+        };
+        readonly Dictionary<Transform, Material> baseMat = new Dictionary<Transform, Material>();
+        static bool IsAction(string k) { foreach (var a in Actions) if (a.kind == k) return true; return false; }
+
+        void DoAction(string kind)
+        {
+            var pd = PlayerDuck.Instance;
+            Close(); Play(clickClip);
+            switch (kind)
+            {
+                case "football": var fg = MicroduckVR.Games.FootballGame.Ensure(); if (MicroduckVR.Games.FootballGame.Active) fg.StopGame(); else fg.StartGame(); break;
+                case "race": var rg = MicroduckVR.Games.RaceGame.Ensure(); if (MicroduckVR.Games.RaceGame.Active) rg.StopRace(); else rg.StartRace(); break;
+                case "swap": if (pd != null) pd.SwapWithNearest(); break;
+                case "view": if (pd != null) pd.SetThirdPerson(!pd.thirdPerson); break;
+                default: if (pd != null) pd.Body.PlayEmote(kind); break;
+            }
+        }
+
         public void Choose(string kind)
         {
+            if (IsAction(kind)) { DoAction(kind); return; }
             if (kind == "trash") { Selected = null; panel.gameObject.SetActive(false); SetMode(Mode.Trash); Play(clickClip); return; }
             Selected = kind; panel.gameObject.SetActive(false); SetMode(Mode.Place); Play(clickClip);
         }
@@ -201,7 +237,7 @@ namespace MicroduckVR.Player
             if (State == Mode.Panel)
             {
                 // spin the previews; hover by laser (or arrow keys on the desktop)
-                foreach (var (_, model, _) in tiles) model.localRotation = Quaternion.Euler(-20f, pulse * 40f, 0f);
+                foreach (var (_, model, k) in tiles) if (!IsAction(k)) model.localRotation = Quaternion.Euler(-20f, pulse * 40f, 0f);
                 var plane = new Plane(-panel.forward, panel.position);
                 int h = -1;
                 if (plane.Raycast(ray, out float d) && d < 1.5f)
@@ -266,6 +302,11 @@ namespace MicroduckVR.Player
         string Footer(string kind)
         {
             if (kind == "trash") return "BIN: REMOVE TOYS";
+            if (kind == "football") return MicroduckVR.Games.FootballGame.Active ? "STOP THE MATCH" : "FOOTBALL ON THE RUG";
+            if (kind == "race") return MicroduckVR.Games.RaceGame.Active ? "STOP THE RACE" : "RACE ROUND THE HOUSE";
+            if (kind == "swap") return "BECOME THE DUCK IN FRONT";
+            if (kind == "view") return "FIRST / THIRD PERSON";
+            if (IsAction(kind)) return kind.ToUpperInvariant() + "!";
             var e = ToyCatalog.Get(kind);
             return $"{e.label.ToUpperInvariant()}  {Count(kind)}/{e.cap}" + (e.graspable ? "" : "  (KICK IT!)");
         }
@@ -273,7 +314,7 @@ namespace MicroduckVR.Player
         void SetHover(int h)
         {
             if (h == hover) return;
-            if (hover >= 0) { tiles[hover].tile.GetComponent<MeshRenderer>().sharedMaterial = tileMat; tiles[hover].tile.localScale = Vector3.one; }
+            if (hover >= 0) { tiles[hover].tile.GetComponent<MeshRenderer>().sharedMaterial = baseMat[tiles[hover].tile]; tiles[hover].tile.localScale = Vector3.one; }
             hover = h;
             if (hover >= 0) { tiles[hover].tile.GetComponent<MeshRenderer>().sharedMaterial = tileHover; tiles[hover].tile.localScale = Vector3.one * 1.15f; Play(clickClip, 0.4f); }
         }

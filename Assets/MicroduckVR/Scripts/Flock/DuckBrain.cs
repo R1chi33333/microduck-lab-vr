@@ -63,9 +63,88 @@ namespace MicroduckVR.Flock
             if (State == "idle" && R() < 0.5f) body.PlayEmote(new[] { "nod", "look", "dance", "shake" }[rng.Next(4)]);
         }
 
+        /// <summary>Put the duck somewhere at once (race grid, duck swap): drops what it carries, stops what it was doing.</summary>
+        public void Teleport(Vector3 pos, float yawRad)
+        {
+            if (held != null) { held.Release(Vector3.zero); held = null; }
+            toy = null; taskPhase = null; body.ReachState.weight = 0f; body.JawTarget = 0f; body.JawStop = 0f;
+            mover.enabled = false; mover.transform.position = pos + Vector3.up * 0.02f; mover.enabled = true;
+            yaw = yawRad; vel = Vector3.zero; vy = 0f; lastPos = mover.transform.position;
+            body.Teleport(new Vector3(pos.x, WorldQueries.GroundNear(pos.x, pos.z, pos.y + 0.02f), pos.z), yawRad);
+            Pick("idle");
+        }
+
+        void Mode(string s) { if (State != s) { State = s; Context = ""; } }
+        void DropHeld() { if (held != null) { held.Release(Vector3.zero); OnEvent?.Invoke(this, "drop", held.label); held = null; } toy = null; taskPhase = null; body.ReachState.weight = 0f; body.JawTarget = 0f; body.JawStop = 0f; }
+
+        // ------------------------------------------------------------------ games (they take over from the normal life)
+        float lastKick = -9f, lastPounce = -9f, pounceT = -1f; bool cheered;
+
+        (float v, float w)? Games(float dt)
+        {
+            if (MicroduckVR.Games.RaceGame.Active)
+            {
+                var rg = MicroduckVR.Games.RaceGame.Instance;
+                Mode("race"); DropHeld();
+                if (MicroduckVR.Games.RaceGame.Frozen) { cheered = false; return (0f, 0f); }
+                if (rg.Done(this)) { if (!cheered) { cheered = true; body.PlayEmote("dance"); } return (0f, 0f); }
+                // a slightly different pace per duck so it is a real race
+                return SteerAvoid(rg.TargetFor(this), Gait.MaxSpeed * 1.9f * (0.8f + 0.16f * ((index * 37) % 7) / 7f), 0.05f);   // race pace, as on the web
+            }
+            if (MicroduckVR.Games.FootballGame.Active && MicroduckVR.Games.FootballGame.Instance.Team.TryGetValue(this, out int team))
+            {
+                var fg = MicroduckVR.Games.FootballGame.Instance;
+                Mode("football"); DropHeld();
+                if (!fg.IsChaser(this)) return SteerAvoid(fg.HomeSpot(this), Gait.MaxSpeed * 0.6f, 0.04f);
+                Vector3 b = fg.BallPos, goal = fg.GoalCentre(1 - team);
+                Vector3 toGoal = Flat(goal - b).normalized, behind = Flat(b) - toGoal * 0.09f;
+                float d = Flat(behind - Pos).magnitude;
+                body.LookAt.target = b; body.LookAt.weight = 0.7f;
+                // close to the ball, facing the goal: kick it
+                if (Flat(b - Pos).magnitude < 0.085f && Time.time - lastKick > 0.45f && fg.Ball != null && Vector3.Dot(Flat(b - Pos).normalized, toGoal) > -0.2f)
+                {
+                    lastKick = Time.time;
+                    var spread = Quaternion.Euler(0f, R(-12f, 12f), 0f) * toGoal;
+                    fg.Ball.AddForce(spread * (0.18f + Speed * 0.8f) + Vector3.up * 0.04f, ForceMode.VelocityChange);
+                }
+                if (d < 0.04f) return SteerAvoid(Flat(b) + toGoal * 0.1f, Gait.MaxSpeed, 0.01f);
+                return SteerAvoid(behind, Gait.MaxSpeed, 0.02f);
+            }
+            if (MicroduckVR.Games.LaserPointer.Active)
+            {
+                Vector3 P = MicroduckVR.Games.LaserPointer.Point;
+                float d = Flat(P - Pos).magnitude;
+                if (d < 0.8f && Mathf.Abs(P.y - Pos.y) < 0.12f)
+                {
+                    Mode("laser"); DropHeld();
+                    body.LookAt.target = P; body.LookAt.weight = 0.8f;
+                    if (pounceT >= 0f) return Pounce(dt);
+                    if (d < 0.13f && Time.time - lastPounce > 2.2f) { pounceT = 0f; lastPounce = Time.time; return (0f, 0f); }
+                    // gather in a ring round the dot instead of piling onto it
+                    float ang = index * 2.39996f;
+                    Vector3 ring = new Vector3(P.x + Mathf.Cos(ang) * 0.11f, P.y, P.z + Mathf.Sin(ang) * 0.11f);
+                    if (d < 0.16f) { float err = Wrap(Mathf.Atan2(P.x - Pos.x, P.z - Pos.z) - yaw); return (0f, Mathf.Clamp(err * 4f, -2f, 2f)); }
+                    return SteerAvoid(ring, Gait.MaxSpeed, 0.03f);
+                }
+            }
+            if (pounceT >= 0f) return Pounce(dt);
+            if (State == "race" || State == "football" || State == "laser") { body.LookAt.weight = 0f; Pick("idle"); }
+            return null;
+        }
+
+        (float v, float w) Pounce(float dt)
+        {
+            pounceT += dt; float u = pounceT / 0.6f;
+            body.CrouchTarget = u < 0.35f;
+            body.Hop = u > 0.35f && u < 1f ? Mathf.Sin(Mathf.PI * (u - 0.35f) / 0.65f) * 0.03f : 0f;
+            if (u >= 1f) { pounceT = -1f; body.Hop = 0f; body.CrouchTarget = false; body.HappyWiggle = 1f; OnEvent?.Invoke(this, "got", "dot"); }
+            return (u > 0.35f && u < 0.9f ? 0.26f : 0f, 0f);
+        }
+
         (float v, float w) Think(float dt)
         {
             if (body.Fallen) return (0f, 0f);
+            var gm = Games(dt); if (gm.HasValue) return gm.Value;
             t += dt;
             if (held != null || toy != null) return ToyTask(dt);
             if (t > dur) Pick(null);
@@ -233,7 +312,7 @@ namespace MicroduckVR.Flock
             yawRate = w;
             bedT = st == "bed" ? bedT + dt : 0f;
             boing *= Mathf.Exp(-2.2f * dt);
-            body.Hop = st == "bed" ? Mathf.Abs(Mathf.Sin(bedT * 13f + seed)) * (0.011f * Mathf.Clamp01(Speed / 0.02f) + 0.026f * boing) : Mathf.MoveTowards(body.Hop, 0f, 0.2f * dt);
+            if (pounceT < 0f) body.Hop = st == "bed" ? Mathf.Abs(Mathf.Sin(bedT * 13f + seed)) * (0.011f * Mathf.Clamp01(Speed / 0.02f) + 0.026f * boing) : Mathf.MoveTowards(body.Hop, 0f, 0.2f * dt);
             body.Step(dt, p, yaw, Flat(vel), yawRate);
             if (held != null) { held.transform.position = body.BeakGap(); held.transform.rotation = Quaternion.LookRotation(body.HeadDir(), Vector3.up); }
         }
