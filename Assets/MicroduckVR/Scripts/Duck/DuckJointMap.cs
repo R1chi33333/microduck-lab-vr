@@ -24,6 +24,9 @@ namespace MicroduckVR.Duck
         }
 
         public List<Joint> joints = new List<Joint>();
+        /// <summary>Rest position of body_trunk in the rig's root frame (Unity space). glTFast folds the
+        /// single root node into the prefab root, so the body code reads it from here.</summary>
+        public Vector3 trunkTranslation;
 
         public Joint Find(string jointName)
         {
