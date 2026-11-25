@@ -8,47 +8,47 @@ const out = path.join(root, 'Assets/MicroduckVR/Resources/Tutorial');
 fs.mkdirSync(out, { recursive: true });
 const font = fs.readFileSync(path.join(root, 'Assets/MicroduckVR/Fonts/Bangers-Regular.ttf')).toString('base64');
 
-const INK = '#1B1430', BODY = '#56527A', LIGHT = '#7B77A6', SHADE = '#3B3858', CREAM = '#FFF6E4', HI = '#FFE45C', RED = '#FF2A2A';
+const INK = '#1B1430', BODY = '#45465C', LIGHT = '#686A86', SHADE = '#2C2D3E', CREAM = '#FFF6E4', HI = '#FFE45C', RED = '#FF2A2A';
 
-// one controller, drawn for the right hand; the left one is the mirror image. Returns svg + the hot spots.
-function controller(right, hi) {
-  const L = !right;
-  const lab = (a, b) => right ? a : b;
+// One Touch Pro controller seen from above, drawn as the LEFT one in a 300 x 380 box (the right one is its mirror):
+// a round head with the thumbstick near the top, a camera lens at the outer top, the two face buttons below the
+// stick and the menu (left) / Meta (right) button at the edge; the handle sweeps down and outwards, the trigger
+// pokes out under the head on the inner side, the grip runs along the inner edge of the handle.
+// Returns the shapes (mirrorable) and the labels/spots in box coordinates.
+function controller(hi) {
   const on = (p) => hi.includes(p);
   const fill = (p, base) => on(p) ? HI : base;
-  // shapes in a 300 x 380 box, inner side (where the stick is) on the left for the right hand
   let s = '';
-  // grip button on the inner side of the handle (drawn under the handle edge)
-  s += `<path d="M78 200 C60 215 58 262 74 290 C82 298 94 292 96 280 C100 250 100 222 96 206 C92 196 84 195 78 200Z" fill="${fill('grip', SHADE)}" stroke="${INK}" stroke-width="7" stroke-linejoin="round"/>`;
-  // handle
-  s += `<path d="M92 150 C80 210 84 290 110 345 C120 366 152 370 168 352 C190 322 196 250 192 168 Z" fill="${BODY}" stroke="${INK}" stroke-width="8" stroke-linejoin="round"/>`;
-  s += `<path d="M110 175 C104 230 108 300 126 340" fill="none" stroke="${LIGHT}" stroke-width="10" stroke-linecap="round"/>`;
-  s += `<path d="M178 190 C182 250 176 310 160 345 C175 330 186 300 188 250 C190 220 186 200 178 190Z" fill="url(#dots)" opacity="0.9"/>`;
-  // trigger: a curved finger tab poking out under the head on the outer side
-  s += `<path d="M168 150 C196 156 226 176 230 204 C233 222 220 232 206 226 C192 220 184 200 172 186 Z" fill="${fill('trigger', SHADE)}" stroke="${INK}" stroke-width="7" stroke-linejoin="round"/>`;
-  s += `<path d="M190 170 C206 180 218 192 220 206" fill="none" stroke="${on('trigger') ? '#FFFFFF' : LIGHT}" stroke-width="5" stroke-linecap="round" opacity="0.8"/>`;
-  // head: a fat rounded top with the face plate
-  s += `<path d="M40 110 C36 50 110 18 170 22 C236 26 270 70 262 120 C256 160 214 182 160 184 C96 186 44 164 40 110Z" fill="${BODY}" stroke="${INK}" stroke-width="8" stroke-linejoin="round"/>`;
-  s += `<path d="M62 104 C62 66 118 42 168 44 C220 46 246 76 240 110 C236 140 204 158 158 160 C104 162 62 144 62 104Z" fill="${LIGHT}" stroke="${INK}" stroke-width="5"/>`;
-  s += `<path d="M70 70 C90 46 130 36 160 38" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" opacity="0.8"/>`;
-  s += `<path d="M200 156 C232 146 252 128 256 104 C258 140 236 168 196 176Z" fill="url(#dots)" opacity="0.9"/>`;
-  // thumbstick (inner side) and the two face buttons (outer side)
-  const stickC = on('stick') || on('stickclick') ? HI : '#2A2840';
-  s += `<ellipse cx="112" cy="100" rx="34" ry="30" fill="${SHADE}" stroke="${INK}" stroke-width="6"/>`;
-  s += `<ellipse cx="112" cy="94" rx="25" ry="22" fill="${stickC}" stroke="${INK}" stroke-width="6"/>`;
-  s += `<ellipse cx="104" cy="86" rx="8" ry="5" fill="#FFFFFF" opacity="0.7"/>`;
-  const btn = (cx, cy, p, letter) => {
-    let b = `<ellipse cx="${cx}" cy="${cy + 4}" rx="22" ry="19" fill="${SHADE}" stroke="${INK}" stroke-width="6"/>`;
-    b += `<ellipse cx="${cx}" cy="${cy}" rx="22" ry="19" fill="${fill(p, CREAM)}" stroke="${INK}" stroke-width="6"/>`;
-    b += `<text x="${cx}" y="${cy + 10}" font-family="Bangers" font-size="30" text-anchor="middle" fill="${INK}" ${L ? `transform="translate(${2 * cx} 0) scale(-1 1)"` : ''}>${letter}</text>`;
-    return b;
-  };
-  s += btn(190, 118, lab('A', 'X') === 'A' ? 'A' : 'X', lab('A', 'X'));
-  s += btn(204, 72, lab('B', 'Y') === 'B' ? 'B' : 'Y', lab('B', 'Y'));
-  // hot spots (for the red rings), in this box's coordinates
-  const spots = { stick: [112, 96, 44], stickclick: [112, 96, 44], trigger: [206, 200, 42], grip: [80, 246, 52],
-                  A: [190, 120, 34], B: [204, 74, 34], X: [190, 120, 34], Y: [204, 74, 34] };
-  return { svg: s, spots };
+  // handle (under the head)
+  s += `<path d="M86 150 C64 214 34 292 36 342 C38 376 86 384 106 360 C134 324 174 262 214 196 Z" fill="${BODY}" stroke="${INK}" stroke-width="8" stroke-linejoin="round"/>`;
+  s += `<path d="M76 210 C60 260 48 310 52 340" fill="none" stroke="${LIGHT}" stroke-width="10" stroke-linecap="round"/>`;
+  // grip: a long pad on the inner edge of the handle
+  s += `<path d="M184 222 C160 262 134 302 106 338 C122 352 148 344 162 328 C182 302 202 270 214 236 Z" fill="${fill('grip', SHADE)}" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/>`;
+  s += `<path d="M112 250 C100 290 84 330 86 352 C104 330 128 296 150 262Z" fill="url(#dots)" opacity="0.8"/>`;
+  // trigger: tab under the head on the inner side
+  s += `<path d="M184 196 C210 190 236 204 236 230 C236 250 214 258 200 248 C190 240 186 222 184 196Z" fill="${fill('trigger', SHADE)}" stroke="${INK}" stroke-width="7" stroke-linejoin="round"/>`;
+  s += `<path d="M206 206 C220 210 228 220 228 232" fill="none" stroke="${on('trigger') ? '#FFFFFF' : LIGHT}" stroke-width="5" stroke-linecap="round" opacity="0.85"/>`;
+  // head: round disc with a rim and a slightly smaller face
+  s += `<ellipse cx="160" cy="118" rx="118" ry="104" fill="${BODY}" stroke="${INK}" stroke-width="8"/>`;
+  s += `<ellipse cx="158" cy="112" rx="104" ry="90" fill="${LIGHT}" stroke="${INK}" stroke-width="5"/>`;
+  s += `<path d="M78 70 C100 40 140 28 178 30" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" opacity="0.75"/>`;
+  s += `<path d="M236 150 C220 182 186 200 146 202 C200 214 252 190 266 140 Z" fill="url(#dots)" opacity="0.85"/>`;
+  // thumbstick near the top
+  const stickC = on('stick') || on('stickclick') ? HI : '#2A2B3C';
+  s += `<ellipse cx="150" cy="84" rx="32" ry="27" fill="${SHADE}" stroke="${INK}" stroke-width="6"/>`;
+  s += `<ellipse cx="150" cy="76" rx="24" ry="22" fill="${stickC}" stroke="${INK}" stroke-width="6"/>`;
+  s += `<ellipse cx="143" cy="68" rx="8" ry="5" fill="#FFFFFF" opacity="0.7"/>`;
+  // camera lens at the outer top edge
+  s += `<circle cx="238" cy="64" r="12" fill="${SHADE}" stroke="${INK}" stroke-width="5"/><circle cx="238" cy="64" r="5" fill="#8FD3FF"/>`;
+  // face buttons: lower (X / A) and upper (Y / B); the system button at the inner edge
+  const btn = (cx, cy, r, p, base) => `<ellipse cx="${cx}" cy="${cy + 4}" rx="${r}" ry="${r * 0.88}" fill="${SHADE}" stroke="${INK}" stroke-width="6"/>` +
+      `<ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r * 0.88}" fill="${fill(p, base)}" stroke="${INK}" stroke-width="6"/>`;
+  s += btn(150, 146, 20, 'low', CREAM);
+  s += btn(208, 128, 20, 'high', CREAM);
+  s += btn(86, 126, 15, 'sys', '#B9BED0');
+  const spots = { stick: [150, 78, 44], stickclick: [150, 78, 44], trigger: [212, 226, 36], grip: [160, 282, 48], low: [150, 148, 32], high: [208, 130, 32] };
+  const labels = { low: [150, 146], high: [208, 128], sys: [86, 126] };
+  return { svg: s, spots, labels };
 }
 
 // a wobbly hand-drawn ring (two passes) + little "press!" ticks
@@ -61,19 +61,27 @@ function ring(cx, cy, r, seed) {
 }
 
 function scene(hi) {
-  // hi: list of "L:part" / "R:part"
-  const hiL = hi.filter(h => h.startsWith('L:')).map(h => h.slice(2));
-  const hiR = hi.filter(h => h.startsWith('R:')).map(h => h.slice(2));
-  const l = controller(false, hiL), r = controller(true, hiR);
+  // hi: "L:part" / "R:part"; parts: stick, stickclick, trigger, grip, A, B, X, Y
+  const map = (h) => ({ A: 'low', X: 'low', B: 'high', Y: 'high' }[h] || h);
+  const hiL = hi.filter(h => h.startsWith('L:')).map(h => map(h.slice(2)));
+  const hiR = hi.filter(h => h.startsWith('R:')).map(h => map(h.slice(2)));
+  const l = controller(hiL), r = controller(hiR);
+  const OX = 14, OY = 16, RX = 626;          // left box at OX; right box mirrored so its x runs from RX leftwards
+  const Lx = (x) => OX + x, Rx = (x) => RX - x, Y = (y) => OY + y;
   let s = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420">
   <defs><style>@font-face{font-family:Bangers;src:url(data:font/ttf;base64,${font})}</style>
   <pattern id="dots" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="2.2" fill="${INK}" opacity="0.55"/></pattern></defs>`;
-  // left controller: mirrored
-  s += `<g transform="translate(320 18) scale(-1 1)">${l.svg}</g>`;
-  s += `<g transform="translate(320 18)">${r.svg}</g>`;
-  hiL.forEach((p, i) => { const [x, y, rr] = l.spots[p]; s += ring(320 - x, 18 + y, rr, 0.6 + i); if (p === 'stickclick') s += burst(320 - x - 70, 18 + y - 70, 'CLICK!'); });
-  hiR.forEach((p, i) => { const [x, y, rr] = r.spots[p]; s += ring(320 + x, 18 + y, rr, 1.3 + i); if (p === 'stickclick') s += burst(320 + x + 70, 18 + y - 70, 'CLICK!'); });
-  s += label(320 - 150, 408, 'LEFT', hiL.length > 0) + label(320 + 150, 408, 'RIGHT', hiR.length > 0);
+  s += `<g transform="translate(${OX} ${OY})">${l.svg}</g>`;
+  s += `<g transform="translate(${RX} ${OY}) scale(-1 1)">${r.svg}</g>`;
+  // button faces, never mirrored
+  const t = (x, y, txt, size = 26) => `<text x="${x}" y="${y + size * 0.34}" font-family="Bangers" font-size="${size}" text-anchor="middle" fill="${INK}">${txt}</text>`;
+  s += t(Lx(l.labels.low[0]), Y(l.labels.low[1]), 'X') + t(Lx(l.labels.high[0]), Y(l.labels.high[1]), 'Y');
+  s += t(Rx(r.labels.low[0]), Y(r.labels.low[1]), 'A') + t(Rx(r.labels.high[0]), Y(r.labels.high[1]), 'B');
+  const [mx, my] = l.labels.sys; for (let i = -1; i <= 1; i++) s += `<path d="M${Lx(mx) - 7} ${Y(my) + i * 5} h14" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>`;
+  const [ox, oy] = r.labels.sys; s += `<ellipse cx="${Rx(ox)}" cy="${Y(oy)}" rx="7" ry="5" fill="none" stroke="${INK}" stroke-width="3"/>`;
+  hiL.forEach((p, i) => { const [x, y, rr] = l.spots[p]; s += ring(Lx(x), Y(y), rr, 0.6 + i); if (p === 'stickclick') s += burst(Lx(x) - 60, Y(y) - 52, 'CLICK!'); });
+  hiR.forEach((p, i) => { const [x, y, rr] = r.spots[p]; s += ring(Rx(x), Y(y), rr, 1.3 + i); if (p === 'stickclick') s += burst(Rx(x) + 60, Y(y) - 52, 'CLICK!'); });
+  s += label(150, 410, 'LEFT', hiL.length > 0) + label(490, 410, 'RIGHT', hiR.length > 0);
   return s + '</svg>';
 }
 function label(x, y, t, on) { return `<text x="${x}" y="${y}" font-family="Bangers" font-size="34" text-anchor="middle" fill="${on ? RED : '#97A0AE'}" stroke="${INK}" stroke-width="${on ? 1.5 : 0}">${t}</text>`; }
