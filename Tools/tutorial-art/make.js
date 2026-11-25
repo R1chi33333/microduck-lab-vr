@@ -98,7 +98,7 @@ function scene(frame) {
   s += label(150, 410, 'LEFT', rgL.length > 0) + label(490, 410, 'RIGHT', rgR.length > 0);
   return s + '</svg>';
 }
-function label(x, y, t, on) { return `<text x="${x}" y="${y}" font-family="Bangers" font-size="34" text-anchor="middle" fill="${on ? RED : '#97A0AE'}" stroke="${INK}" stroke-width="${on ? 1.5 : 0}">${t}</text>`; }
+function label(x, y, t, on) { return `<text x="${x}" y="${y}" font-family="Bangers" font-size="50" text-anchor="middle" fill="${on ? RED : '#97A0AE'}" stroke="${INK}" stroke-width="${on ? 1.5 : 0}">${t}</text>`; }
 function burst(x, y, t) {
   let d = ''; for (let i = 0; i <= 16; i++) { const a = i / 16 * Math.PI * 2, rr = i % 2 ? 26 : 44; d += (i ? 'L' : 'M') + (x + Math.cos(a) * rr * 1.5).toFixed(1) + ' ' + (y + Math.sin(a) * rr).toFixed(1); }
   return `<path d="${d}Z" fill="${HI}" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/><text x="${x}" y="${y + 10}" font-family="Bangers" font-size="28" text-anchor="middle" fill="${INK}">${t}</text>`;
