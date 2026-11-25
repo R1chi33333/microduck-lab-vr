@@ -144,7 +144,7 @@ namespace MicroduckVR.Player
             Vector3 realVel = new Vector3(vel.x, 0f, vel.z);
 
             // ---- beak and grabbing
-            float trig = input.Beak.ReadValue<float>();
+            float trig = BagMenu.Busy ? 0f : input.Beak.ReadValue<float>();   // the trigger works the bag while it is open
             bool open = trig > 0.35f;
             if (held == null)
             {
@@ -167,7 +167,7 @@ namespace MicroduckVR.Player
             }
             beakWasOpen = open;
 
-            if (input.Chirp.WasPressedThisFrame()) { chirpT = 0.25f; var au = GetComponent<MicroduckVR.Audio.DuckAudio>(); if (au != null) au.Chirp(); }
+            if (!BagMenu.Busy && input.Chirp.WasPressedThisFrame()) { chirpT = 0.25f; var au = GetComponent<MicroduckVR.Audio.DuckAudio>(); if (au != null) au.Chirp(); }
             if (chirpT > 0f) { chirpT -= dt; if (held == null) body.JawTarget = Mathf.Max(body.JawTarget, 0.55f); }
             if (input.Emote.WasPressedThisFrame()) body.PlayEmote("dance");
 

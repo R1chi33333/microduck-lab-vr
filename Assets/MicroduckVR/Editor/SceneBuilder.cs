@@ -69,6 +69,20 @@ namespace MicroduckVR.EditorTools
             return tpd;
         }
 
+        /// <summary>Tracks a controller's aim pose (falls back to its grip pose).</summary>
+        public static TrackedPoseDriver AddHandTracking(GameObject go, string hand)
+        {
+            var tpd = go.AddComponent<TrackedPoseDriver>();
+            tpd.trackingType = TrackedPoseDriver.TrackingType.RotationAndPosition;
+            var pos = new InputAction(hand + "Position", InputActionType.Value, expectedControlType: "Vector3");
+            pos.AddBinding($"<XRController>{{{hand}}}/pointerPosition"); pos.AddBinding($"<XRController>{{{hand}}}/devicePosition");
+            var rot = new InputAction(hand + "Rotation", InputActionType.Value, expectedControlType: "Quaternion");
+            rot.AddBinding($"<XRController>{{{hand}}}/pointerRotation"); rot.AddBinding($"<XRController>{{{hand}}}/deviceRotation");
+            tpd.positionInput = new InputActionProperty(pos);
+            tpd.rotationInput = new InputActionProperty(rot);
+            return tpd;
+        }
+
         public static void AddToBuild(string path)
         {
             var list = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);

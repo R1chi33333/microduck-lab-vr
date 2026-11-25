@@ -2,6 +2,7 @@ using System.IO;
 using MicroduckVR.Duck;
 using MicroduckVR.Audio;
 using MicroduckVR.Flock;
+using MicroduckVR.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -55,19 +56,26 @@ namespace MicroduckVR.EditorTools
             tb.font = AssetDatabase.LoadAssetAtPath<Font>("Assets/MicroduckVR/Fonts/Bangers-Regular.ttf");
             tb.viewer = player.cam;
 
-            // toys: some on the living floor, some in the kitchen and bedroom (X mirrored from the web props list)
-            SceneBuilderM1.MakeToy("Foam cube", PrimitiveType.Cube, new Vector3(-0.1f, 0.012f, 1.25f), Vector3.one * 0.022f, new Color(1f, 0.79f, 0.16f));
-            SceneBuilderM1.MakeToy("Toy brick", PrimitiveType.Cube, new Vector3(-0.35f, 0.01f, 1.2f), new Vector3(0.018f, 0.018f, 0.032f), new Color(0.84f, 0.15f, 0.17f));
-            SceneBuilderM1.MakeToy("Bead", PrimitiveType.Sphere, new Vector3(0.05f, 0.01f, 1.15f), Vector3.one * 0.02f, new Color(0.39f, 0.82f, 1f));
-            SceneBuilderM1.MakeToy("Strawberry", PrimitiveType.Sphere, new Vector3(-4.3f, 0.011f, 1.7f), Vector3.one * 0.022f, new Color(1f, 0.36f, 0.45f));
-            SceneBuilderM1.MakeToy("Grape", PrimitiveType.Sphere, new Vector3(-5.9f, 0.01f, 1.5f), Vector3.one * 0.018f, new Color(0.48f, 0.38f, 1f));
-            SceneBuilderM1.MakeToy("Toy figure", PrimitiveType.Capsule, new Vector3(4.3f, 0.02f, 0.9f), new Vector3(0.016f, 0.02f, 0.016f), new Color(0.12f, 0.65f, 0.63f));
-            SceneBuilderM1.MakeToy("Crayon", PrimitiveType.Cube, new Vector3(4.0f, 0.006f, 1.6f), new Vector3(0.012f, 0.012f, 0.06f), new Color(0.84f, 0.2f, 0.2f));
-            SceneBuilderM1.MakeToy("Pebble", PrimitiveType.Sphere, new Vector3(-0.6f, 0.01f, 6.1f), new Vector3(0.022f, 0.014f, 0.02f), new Color(0.8f, 0.78f, 0.85f));
+            // toys from the bag catalogue, out around the house (built when the scene starts)
+            var spawner = new GameObject("Toys").AddComponent<ToySpawner>();
+            spawner.items = new[]
+            {
+                T("toy_duck", -0.9f, 0f, 1.0f, 30f), T("foam_cube", -1.2f, 0f, 1.3f), T("toy_brick", -1.0f, 0f, 1.55f, 20f), T("ring", -0.7f, 0f, -1.0f),
+                T("pencil", 0.0f, 0.75f, 0.1f, 70f), T("cookie", -0.2f, 0.75f, 0.25f), T("sock_ball", 1.6f, 0f, 1.25f), T("wicker_ball", 2.3f, 0f, 0.2f),
+                T("chess_pawn", 1.4f, 0.4f, -0.85f), T("chess_knight", 1.52f, 0.4f, -0.8f, 200f),
+                T("strawberry", -4.3f, 0f, 1.7f), T("grape", -5.9f, 0f, 1.5f), T("bread_crust", -4.6f, 0f, 1.15f, 40f), T("cracker", -5.6f, 0f, -0.3f, 15f),
+                T("toast", -4.2f, 0f, -0.6f, 60f), T("croissant", -5.6f, 0.765f, 0.6f, 100f), T("bottle_cap", -6.2f, 0f, 0.0f), T("button", -3.7f, 0f, -0.3f),
+                T("toy_figure", 3.5f, 0f, -1.6f, 150f), T("crayon_red", 3.4f, 0f, 0.6f, 20f), T("crayon_green", 3.45f, 0f, 0.75f, 60f),
+                T("rubber_duck_pink", 5.3f, 0.165f, -1.9f, 250f), T("key", 6.55f, 0.645f, -0.35f, 30f),
+                T("rubber_duck_blue", -0.8f, 0f, 3.3f, 90f), T("toy_car", 1.0f, 0f, 3.35f, 80f),
+                T("pebble", -0.6f, 0f, 6.1f), T("leaf", 1.5f, 0f, 5.5f, 40f), T("rubber_duck_mint", -1.0f, 0f, 5.45f, 200f), T("crayon", 0.4f, 0f, 6.3f, 120f),
+            };
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             SceneBuilder.AddToBuild(ScenePath);
             Debug.Log("[Microduck] Built " + ScenePath);
         }
+
+        static ToySpawner.Item T(string kind, float x, float y, float z, float yaw = 0f) => new ToySpawner.Item { kind = kind, pos = new Vector3(x, y, z), yaw = yaw };
     }
 }

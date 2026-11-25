@@ -83,6 +83,14 @@ namespace MicroduckVR.EditorTools
             var cv = vig.AddComponent<ComfortVignette>();
             var pd = player.AddComponent<PlayerDuck>();
             pd.xrOrigin = origin.transform; pd.cam = cam; pd.vignette = cv;
+            // tracked controllers (aim pose) under the origin; the right one points the bag's laser
+            var right = new GameObject("Right Hand"); right.transform.SetParent(origin.transform, false);
+            SceneBuilder.AddHandTracking(right, "RightHand");
+            var left = new GameObject("Left Hand"); left.transform.SetParent(origin.transform, false);
+            SceneBuilder.AddHandTracking(left, "LeftHand");
+            var bag = player.AddComponent<BagMenu>();
+            bag.cam = cam; bag.rightHand = right.transform;
+            bag.font = AssetDatabase.LoadAssetAtPath<Font>("Assets/MicroduckVR/Fonts/Bangers-Regular.ttf");
             return pd;
         }
 
