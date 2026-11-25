@@ -186,6 +186,8 @@ namespace MicroduckVR.Player
             if (cam == null) cam = Camera.main;
             if (sk == null && pd != null) sk = pd.Skates;
             if (!card.gameObject.activeSelf) return;
+            bool hide = BagMenu.Busy && !help;                 // the bag panel takes the same spot; step back while it is open
+            if (root.gameObject.activeSelf == hide) { root.gameObject.SetActive(!hide); if (!hide) Place(true); }
             Place(false);
             holdT += Time.deltaTime;
             card.localScale = Vector3.one * (holdT < 0.2f ? Mathf.SmoothStep(0.3f, 1f, holdT / 0.2f) : 1f);

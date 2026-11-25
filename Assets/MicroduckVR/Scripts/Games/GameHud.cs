@@ -30,8 +30,9 @@ namespace MicroduckVR.Games
             root = new GameObject("hud root").transform; root.SetParent(transform, false);
             card = new GameObject("card").transform; card.SetParent(root, false); card.localPosition = new Vector3(0f, 0.085f, 0f);
             var slab = new GameObject("slab"); slab.transform.SetParent(card, false); slab.transform.localPosition = new Vector3(0f, 0f, 0.003f);
-            slab.AddComponent<MeshFilter>().sharedMesh = ComicMesh.RoundedBox(new Vector3(0.16f, 0.028f, 0.004f), new ComicMesh.Style { radius = 0.008f, segments = 3 });
-            var m = ComicLook.ToonMaterial(Color.white, "hud_white"); m.SetFloat("_Unlit", 1f);
+            slab.AddComponent<MeshFilter>().sharedMesh = ComicMesh.RoundedBox(new Vector3(0.17f, 0.032f, 0.005f), new ComicMesh.Style { radius = 0.004f, segments = 2 });
+            slab.transform.localRotation = Quaternion.Euler(0f, 0f, 1.5f);          // a comic caption box, slightly askew
+            var m = ComicLook.ToonMaterial(ComicLook.Hex("#FFC43D"), "hud_caption"); m.SetFloat("_Unlit", 1f);
             var mr = slab.AddComponent<MeshRenderer>(); mr.sharedMaterial = m; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             caption = Text(card, 0.11f, Vector3.zero, ComicLook.Ink);
             big = Text(root, 0.5f, new Vector3(0f, 0.01f, 0f), ComicLook.Hex("#FF5D73"));

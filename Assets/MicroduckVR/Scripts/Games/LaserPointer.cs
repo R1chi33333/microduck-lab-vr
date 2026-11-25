@@ -20,7 +20,7 @@ namespace MicroduckVR.Games
         public static Vector3? DebugPoint;                 // editor tests
 
         InputAction holdA;
-        LineRenderer beam; Transform dot, halo;
+        ComicBeam beam;
         float t;
 
         void Start()
@@ -29,21 +29,7 @@ namespace MicroduckVR.Games
             holdA = new InputAction("Laser", InputActionType.Value, expectedControlType: "Axis");
             holdA.AddBinding("<XRController>{RightHand}/grip"); holdA.AddBinding("<Keyboard>/l");
             holdA.Enable();
-            var red = ComicLook.ToonMaterial(ComicLook.Hex("#FF2A2A"), "laser_red"); red.SetFloat("_Unlit", 1f);
-            var pink = ComicLook.ToonMaterial(ComicLook.Hex("#FFB3B3"), "laser_core"); pink.SetFloat("_Unlit", 1f);
-            beam = new GameObject("Laser beam").AddComponent<LineRenderer>();
-            beam.positionCount = 2; beam.startWidth = 0.0012f; beam.endWidth = 0.0006f; beam.sharedMaterial = red;
-            beam.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; beam.enabled = false;
-            dot = Disc("Laser dot", red, 0.011f); halo = Disc("Laser core", pink, 0.005f); halo.SetParent(dot, true);
-            dot.gameObject.SetActive(false);
-        }
-
-        Transform Disc(string name, Material m, float r)
-        {
-            var go = new GameObject(name);
-            go.AddComponent<MeshFilter>().sharedMesh = ComicMesh.Leg(0.0008f, r, r, 20);
-            var mr = go.AddComponent<MeshRenderer>(); mr.sharedMaterial = m; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            return go.transform;
+            beam = new ComicBeam("Laser", "#FF5D73", 0.0028f, 0.016f);
         }
 
         void OnDestroy() { holdA?.Disable(); Active = false; }
@@ -58,14 +44,10 @@ namespace MicroduckVR.Games
             if (DebugPoint.HasValue) { hitOk = Physics.Raycast(DebugPoint.Value + Vector3.up * 0.3f, Vector3.down, out hit, 1f, WorldQueries.WorldMask); from = DebugPoint.Value + Vector3.up * 0.3f; }
             else if (on) hitOk = Physics.Raycast(from, dir, out hit, 6f, WorldQueries.WorldMask | (1 << DuckSetup.LayerProp), QueryTriggerInteraction.Ignore);
             Active = on && hitOk;
-            beam.enabled = Active; dot.gameObject.SetActive(Active);
+            beam.Show(Active);
             if (!Active) return;
             Point = hit.point;
-            dot.position = hit.point + hit.normal * 0.0015f;
-            dot.rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
-            float s = 1f + 0.15f * Mathf.Sin(t * 30f);
-            dot.localScale = new Vector3(s, 1f, s);
-            beam.SetPosition(0, from); beam.SetPosition(1, hit.point);
+            beam.Set(from, hit.point, hit.normal);
         }
     }
 }

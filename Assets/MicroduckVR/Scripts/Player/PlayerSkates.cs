@@ -60,7 +60,7 @@ namespace MicroduckVR.Player
             boostA = new InputAction("Boost", InputActionType.Value, expectedControlType: "Axis");
             boostA.AddBinding("<XRController>{LeftHand}/trigger"); boostA.AddBinding("<Keyboard>/leftCtrl");
             driftA.Enable(); boostA.Enable();
-            smokeMat = Unlit("#F6F4FA", "skate_smoke"); sparkMat = Unlit("#FFE45C", "skate_spark"); skidMat = Unlit("#4A4458", "skate_skid");
+            smokeMat = Unlit("#FFF6E4", "skate_smoke"); sparkMat = Unlit("#FFE45C", "skate_spark"); skidMat = Unlit("#1B1430", "skate_skid");
             rollSrc = gameObject.AddComponent<AudioSource>(); rollSrc.clip = Noise(1f, 0.25f, true); rollSrc.loop = true; rollSrc.volume = 0f; rollSrc.spatialBlend = 0f; rollSrc.Play();
             sfxSrc = gameObject.AddComponent<AudioSource>(); sfxSrc.spatialBlend = 0f;
             boostClip = Sweep(300f, 1400f, 0.35f); pushClip = Noise(0.12f, 0.6f, false); clackClip = Sweep(900f, 500f, 0.04f);
@@ -198,8 +198,15 @@ namespace MicroduckVR.Player
                 age += dt;
                 if (age >= life) { Destroy(t.gameObject); fx.RemoveAt(i); continue; }
                 float u = age / life;
-                if (kind == 0) { t.position += v * dt; float s = u < 0.2f ? Mathf.Lerp(0.006f, 0.02f, u / 0.2f) : Mathf.Lerp(0.02f, 0f, (u - 0.2f) / 0.8f); t.localScale = new Vector3(s, s * 0.85f, s); }
-                else { v += Vector3.down * 1.2f * dt; t.position += v * dt; if (v.sqrMagnitude > 1e-6f) t.rotation = Quaternion.LookRotation(v); t.localScale = new Vector3(0.0018f, 0.0018f, 0.012f * (1f - u)); }
+                if (kind == 0) { t.position += v * dt; float s = u < 0.18f ? Mathf.Lerp(0.01f, 0.032f, u / 0.18f) : Mathf.Lerp(0.032f, 0f, (u - 0.18f) / 0.82f); t.localScale = new Vector3(s, s * 0.85f, s); }
+                else
+                {
+                    // a little comic star that spins, faces you and shrinks as it falls
+                    v += Vector3.down * 1.2f * dt; t.position += v * dt;
+                    var c = Camera.main; var look = c != null ? t.position - c.transform.position : Vector3.forward;
+                    t.rotation = Quaternion.LookRotation(look, Vector3.up) * Quaternion.Euler(0f, 0f, age * 720f);
+                    float s = 0.011f * (u < 0.15f ? u / 0.15f : 1f - (u - 0.15f) / 0.85f); t.localScale = new Vector3(s, s, s);
+                }
                 fx[i] = (t, v, age, life, kind);
             }
             int n = skids.Count;
@@ -207,7 +214,7 @@ namespace MicroduckVR.Player
             {
                 var (t, age) = skids.Dequeue(); age += dt;
                 if (age > 7f) { Destroy(t.gameObject); continue; }
-                if (age > 5f) { var s = t.localScale; s.x = 0.0055f * (1f - (age - 5f) / 2f); t.localScale = s; }
+                if (age > 5f) { var s = t.localScale; s.x = 0.008f * (1f - (age - 5f) / 2f); t.localScale = s; }
                 skids.Enqueue((t, age));
             }
         }
@@ -221,8 +228,43 @@ namespace MicroduckVR.Player
             return go.transform;
         }
 
-        static Mesh cube;
-        static Mesh Cube() { if (cube == null) { var g = GameObject.CreatePrimitive(PrimitiveType.Cube); cube = g.GetComponent<MeshFilter>().sharedMesh; Destroy(g); } return cube; }
+        static Mesh star, stroke;
+        /// <summary>A flat four-point comic star (1 unit across, a little thickness so the ink pass outlines it).</summary>
+        static Mesh Star()
+        {
+            if (star != null) return star;
+            var v = new List<Vector3>(); var t = new List<int>();
+            const int P = 8; float th = 0.12f;
+            foreach (var z in new[] { -th, th })
+            {
+                v.Add(new Vector3(0f, 0f, z));
+                for (int i = 0; i < P; i++) { float a = i * Mathf.PI * 2f / P, r = i % 2 == 0 ? 0.5f : 0.17f; v.Add(new Vector3(Mathf.Sin(a) * r, Mathf.Cos(a) * r, z)); }
+            }
+            int o = P + 1;
+            for (int i = 0; i < P; i++)
+            {
+                int a = 1 + i, b = 1 + (i + 1) % P;
+                t.Add(0); t.Add(a); t.Add(b);                         // front
+                t.Add(o); t.Add(o + b); t.Add(o + a);                 // back
+                t.Add(a); t.Add(o + a); t.Add(o + b); t.Add(a); t.Add(o + b); t.Add(b);   // rim
+            }
+            star = new Mesh { name = "comic star" }; star.SetVertices(v); star.SetTriangles(t, 0); star.RecalculateNormals(); star.RecalculateBounds();
+            return star;
+        }
+        /// <summary>A tapered brush stroke along +z (length 1, width 1 in the middle), for skid marks.</summary>
+        static Mesh Stroke()
+        {
+            if (stroke != null) return stroke;
+            var v = new List<Vector3>(); var t = new List<int>(); const int N = 8;
+            for (int i = 0; i <= N; i++)
+            {
+                float u = i / (float)N, w = 0.5f * Mathf.Sin(Mathf.PI * Mathf.Lerp(0.08f, 0.92f, u));
+                v.Add(new Vector3(-w, 0f, u - 0.5f)); v.Add(new Vector3(w, 0f, u - 0.5f));
+                if (i > 0) { int a = (i - 1) * 2; t.Add(a); t.Add(a + 2); t.Add(a + 1); t.Add(a + 1); t.Add(a + 2); t.Add(a + 3); }
+            }
+            stroke = new Mesh { name = "skid stroke" }; stroke.SetVertices(v); stroke.SetTriangles(t, 0); stroke.RecalculateNormals(); stroke.RecalculateBounds();
+            return stroke;
+        }
 
         void EmitSmoke(int n)
         {
@@ -247,7 +289,7 @@ namespace MicroduckVR.Player
                     var p = sk.position + Vector3.down * 0.018f + back * 0.02f;
                     var side = Vector3.Cross(Vector3.up, back) * Random.Range(-1f, 1f);
                     var v = (back + side * 0.8f).normalized * Random.Range(0.15f, 0.35f) * (0.5f + k) + Vector3.up * Random.Range(0.12f, 0.3f);
-                    fx.Add((Bit(Cube(), sparkMat, p), v, 0f, Random.Range(0.2f, 0.35f), 1));
+                    fx.Add((Bit(Star(), sparkMat, p), v, 0f, Random.Range(0.25f, 0.4f), 1));
                 }
         }
 
@@ -261,9 +303,9 @@ namespace MicroduckVR.Player
                 if (len < 0.012f) return;
                 if (len < 0.08f && Mathf.Abs(d.y) < 0.01f)
                 {
-                    var t = Bit(Cube(), skidMat, (a + p) / 2f);
+                    var t = Bit(Stroke(), skidMat, (a + p) / 2f);
                     t.rotation = Quaternion.LookRotation(d.normalized, Vector3.up);
-                    t.localScale = new Vector3(0.0055f, 0.0006f, len + 0.002f);
+                    t.localScale = new Vector3(0.008f, 1f, len * 1.35f + 0.004f);
                     skids.Enqueue((t, 0f));
                     while (skids.Count > 240) Destroy(skids.Dequeue().t.gameObject);
                 }

@@ -73,7 +73,7 @@ namespace MicroduckVR.Custom
                 var idx = i; row.click = () => Pick(idx);
                 row.text = board.Label("", new Vector3(c.x - 0.075f, c.y + 0.001f, -0.006f), 0.05f, "#1B1430", 0.1f, TextAlignmentOptions.Left);
                 board.Slab(new Vector2(0.05f, 0.007f), "#B9C3CF", new Vector3(c.x + 0.05f, c.y, -0.005f), 0.5f);
-                var fill = board.Slab(new Vector2(0.05f, 0.007f), "#30D158", new Vector3(c.x + 0.05f, c.y, -0.007f), 0.5f);
+                var fill = board.Slab(new Vector2(0.05f, 0.007f), "#8FD35A", new Vector3(c.x + 0.05f, c.y, -0.007f), 0.5f);
                 rows.Add((row, fill, null));
             }
             board.Add("replace", "REPLACE PART", new Vector2(0f, -bh / 2f + 0.025f), new Vector2(0.16f, 0.032f), "#FF8A3D", Replace, 0.09f);
@@ -95,7 +95,7 @@ namespace MicroduckVR.Custom
                 row.text.text = list[i].label;
                 float c = Condition(list[i]) / 100f;
                 fill.localScale = new Vector3(c, 1f, 1f); fill.localPosition = new Vector3(row.rect.center.x + 0.05f - 0.025f * (1f - c), row.rect.center.y, -0.007f);
-                fill.GetComponent<MeshRenderer>().sharedMaterial = WorldPanel.Unlit(c > 0.6f ? "#30D158" : c > 0.3f ? "#FFC43D" : "#FF453A");
+                fill.GetComponent<MeshRenderer>().sharedMaterial = WorldPanel.Unlit(c > 0.6f ? "#8FD35A" : c > 0.3f ? "#FFC43D" : "#FF5D73");
                 board.Select(row, list[i] == selected);
             }
             foreach (var b in board.buttons) if (b.id.StartsWith("tab_")) board.Select(b, b.id == "tab_" + tab);

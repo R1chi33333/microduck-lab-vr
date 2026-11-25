@@ -27,7 +27,7 @@ namespace MicroduckVR.Custom
         static int aimedCount;
 
         InputAction trig; bool was; Button hover;
-        LineRenderer laser; Material hiMat, selMat, laserMat;
+        ComicBeam laser; Material hiMat, selMat;
 
         public static Material Unlit(string hex) { var m = ComicLook.ToonMaterial(ComicLook.Hex(hex), "panel_" + hex); m.SetFloat("_Unlit", 1f); return m; }
 
@@ -35,14 +35,12 @@ namespace MicroduckVR.Custom
         {
             trig = new InputAction("PanelPress", InputActionType.Value, expectedControlType: "Axis");
             trig.AddBinding("<XRController>{RightHand}/trigger"); trig.AddBinding("<Keyboard>/enter"); trig.Enable();
-            hiMat = Unlit("#FFE45C"); selMat = Unlit("#FF8A9A"); laserMat = Unlit("#FF5D73");
-            laser = new GameObject("panel laser").AddComponent<LineRenderer>(); laser.transform.SetParent(transform, false);
-            laser.positionCount = 2; laser.startWidth = 0.0016f; laser.endWidth = 0.0008f; laser.sharedMaterial = laserMat; laser.enabled = false;
-            laser.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            hiMat = Unlit("#FFE45C"); selMat = Unlit("#FF8A9A");
+            laser = new ComicBeam("Panel laser", "#FF5D73", 0.0022f, 0.007f);
         }
 
         void OnDestroy() { trig?.Disable(); if (Aimed) aimedCount--; }
-        void OnDisable() { if (Aimed) { aimedCount--; Aimed = false; } if (laser) laser.enabled = false; }
+        void OnDisable() { if (Aimed) { aimedCount--; Aimed = false; } laser?.Show(false); }
 
         public Transform Slab(Vector2 size, string hex, Vector3 at, float round = 0.25f)
         {
@@ -94,7 +92,7 @@ namespace MicroduckVR.Custom
                 }
             }
             if (aim != Aimed) { aimedCount += aim ? 1 : -1; Aimed = aim; }
-            laser.enabled = aim; if (aim) { laser.SetPosition(0, ray.origin); laser.SetPosition(1, hitP); }
+            laser.Show(aim); if (aim) laser.Set(ray.origin, hitP);
             if (h != hover) { var old = hover; hover = h; if (old != null) Refresh(old); if (h != null) Refresh(h); }
             bool t = trig.ReadValue<float>() > 0.5f || DebugPress; bool press = t && !was; was = t; DebugPress = false;
             if (press && hover != null) hover.click?.Invoke();

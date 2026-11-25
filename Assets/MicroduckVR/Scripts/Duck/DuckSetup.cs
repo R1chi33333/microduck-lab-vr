@@ -16,7 +16,7 @@ namespace MicroduckVR.Duck
         public DuckBody Body { get; private set; }
         public CharacterController Mover { get; private set; }
 
-        public const int LayerWorld = 6, LayerDuck = 7, LayerToy = 8, LayerPlayerHead = 9, LayerProp = 10;
+        public const int LayerWorld = 6, LayerDuck = 7, LayerToy = 8, LayerPlayerHead = 9, LayerProp = 10, LayerCeiling = 11;
 
         void Awake()
         {

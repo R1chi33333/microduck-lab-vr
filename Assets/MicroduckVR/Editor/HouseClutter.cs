@@ -511,7 +511,7 @@ namespace MicroduckVR.EditorTools
             runner.centre = c; runner.radius = radius; runner.height = rail; runner.cars = cars;
             runner.behind = new[] { 0f, 0.23f, 0.43f };
             runner.chimneyTop = chimneyTop;
-            var smoke = M("smoke_puff", "#F6F4FA"); smoke.SetFloat("_Unlit", 1f);
+            var smoke = M("smoke_puff", "#FFF6E4"); smoke.SetFloat("_Unlit", 1f);
             runner.smokeMaterial = smoke; runner.smokeMesh = SphereMesh();
             runner.Place(true);
         }

@@ -20,7 +20,7 @@ namespace MicroduckVR.Custom
         const float W = 0.6f, H = 1.4f;
 
         public WorldPanel Board => board;
-        Camera mirrorCam; RenderTexture rt; Transform glass;
+        Camera mirrorCam; RenderTexture rt; Transform glass; readonly System.Collections.Generic.List<GameObject> glints = new System.Collections.Generic.List<GameObject>();
         WorldPanel board; DuckCustom custom; PlayerDuck pd;
         readonly System.Random rng = new System.Random();
         string paintPart = "";
@@ -49,7 +49,7 @@ namespace MicroduckVR.Custom
             var col = frame.gameObject.AddComponent<BoxCollider>(); col.size = new Vector3(W + 0.16f, H + 0.16f, 0.06f);
 
             // the glass: a quad whose UVs map straight onto the mirror camera's fitted frustum
-            rt = new RenderTexture(512, 1194, 24) { antiAliasing = 2, name = "MirrorRT" };
+            rt = new RenderTexture(768, 1792, 24) { antiAliasing = 4, name = "MirrorRT" };
             var g = new GameObject("Mirror glass"); g.transform.SetParent(transform, false); g.transform.position = MirrorCentre + new Vector3(0f, 0f, 0.0f);
             var mesh = new Mesh { name = "mirror quad" };
             float x0 = -W / 2f, x1 = W / 2f, y0 = -H / 2f, y1 = H / 2f;
@@ -61,6 +61,14 @@ namespace MicroduckVR.Custom
             mat.SetTexture("_BaseMap", rt);
             var mr = g.AddComponent<MeshRenderer>(); mr.sharedMaterial = mat; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             glass = g.transform;
+            // comic glints: two white diagonal strokes in the top corner
+            var gl = ComicLook.ToonMaterial(Color.white, "mirror_glint"); gl.SetFloat("_Unlit", 1f);
+            foreach (var (dx, dy, len, wd) in new[] { (-W * 0.26f, H * 0.34f, W * 0.34f, 0.012f), (-W * 0.15f, H * 0.3f, W * 0.18f, 0.007f) })
+            {
+                var st = ToyKit.Box(g.transform, new Vector3(dx, dy, 0.0135f), new Vector3(len, wd, 0.001f), "#FFFFFF", 0f, new Vector3(0f, 0f, 40f));
+                var smr = st.GetComponent<MeshRenderer>(); smr.sharedMaterial = gl; smr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                st.gameObject.layer = MicroduckVR.Duck.DuckSetup.LayerWorld; glints.Add(st.gameObject);
+            }
             var cg = new GameObject("Mirror camera"); cg.transform.SetParent(transform, false);
             mirrorCam = cg.AddComponent<Camera>(); mirrorCam.enabled = false; mirrorCam.targetTexture = rt;
             mirrorCam.clearFlags = CameraClearFlags.SolidColor; mirrorCam.backgroundColor = ComicLook.Hex("#9AD8F2");
@@ -102,7 +110,7 @@ namespace MicroduckVR.Custom
             for (int i = 0; i < 4; i++) { int v = i; board.Add("voice_" + v, DuckCustom.Voices[v].name, new Vector2(-0.06f + v * 0.045f, y), new Vector2(0.043f, 0.026f), "#C9F0E2", () => { custom.voice = v; Apply(); }, 0.045f); }
             y -= 0.045f;
             board.Add("random", "RANDOM!", new Vector2(-0.07f, y), new Vector2(0.11f, 0.032f), "#E5CCF5", () => { custom.Randomise(rng); Apply(); }, 0.09f);
-            board.Add("save", "SAVE", new Vector2(0.07f, y), new Vector2(0.11f, 0.032f), "#30D158", () => { custom.Save(); MicroduckVR.Games.GameHud.Get().Big("LOOKING GOOD!", "#FF5D73", 1.2f); pd.Body.PlayEmote("dance"); }, 0.1f);
+            board.Add("save", "SAVE", new Vector2(0.07f, y), new Vector2(0.11f, 0.032f), "#8FD35A", () => { custom.Save(); MicroduckVR.Games.GameHud.Get().Big("LOOKING GOOD!", "#FF5D73", 1.2f); pd.Body.PlayEmote("dance"); }, 0.1f);
             Refresh();
         }
 
@@ -147,7 +155,9 @@ namespace MicroduckVR.Custom
             float b = (MirrorCentre.y - H / 2f - r.y) * n / d, t = (MirrorCentre.y + H / 2f - r.y) * n / d;
             mirrorCam.projectionMatrix = Matrix4x4.Frustum(l, rr, b, t, n, f);
             mirrorCam.nearClipPlane = n; mirrorCam.farClipPlane = f;
+            foreach (var gg in glints) gg.SetActive(false);          // the reflection must not see its own glints
             mirrorCam.Render();
+            foreach (var gg in glints) gg.SetActive(true);
         }
 
         void OnDestroy() { if (rt != null) rt.Release(); if (Instance == this) Instance = null; }

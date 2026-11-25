@@ -41,6 +41,8 @@ namespace MicroduckVR.EditorTools
             }
             Shell(); Living(); Hallway(); Kitchen(); Bedroom(); Garden();
             Clutter();
+            Scenery();
+            Grass();
             return root;
         }
 
@@ -177,12 +179,26 @@ namespace MicroduckVR.EditorTools
         static void Shell()
         {
             wall = M("wall", "#FFF0D2"); trim = M("trim", "#FFFFFF"); plank = M("floor_planks", "#E9A85A");
+            // walls: keep the shade side a pale lavender cream instead of a muddy grey
+            wall.SetFloat("_MidMul", 0.95f); wall.SetFloat("_ShadowMul", 0.86f); wall.SetFloat("_DeepMul", 0.8f); wall.SetFloat("_TintAmount", 0.3f);
             // floors per room (2 cm slabs, top at y = 0)
+            Textured(plank, "floor_planks.png", new Vector2(6.0f, 5.0f), 0.6f);
+            var hallM = Textured(M("floor_hall", "#E19B4C"), "floor_planks_narrow.png", new Vector2(14.24f, 1.44f), 0.6f);
+            var tileM = Textured(M("kitchen_tile", "#BFE6DE"), "floor_tiles.png", new Vector2(4.0f, 5.12f), 0.6f);
+            var bedM = Textured(M("bedroom_floor", "#F2DCF2"), "floor_planks_narrow.png", new Vector2(4.0f, 5.12f), 0.6f);
             S("living", "Floor living", 6.0f, 0.02f, 5.0f, plank, 0f, -0.01f, 0f, 0f, "wood");
-            S("hallway", "Floor hallway", 14.24f, 0.02f, 1.44f, M("floor_hall", "#E19B4C"), 0f, -0.01f, 3.22f, 0f, "wood");
-            S("kitchen", "Floor kitchen", 3.88f + 0.12f, 0.02f, 5.0f + 0.12f, M("kitchen_tile", "#BFE6DE"), 5.06f, -0.01f, -0.06f, 0f, "tile");
-            S("bedroom", "Floor bedroom", 3.88f + 0.12f, 0.02f, 5.0f + 0.12f, M("bedroom_floor", "#F2DCF2"), -5.06f, -0.01f, -0.06f, 0f, "wood");
-            S("garden", "Lawn", 26f, 0.02f, 18f, M("lawn", "#6CBF4F"), 0f, -0.03f, 8f, 0f, "grass");
+            S("hallway", "Floor hallway", 14.24f, 0.02f, 1.44f, hallM, 0f, -0.01f, 3.22f, 0f, "wood");
+            S("kitchen", "Floor kitchen", 3.88f + 0.12f, 0.02f, 5.0f + 0.12f, tileM, 5.06f, -0.01f, -0.06f, 0f, "tile");
+            S("bedroom", "Floor bedroom", 3.88f + 0.12f, 0.02f, 5.0f + 0.12f, bedM, -5.06f, -0.01f, -0.06f, 0f, "wood");
+            S("garden", "Lawn", 60f, 0.02f, 44f, M("lawn", "#6CBF4F"), 0f, -0.03f, 10f, 0f, "grass");
+            // ceilings over the rooms (no shadows, so the rooms stay sunlit; hidden from the debug top views)
+            var ceil = M("ceiling", "#FFF6E4"); ceil.SetFloat("_Unlit", 1f);
+            foreach (var (room, cx, cz, w, d) in new[] { ("living", 0f, 0f, 6.24f, 5.24f), ("kitchen", 5.06f, -0.06f, 4.12f, 5.24f), ("bedroom", -5.06f, -0.06f, 4.12f, 5.24f), ("hallway", 0f, 3.22f, 14.36f, 1.56f) })
+            {
+                var c = S(room, "Ceiling " + room, w, 0.03f, d, ceil, cx, WH + 0.015f, cz, 0f, null, false);
+                c.layer = MicroduckVR.Duck.DuckSetup.LayerCeiling;
+                c.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
             S("garden", "Grass", 7.0f, 0.02f, 3.66f, M("grass", "#7CCB5A"), 0f, -0.009f, 5.77f, 0f, "grass");
 
             // living back wall with the window
@@ -203,6 +219,13 @@ namespace MicroduckVR.EditorTools
             WallX("wall_bedroom_back", -2.56f, -7.12f, -3.0f, new (float, float, float)[0], "bedroom");
             WallZ("wall_east", 7.06f, -2.62f, 3.94f, new (float, float, float)[0], "kitchen");
             WallZ("wall_west", -7.06f, -2.62f, 3.94f, new (float, float, float)[0], "bedroom");
+        }
+
+        static Material Textured(Material m, string tex, Vector2 size, float tile)
+        {
+            var t = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/MicroduckVR/Textures/" + tex);
+            if (t != null) { m.SetTexture("_BaseMap", t); m.SetTextureScale("_BaseMap", size / tile); EditorUtility.SetDirty(m); }
+            return m;
         }
 
         static void WallX(string id, float z, float x0, float x1, (float a, float b, float h)[] gaps, string room)
@@ -382,6 +405,7 @@ namespace MicroduckVR.EditorTools
         {
             const string R = "garden";
             float Gz0 = 3.94f, Gz1 = 7.6f, Gx0 = -3.5f, Gx1 = 3.5f;
+            crng = new System.Random(99);                     // the bush and flower builders use it
             var stone = M("stone", "#C9C3D6");
             S(R, "Patio slab", 2.2f, 0.006f, 0.5f, stone, 0f, 0.003f, Gz0 + 0.25f, 0f, "stone");
             for (int i = 0; i < 7; i++)
@@ -406,30 +430,22 @@ namespace MicroduckVR.EditorTools
                 B(R, "Fence collider", Mathf.Abs(bx - ax) + 0.04f, 0.5f, Mathf.Abs(bz - az) + 0.04f, fence, (ax + bx) / 2f, 0.25f, (az + bz) / 2f).GetComponent<Renderer>().enabled = false;
             }
             Run(Gx0, Gz1, Gx1, Gz1); Run(Gx0, Gz0, Gx0, Gz1); Run(Gx1, Gz0, Gx1, Gz1);
-            // potted plants
-            var pot = M("pot", "#E07A4F"); var leaf = M("plant_leaf", "#3E9A45");
+            // potted bushes
+            var pot = M("pot", "#E07A4F");
             foreach (var (x, z, r) in new[] { (-3.1f, 4.35f, 0.2f), (-3.1f, 7.15f, 0.24f), (3.05f, 4.4f, 0.18f), (-1.6f, 7.2f, 0.17f) })
             {
                 Cyl(R, "Garden pot", r, r * 1.4f, pot, x, r * 0.7f, z, "table");
-                var ball = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                ball.name = "Garden plant"; ball.layer = DuckSetup.LayerWorld; ball.isStatic = true;
-                ball.transform.SetParent(rooms[R], false); ball.transform.position = P(x, r * 1.4f + r * 0.6f, z);
-                ball.transform.localScale = new Vector3(r * 1.6f, r * 1.8f, r * 1.6f);
-                ball.GetComponent<Renderer>().sharedMaterial = leaf; Object.DestroyImmediate(ball.GetComponent<Collider>());
+                Stat(Bush(R, P(x, r * 1.4f - 0.02f, z), r * 4.2f), R);
             }
             // flowers
             var rnd = new System.Random(77);
-            var fl1 = M("flower", "#FF5D73"); var fl2 = M("flower2", "#FFE45C");
+            string[] petals = { "#FF5D73", "#FFE45C", "#7B61FF", "#FF8A9A", "#FFFFFF" };
             for (int i = 0; i < 26; i++)
             {
                 float x = Gx0 + 0.3f + (float)rnd.NextDouble() * (Gx1 - Gx0 - 0.6f), z = Gz0 + 0.7f + (float)rnd.NextDouble() * (Gz1 - Gz0 - 1.0f);
                 if (Mathf.Abs(x - 1.45f) < 0.6f && Mathf.Abs(z - 5.2f) < 0.45f) continue;
                 if (x > 1.6f && z > 5.9f) continue;
-                Cyl(R, "Flower stem", 0.004f, 0.12f, leaf, x, 0.06f, z, null, false);
-                var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                head.name = "Flower"; head.isStatic = true; head.transform.SetParent(rooms[R], false);
-                head.transform.position = P(x, 0.125f, z); head.transform.localScale = new Vector3(0.06f, 0.03f, 0.06f);
-                head.GetComponent<Renderer>().sharedMaterial = i % 2 == 1 ? fl1 : fl2; Object.DestroyImmediate(head.GetComponent<Collider>());
+                Stat(Flower(R, P(x, 0f, z), petals[i % petals.Length], 2.0f + (float)rnd.NextDouble() * 0.6f), R);
             }
         }
 

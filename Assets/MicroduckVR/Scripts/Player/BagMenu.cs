@@ -35,7 +35,7 @@ namespace MicroduckVR.Player
         Transform panel; TextMeshPro footer;
         readonly List<(Transform tile, Transform model, string kind)> tiles = new List<(Transform, Transform, string)>();
         int hover = -1;
-        LineRenderer laser; Transform dot;
+        ComicBeam laser;
         GameObject ghost; string ghostKind; Transform ghostRing;
         Material ghostOk, ghostBad, tileMat, tileHover, inkMat;
         bool triggerWas; float pulse;
@@ -53,7 +53,7 @@ namespace MicroduckVR.Player
             navA.AddCompositeBinding("2DVector").With("Up", "<Keyboard>/upArrow").With("Down", "<Keyboard>/downArrow").With("Left", "<Keyboard>/leftArrow").With("Right", "<Keyboard>/rightArrow");
             menuA.Enable(); selectA.Enable(); navA.Enable();
 
-            ghostOk = Unlit("#30D158", "bag_ghost_ok"); ghostBad = Unlit("#FF453A", "bag_ghost_bad");
+            ghostOk = Unlit("#8FD35A", "bag_ghost_ok"); ghostBad = Unlit("#FF5D73", "bag_ghost_bad");
             tileMat = Unlit("#FFF6E4", "bag_tile"); tileHover = Unlit("#FFD23F", "bag_tile_hover"); inkMat = Unlit("#1B1430", "bag_ink");
             BuildPanel(); BuildLaser();
             audioSrc = gameObject.AddComponent<AudioSource>(); audioSrc.spatialBlend = 0f; audioSrc.volume = 0.5f;
@@ -86,8 +86,10 @@ namespace MicroduckVR.Player
             float w = Cols * (Tile + Gap) + Gap * 2f, h = (rowsA + 1) * (Tile + Gap) + 0.008f + 0.05f;
             var slab = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(w, h, 0.006f), new ComicMesh.Style { radius = 0.01f, segments = 3 }), Unlit("#FFFFFF", "bag_slab"));
             slab.localPosition = new Vector3(0f, -0.004f, 0.004f);
-            var title = Text(panel, "TOY BAG", 0.12f, new Vector3(0f, h / 2f - 0.017f, -0.001f));
-            title.color = ComicLook.Hex("#FF5D73");
+            var tab = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(0.11f, 0.03f, 0.005f), new ComicMesh.Style { radius = 0.008f, segments = 3 }), Unlit("#FFC43D", "bag_tab"));
+            tab.localPosition = new Vector3(0f, h / 2f + 0.002f, -0.0015f); tab.localRotation = Quaternion.Euler(0f, 0f, -2f);
+            var title = Text(panel, "TOY BAG!", 0.16f, new Vector3(0f, h / 2f + 0.001f, -0.0045f));
+            title.color = ComicLook.Ink; title.transform.localRotation = Quaternion.Euler(0f, 0f, -2f);
             footer = Text(panel, "", 0.075f, new Vector3(0f, -h / 2f + 0.008f, -0.001f));
             float x0 = -(Cols - 1) * (Tile + Gap) / 2f, y0 = h / 2f - 0.045f;
             for (int i = 0; i < n; i++)
@@ -104,17 +106,18 @@ namespace MicroduckVR.Player
                     model = new GameObject("preview").transform; model.SetParent(tile, false);
                     vis.transform.SetParent(model, false);
                     var b = ToyKit.LocalBounds(vis.transform);
-                    float s = 0.022f / Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z));
+                    float s = Tile * 0.78f / Mathf.Max(b.size.magnitude, 1e-4f);     // the diagonal, so spinning never pokes out of the tile
                     vis.transform.localScale = Vector3.one * s; vis.transform.localPosition = -b.center * s;
                     model.localPosition = new Vector3(0f, 0f, -0.014f); model.localRotation = Quaternion.Euler(-20f, 0f, 0f);
                 }
                 else if (i > entries.Count)
                 {
-                    var (akind, alabel, acol) = i == entries.Count + 1 ? ("help", "HELP", "#FFF2B0") : i == entries.Count + 2 ? ("credits", "CREDITS", "#E6E9F0") : Actions[i - nA];
+                    var (akind, alabel, acol) = i == entries.Count + 1 ? ("help", "HELP", "#FFC43D") : i == entries.Count + 2 ? ("credits", "CREDITS", "#8FD35A") : Actions[i - nA];
                     kind = akind;
                     tile.GetComponent<MeshRenderer>().sharedMaterial = Unlit(acol, "bag_action_" + akind);
                     model = new GameObject("label").transform; model.SetParent(tile, false); model.localPosition = new Vector3(0f, 0f, -0.0035f);
-                    var lt = Text(model, alabel, alabel.Length > 6 ? 0.075f : 0.1f, Vector3.zero); lt.textWrappingMode = TextWrappingModes.Normal;
+                    var lt = Text(model, alabel, alabel.Length > 6 ? 0.08f : 0.11f, Vector3.zero); lt.textWrappingMode = TextWrappingModes.Normal;
+                    if (acol != "#FFC43D" && acol != "#8FD35A") lt.color = ComicLook.Hex("#FFF6E4");
                     lt.rectTransform.sizeDelta = new Vector2(Tile, Tile);
                 }
                 else
@@ -155,13 +158,7 @@ namespace MicroduckVR.Player
 
         void BuildLaser()
         {
-            var go = new GameObject("Bag laser");
-            laser = go.AddComponent<LineRenderer>();
-            laser.positionCount = 2; laser.startWidth = 0.0016f; laser.endWidth = 0.0008f; laser.useWorldSpace = true;
-            laser.sharedMaterial = Unlit("#FF5D73", "bag_laser"); laser.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            laser.enabled = false;
-            dot = MakeMesh(null, ToyKit.Sphere(), Unlit("#FF5D73", "bag_laser")); dot.name = "Bag laser dot";
-            dot.localScale = Vector3.one * 0.007f; dot.gameObject.SetActive(false);
+            laser = new ComicBeam("Bag laser", "#FF5D73", 0.0022f, 0.008f);
         }
 
         // ------------------------------------------------------------------ public control (also used by editor tests)
@@ -183,8 +180,8 @@ namespace MicroduckVR.Player
         // the bottom rows: games, emotes, swapping duck, the view
         static readonly (string kind, string label, string col)[] Actions =
         {
-            ("football", "FOOTBALL", "#FFD9A8"), ("race", "RACE", "#E5CCF5"), ("swap", "SWAP DUCK", "#C9F0E2"), ("view", "VIEW", "#CDE8FF"),
-            ("dance", "DANCE", "#FFE2EC"), ("nod", "NOD", "#FFE2EC"), ("shake", "SHAKE", "#FFE2EC"), ("look", "LOOK", "#FFE2EC"),
+            ("football", "FOOTBALL", "#FF8A3D"), ("race", "RACE", "#7B61FF"), ("swap", "SWAP DUCK", "#1FA6A0"), ("view", "VIEW", "#3A86FF"),
+            ("dance", "DANCE", "#FF5D73"), ("nod", "NOD", "#FF5D73"), ("shake", "SHAKE", "#FF5D73"), ("look", "LOOK", "#FF5D73"),
         };
         readonly Dictionary<Transform, Material> baseMat = new Dictionary<Transform, Material>();
         static bool IsAction(string k) { if (k == "help" || k == "credits") return true; foreach (var a in Actions) if (a.kind == k) return true; return false; }
@@ -212,7 +209,7 @@ namespace MicroduckVR.Player
             Selected = kind; panel.gameObject.SetActive(false); SetMode(Mode.Place); Play(clickClip);
         }
 
-        void SetMode(Mode m) { State = m; Busy = m != Mode.Closed; laser.enabled = Busy; dot.gameObject.SetActive(Busy); if (m != Mode.Place) DropGhost(); }
+        void SetMode(Mode m) { State = m; Busy = m != Mode.Closed; laser.Show(Busy); if (m != Mode.Place) DropGhost(); }
 
         Ray Aim()
         {
@@ -292,8 +289,7 @@ namespace MicroduckVR.Player
                 }
             }
 
-            laser.SetPosition(0, ray.origin); laser.SetPosition(1, end);
-            dot.position = end;
+            laser.Set(ray.origin, end);
             footer.text = State == Mode.Panel && hover >= 0 ? Footer(tiles[hover].kind) : "";
         }
 
