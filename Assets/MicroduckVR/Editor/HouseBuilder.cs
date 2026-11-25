@@ -18,6 +18,7 @@ namespace MicroduckVR.EditorTools
     public static class HouseBuilder
     {
         const string MatDir = "Assets/MicroduckVR/Materials/House";
+        const string MeshDir = "Assets/MicroduckVR/Meshes/House";
         const float WH = 2.5f, WT = 0.12f, DOOR_H = 2.0f, T_H = 0.75f;
 
         static Transform root;
@@ -29,6 +30,9 @@ namespace MicroduckVR.EditorTools
         public static Transform Build()
         {
             Directory.CreateDirectory(MatDir);
+            if (Directory.Exists(MeshDir)) AssetDatabase.DeleteAsset(MeshDir);
+            Directory.CreateDirectory(MeshDir); AssetDatabase.Refresh();
+            savedMeshes.Clear(); seedCounter = 0;
             root = new GameObject("House").transform;
             rooms.Clear();
             foreach (var k in new[] { "living", "hallway", "kitchen", "bedroom", "garden" })
@@ -52,33 +56,72 @@ namespace MicroduckVR.EditorTools
         }
 
         // ================================================================ primitives
-        static GameObject Box(string room, string name, Vector3 center, Vector3 size, Material mat, float yawDegWeb = 0f, string surface = null, bool collide = true)
+        static int seedCounter;
+        /// <summary>Hand-drawn comic style (style B): rounded, slightly wobbly and bulging, scaled to the part's size.</summary>
+        static ComicMesh.Style HandDrawn(Vector3 size)
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = name; go.layer = DuckSetup.LayerWorld; go.isStatic = true;
-            go.transform.SetParent(rooms[room], false);
-            go.transform.SetPositionAndRotation(center, Quaternion.Euler(0f, -yawDegWeb, 0f));
-            go.transform.localScale = size;
-            go.GetComponent<Renderer>().sharedMaterial = mat;
-            if (!collide) Object.DestroyImmediate(go.GetComponent<Collider>());
-            else if (surface != null) Tag(go, surface, room);
+            float m = Mathf.Min(size.x, Mathf.Min(size.y, size.z));
+            return new ComicMesh.Style
+            {
+                radius = Mathf.Min(0.035f, m * 0.3f), segments = 3,
+                puff = 0.05f, wobble = Mathf.Min(0.016f, m * 0.08f + Mathf.Max(size.x, size.z) * 0.004f),
+                skew = Mathf.Min(0.012f, size.y * 0.02f), taperTop = size.y > 0.3f ? 0.03f : 0f, seed = ++seedCounter,
+            };
+        }
+
+        static GameObject Box(string room, string name, Vector3 center, Vector3 size, Material mat, float yawDegWeb = 0f, string surface = null, bool collide = true, bool styled = true)
+        {
+            GameObject go;
+            if (styled && Mathf.Min(size.x, Mathf.Min(size.y, size.z)) > 0.012f)
+            {
+                go = new GameObject(name);
+                go.AddComponent<MeshFilter>().sharedMesh = SaveMesh(ComicMesh.RoundedBox(size, HandDrawn(size)));
+                go.AddComponent<MeshRenderer>().sharedMaterial = mat;
+                if (collide) go.AddComponent<BoxCollider>().size = size;
+                go.transform.SetParent(rooms[room], false);
+                go.transform.SetPositionAndRotation(center, Quaternion.Euler(0f, -yawDegWeb, 0f));
+            }
+            else
+            {
+                go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                go.name = name;
+                go.transform.SetParent(rooms[room], false);
+                go.transform.SetPositionAndRotation(center, Quaternion.Euler(0f, -yawDegWeb, 0f));
+                go.transform.localScale = size;
+                go.GetComponent<Renderer>().sharedMaterial = mat;
+                if (!collide) Object.DestroyImmediate(go.GetComponent<Collider>());
+            }
+            go.layer = DuckSetup.LayerWorld; go.isStatic = true;
+            if (collide && surface != null) Tag(go, surface, room);
             return go;
         }
 
+        static readonly HashSet<Mesh> savedMeshes = new HashSet<Mesh>();
+        internal static Mesh SaveMesh(Mesh m)
+        {
+            if (savedMeshes.Contains(m) || AssetDatabase.Contains(m)) return m;
+            AssetDatabase.CreateAsset(m, $"{MeshDir}/{savedMeshes.Count:D4}.asset");
+            savedMeshes.Add(m);
+            return m;
+        }
+
         // box from web centre + web size
-        static GameObject B(string room, string name, float w, float h, float d, Material mat, float x, float y, float z, float ryRad = 0f, string surface = null, bool collide = true)
-            => Box(room, name, P(x, y, z), new Vector3(w, h, d), mat, ryRad * Mathf.Rad2Deg, surface, collide);
+        static GameObject B(string room, string name, float w, float h, float d, Material mat, float x, float y, float z, float ryRad = 0f, string surface = null, bool collide = true, bool styled = true)
+            => Box(room, name, P(x, y, z), new Vector3(w, h, d), mat, ryRad * Mathf.Rad2Deg, surface, collide, styled);
+        // straight architecture (walls, floors, thin decals): no hand-drawn warp
+        static GameObject S(string room, string name, float w, float h, float d, Material mat, float x, float y, float z, float ryRad = 0f, string surface = null, bool collide = true)
+            => Box(room, name, P(x, y, z), new Vector3(w, h, d), mat, ryRad * Mathf.Rad2Deg, surface, collide, false);
 
         static GameObject Cyl(string room, string name, float r, float h, Material mat, float x, float y, float z, string surface = null, bool collide = true)
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            go.name = name; go.layer = DuckSetup.LayerWorld; go.isStatic = true;
+            var go = new GameObject(name) { layer = DuckSetup.LayerWorld, isStatic = true };
             go.transform.SetParent(rooms[room], false);
             go.transform.position = P(x, y, z);
-            go.transform.localScale = new Vector3(r * 2f, h / 2f, r * 2f);
-            go.GetComponent<Renderer>().sharedMaterial = mat;
-            if (!collide) Object.DestroyImmediate(go.GetComponent<Collider>());
-            else if (surface != null) Tag(go, surface, room);
+            bool flat = h < r * 0.3f;                                    // rugs, stones, puddles: straight disc
+            var mesh = SaveMesh(ComicMesh.Leg(h, flat ? r : r * 0.82f, r, flat ? 28 : 14));
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            go.AddComponent<MeshRenderer>().sharedMaterial = mat;
+            if (collide) { var mc = go.AddComponent<MeshCollider>(); mc.sharedMesh = mesh; mc.convex = true; if (surface != null) Tag(go, surface, room); }
             return go;
         }
 
@@ -115,6 +158,14 @@ namespace MicroduckVR.EditorTools
             return go;
         }
 
+        static GameObject Hidden(string room, string name, float w, float h, float d, float x, float y, float z, string surface = null)
+        {
+            var go = S(room, name, w, h, d, null, x, y, z, 0f, surface);
+            Object.DestroyImmediate(go.GetComponent<MeshRenderer>());
+            Object.DestroyImmediate(go.GetComponent<MeshFilter>());
+            return go;
+        }
+
         static void Tag(GameObject go, string type, string room)
         {
             var t = go.AddComponent<SurfaceTag>(); t.type = type; t.room = room;
@@ -126,22 +177,22 @@ namespace MicroduckVR.EditorTools
         {
             wall = M("wall", "#FFF0D2"); trim = M("trim", "#FFFFFF"); plank = M("floor_planks", "#E9A85A");
             // floors per room (2 cm slabs, top at y = 0)
-            B("living", "Floor living", 6.0f, 0.02f, 5.0f, plank, 0f, -0.01f, 0f, 0f, "wood");
-            B("hallway", "Floor hallway", 14.24f, 0.02f, 1.44f, M("floor_hall", "#E19B4C"), 0f, -0.01f, 3.22f, 0f, "wood");
-            B("kitchen", "Floor kitchen", 3.88f + 0.12f, 0.02f, 5.0f + 0.12f, M("kitchen_tile", "#BFE6DE"), 5.06f, -0.01f, -0.06f, 0f, "tile");
-            B("bedroom", "Floor bedroom", 3.88f + 0.12f, 0.02f, 5.0f + 0.12f, M("bedroom_floor", "#F2DCF2"), -5.06f, -0.01f, -0.06f, 0f, "wood");
-            B("garden", "Lawn", 26f, 0.02f, 18f, M("lawn", "#6CBF4F"), 0f, -0.03f, 8f, 0f, "grass");
-            B("garden", "Grass", 7.0f, 0.02f, 3.66f, M("grass", "#7CCB5A"), 0f, -0.009f, 5.77f, 0f, "grass");
+            S("living", "Floor living", 6.0f, 0.02f, 5.0f, plank, 0f, -0.01f, 0f, 0f, "wood");
+            S("hallway", "Floor hallway", 14.24f, 0.02f, 1.44f, M("floor_hall", "#E19B4C"), 0f, -0.01f, 3.22f, 0f, "wood");
+            S("kitchen", "Floor kitchen", 3.88f + 0.12f, 0.02f, 5.0f + 0.12f, M("kitchen_tile", "#BFE6DE"), 5.06f, -0.01f, -0.06f, 0f, "tile");
+            S("bedroom", "Floor bedroom", 3.88f + 0.12f, 0.02f, 5.0f + 0.12f, M("bedroom_floor", "#F2DCF2"), -5.06f, -0.01f, -0.06f, 0f, "wood");
+            S("garden", "Lawn", 26f, 0.02f, 18f, M("lawn", "#6CBF4F"), 0f, -0.03f, 8f, 0f, "grass");
+            S("garden", "Grass", 7.0f, 0.02f, 3.66f, M("grass", "#7CCB5A"), 0f, -0.009f, 5.77f, 0f, "grass");
 
             // living back wall with the window
             float bz = -2.5f - WT / 2f;
             var WIN = (x: 0.9f, w: 1.4f, y0: 0.85f, h: 1.25f);
-            B("living", "Wall back L", WIN.x - WIN.w / 2f + 3f, WH, WT, wall, (-3f + WIN.x - WIN.w / 2f) / 2f, WH / 2f, bz);
-            B("living", "Wall back R", 3f - (WIN.x + WIN.w / 2f), WH, WT, wall, (3f + WIN.x + WIN.w / 2f) / 2f, WH / 2f, bz);
-            B("living", "Wall back sill", WIN.w, WIN.y0, WT, wall, WIN.x, WIN.y0 / 2f, bz);
-            B("living", "Wall back top", WIN.w, WH - (WIN.y0 + WIN.h), WT, wall, WIN.x, (WIN.y0 + WIN.h + WH) / 2f, bz);
+            S("living", "Wall back L", WIN.x - WIN.w / 2f + 3f, WH, WT, wall, (-3f + WIN.x - WIN.w / 2f) / 2f, WH / 2f, bz);
+            S("living", "Wall back R", 3f - (WIN.x + WIN.w / 2f), WH, WT, wall, (3f + WIN.x + WIN.w / 2f) / 2f, WH / 2f, bz);
+            S("living", "Wall back sill", WIN.w, WIN.y0, WT, wall, WIN.x, WIN.y0 / 2f, bz);
+            S("living", "Wall back top", WIN.w, WH - (WIN.y0 + WIN.h), WT, wall, WIN.x, (WIN.y0 + WIN.h + WH) / 2f, bz);
             B("living", "Window sill", WIN.w + 0.12f, 0.06f, 0.16f, trim, WIN.x, WIN.y0 - 0.02f, -2.48f);
-            B("living", "Window view", WIN.w, WIN.h, 0.01f, M("window_view", "#9AD8F2"), WIN.x, WIN.y0 + WIN.h / 2f, bz - 0.04f, 0f, null, false);
+            S("living", "Window view", WIN.w, WIN.h, 0.01f, M("window_view", "#9AD8F2"), WIN.x, WIN.y0 + WIN.h / 2f, bz - 0.04f, 0f, null, false);
 
             WallX("wall_hall_back", 2.56f, -7.12f, 7.12f, new[] { (-0.45f, 0.45f, DOOR_H), (-5.4f, -4.6f, DOOR_H), (4.6f, 5.4f, DOOR_H) }, "hallway");
             WallX("wall_hall_front", 3.88f, -7.12f, 7.12f, new[] { (-1.0f, 1.0f, 2.1f) }, "hallway");
@@ -159,13 +210,13 @@ namespace MicroduckVR.EditorTools
             System.Array.Sort(gaps, (p, q) => p.a.CompareTo(q.a));
             foreach (var g in gaps)
             {
-                if (g.a - a > 0.001f) B(room, id + "_" + i++, g.a - a, WH, WT, wall, (a + g.a) / 2f, WH / 2f, z);
-                B(room, id + "_lintel" + i, g.b - g.a, WH - g.h, WT, wall, (g.a + g.b) / 2f, g.h + (WH - g.h) / 2f, z);
+                if (g.a - a > 0.001f) S(room, id + "_" + i++, g.a - a, WH, WT, wall, (a + g.a) / 2f, WH / 2f, z);
+                S(room, id + "_lintel" + i, g.b - g.a, WH - g.h, WT, wall, (g.a + g.b) / 2f, g.h + (WH - g.h) / 2f, z);
                 foreach (var s in new[] { -1f, 1f }) B(room, id + "_jamb", 0.05f, g.h, WT + 0.03f, trim, (s < 0 ? g.a : g.b) + s * 0.025f, g.h / 2f, z, 0f, null, false);
                 B(room, id + "_head", g.b - g.a + 0.1f, 0.05f, WT + 0.03f, trim, (g.a + g.b) / 2f, g.h + 0.025f, z, 0f, null, false);
                 a = g.b;
             }
-            if (x1 - a > 0.001f) B(room, id + "_" + i, x1 - a, WH, WT, wall, (a + x1) / 2f, WH / 2f, z);
+            if (x1 - a > 0.001f) S(room, id + "_" + i, x1 - a, WH, WT, wall, (a + x1) / 2f, WH / 2f, z);
         }
 
         static void WallZ(string id, float x, float z0, float z1, (float a, float b, float h)[] gaps, string room)
@@ -173,13 +224,13 @@ namespace MicroduckVR.EditorTools
             float a = z0; int i = 0;
             foreach (var g in gaps)
             {
-                if (g.a - a > 0.001f) B(room, id + "_" + i++, WT, WH, g.a - a, wall, x, WH / 2f, (a + g.a) / 2f);
-                B(room, id + "_lintel" + i, WT, WH - g.h, g.b - g.a, wall, x, g.h + (WH - g.h) / 2f, (g.a + g.b) / 2f);
+                if (g.a - a > 0.001f) S(room, id + "_" + i++, WT, WH, g.a - a, wall, x, WH / 2f, (a + g.a) / 2f);
+                S(room, id + "_lintel" + i, WT, WH - g.h, g.b - g.a, wall, x, g.h + (WH - g.h) / 2f, (g.a + g.b) / 2f);
                 foreach (var s in new[] { -1f, 1f }) B(room, id + "_jamb", WT + 0.03f, g.h, 0.05f, trim, x, g.h / 2f, (s < 0 ? g.a : g.b) + s * 0.025f, 0f, null, false);
                 B(room, id + "_head", WT + 0.03f, 0.05f, g.b - g.a + 0.1f, trim, x, g.h + 0.025f, (g.a + g.b) / 2f, 0f, null, false);
                 a = g.b;
             }
-            if (z1 - a > 0.001f) B(room, id + "_" + i, WT, WH, z1 - a, wall, x, WH / 2f, (a + z1) / 2f);
+            if (z1 - a > 0.001f) S(room, id + "_" + i, WT, WH, z1 - a, wall, x, WH / 2f, (a + z1) / 2f);
         }
 
         // ================================================================ living room
@@ -210,21 +261,26 @@ namespace MicroduckVR.EditorTools
 
             // sofa (teal), coffee table, shelf, plant, pouf
             var sofaM = M("sofa", "#27B3B0");
-            var S = (x: -1.66f, z: -2.5f + 0.54f, L: 2.19f, D: 1.02f, seat: 0.46f, back: 0.72f, arm: 0.6f);
-            B(R, "Sofa seat", S.L, S.seat, S.D, sofaM, S.x, S.seat / 2f, S.z, 0f, "rug");
-            B(R, "Sofa back", S.L, S.back, 0.24f, sofaM, S.x, S.back / 2f, S.z - S.D / 2f + 0.12f);
-            foreach (var k in new[] { -1f, 1f }) B(R, "Sofa arm", 0.16f, S.arm, S.D, sofaM, S.x + k * (S.L / 2f - 0.08f), S.arm / 2f, S.z);
-            var ct = M("coffee_table", "#FFC43D");
-            B(R, "Coffee table top", 1.0f, 0.035f, 0.48f, ct, -1.66f, 0.4f - 0.0175f, -1.0f, 0f, "table");
+            var SF = (x: -1.66f, z: -2.5f + 0.54f, L: 2.19f, D: 1.02f, seat: 0.46f, back: 0.72f, arm: 0.6f);
+            // visuals: the cushioned hand-drawn sofa and coffee table; colliders: simple invisible boxes
+            FurnitureStyles.MeshSaver = SaveMesh; FurnitureStyles.MatFactory = (hex, key) => M(key, hex);
+            FurnitureStyles.BuildSofa(rooms[R], P(SF.x, 0f, SF.z), FurnitureStyles.Kind.HandDrawn);
+            FurnitureStyles.BuildCoffeeTable(rooms[R], P(-1.66f, 0f, -1.0f), FurnitureStyles.Kind.HandDrawn);
+            FurnitureStyles.BuildArmchair(rooms[R], P(2.2f, 0f, -1.2f), FurnitureStyles.Kind.HandDrawn);
+            FurnitureStyles.MeshSaver = m => m; FurnitureStyles.MatFactory = (hex, key) => ComicLook.ToonMaterial(ComicLook.Hex(hex), key);
+            Hidden(R, "Sofa seat collider", SF.L, 0.5f, SF.D, SF.x, 0.25f, SF.z, "rug");
+            Hidden(R, "Sofa back collider", SF.L, 0.9f, 0.24f, SF.x, 0.45f, SF.z - SF.D / 2f + 0.12f);
+            Hidden(R, "Coffee table collider", 1.0f, 0.05f, 0.5f, -1.66f, 0.375f, -1.0f, "table");
             foreach (var sx in new[] { -1f, 1f }) foreach (var sz in new[] { -1f, 1f })
-                Cyl(R, "Coffee table leg", 0.02f, 0.365f, M("leg_dark", "#3D3B4F"), -1.66f + sx * 0.44f, 0.1825f, -1.0f + sz * 0.19f);
+                Hidden(R, "Coffee table leg collider", 0.05f, 0.35f, 0.05f, -1.66f + sx * 0.4f, 0.175f, -1.0f + sz * 0.15f);
+            Hidden(R, "Armchair collider", 0.9f, 0.55f, 0.9f, 2.2f, 0.275f, -1.2f, "rug");
             B(R, "Shelf", 1.3f, 0.46f, 0.34f, M("shelf", "#7B61FF"), 0.9f, 0.23f, -2.5f + 0.19f, 0f, "table");
             Cyl(R, "Plant pot", 0.23f, 0.336f, M("pot", "#E07A4F"), 2.52f, 0.168f, -2.08f, "table");
             Cyl(R, "Plant", 0.2f, 0.5f, M("plant_leaf", "#3E9A45"), 2.52f, 0.336f + 0.25f, -2.08f, null, false);
             Cyl(R, "Pouf", 0.3f, 0.2f, M("pouf", "#FF5D73"), -0.15f, 0.1f, -2.06f, "rug");
             // rug + football pitch + goals
-            B(R, "Rug", 1.85f, 0.006f, 3.1f, M("rug", "#8E6FD6"), -1.93f, 0.003f, 0.73f, 0f, "rug");
-            B(R, "Pitch", 1.3f, 0.002f, 2.5f, M("pitch", "#5FBF5A"), -1.93f, 0.007f, 0.73f, 0f, null, false);
+            S(R, "Rug", 1.85f, 0.006f, 3.1f, M("rug", "#8E6FD6"), -1.93f, 0.003f, 0.73f, 0f, "rug");
+            S(R, "Pitch", 1.3f, 0.002f, 2.5f, M("pitch", "#5FBF5A"), -1.93f, 0.007f, 0.73f, 0f, null, false);
             var white = M("goal_white", "#FFFFFF");
             foreach (var end in new[] { -1f, 1f })
             {
@@ -234,7 +290,7 @@ namespace MicroduckVR.EditorTools
                 B(R, "Goal back", 0.34f, 0.16f, 0.006f, white, -1.93f, 0.006f + 0.08f, mz + end * 0.06f);
             }
             // garage corner mat + turntable
-            B(R, "Garage mat", 1.25f, 0.004f, 1.0f, M("garage_mat", "#3D3B4F"), 2.2f, 0.002f, 1.78f, 0f, "rug");
+            S(R, "Garage mat", 1.25f, 0.004f, 1.0f, M("garage_mat", "#3D3B4F"), 2.2f, 0.002f, 1.78f, 0f, "rug");
             Cyl(R, "Turntable", 0.2f, 0.018f, M("turntable", "#FFC43D"), 2.2f, 0.009f, 1.78f, "table");
         }
 
@@ -244,9 +300,9 @@ namespace MicroduckVR.EditorTools
             const string R = "hallway";
             float hz = (2.62f + 3.82f) / 2f;
             var tape = M("tape_yellow", "#FFC43D");
-            for (float x = -6.2f + 0.4f; x < 6.2f - 0.3f; x += 0.5f) B(R, "Dash", 0.22f, 0.002f, 0.03f, tape, x, 0.001f, hz, 0f, null, false);
-            B(R, "Start line", 0.06f, 0.002f, 0.95f, M("start_red", "#FF5D73"), -6.2f, 0.001f, hz, 0f, null, false);
-            B(R, "Finish line", 0.06f, 0.002f, 0.95f, M("finish_blue", "#3A86FF"), 6.2f, 0.001f, hz, 0f, null, false);
+            for (float x = -6.2f + 0.4f; x < 6.2f - 0.3f; x += 0.5f) S(R, "Dash", 0.22f, 0.002f, 0.03f, tape, x, 0.001f, hz, 0f, null, false);
+            S(R, "Start line", 0.06f, 0.002f, 0.95f, M("start_red", "#FF5D73"), -6.2f, 0.001f, hz, 0f, null, false);
+            S(R, "Finish line", 0.06f, 0.002f, 0.95f, M("finish_blue", "#3A86FF"), 6.2f, 0.001f, hz, 0f, null, false);
             var frame = M("frame", "#3D3B4F");
             string[] pics = { "#FF5D73", "#FFC43D", "#1FA6A0", "#7B61FF", "#3A86FF" };
             float[] xs = { -6.3f, -3.6f, -2.0f, 2.0f, 3.6f, 6.3f };
@@ -254,7 +310,7 @@ namespace MicroduckVR.EditorTools
             {
                 float z = i % 2 == 1 ? 3.82f - 0.02f : 2.62f + 0.02f;
                 B(R, "Picture frame", 0.5f, 0.38f, 0.03f, frame, xs[i], 1.45f, z, 0f, null, false);
-                B(R, "Picture", 0.42f, 0.3f, 0.035f, M("picture" + i % pics.Length, pics[i % pics.Length]), xs[i], 1.45f, z, 0f, null, false);
+                S(R, "Picture", 0.42f, 0.3f, 0.035f, M("picture" + i % pics.Length, pics[i % pics.Length]), xs[i], 1.45f, z, 0f, null, false);
             }
             foreach (var dx in new[] { 0f, 0.14f }) B(R, "Shoe", 0.1f, 0.07f, 0.26f, M("shoe", "#FF5D73"), 1.45f + dx, 0.035f, 3.82f - 0.2f);
         }
@@ -270,11 +326,11 @@ namespace MicroduckVR.EditorTools
             B(R, "Counter", c1 - c0 + 0.04f, 0.05f, cd + 0.04f, counter, (c0 + c1) / 2f, ch + 0.025f, Kz0 + cd / 2f, 0f, "table");
             for (float x = c0 + 0.3f; x < c1; x += 0.6f)
             {
-                B(R, "Cabinet door", 0.56f, 0.78f, 0.02f, cab, x, 0.43f, Kz0 + cd + 0.01f, 0f, null, false);
+                S(R, "Cabinet door", 0.56f, 0.78f, 0.02f, cab, x, 0.43f, Kz0 + cd + 0.01f, 0f, null, false);
                 B(R, "Knob", 0.12f, 0.025f, 0.03f, knob, x, 0.74f, Kz0 + cd + 0.03f, 0f, null, false);
                 B(R, "Upper cabinet", 0.56f, 0.7f, 0.34f, cab, x, 1.75f, Kz0 + 0.17f, 0f, null, false);
             }
-            B(R, "Sink", 0.5f, 0.02f, 0.36f, M("sink", "#B9C3CF"), 4.4f, ch + 0.052f, Kz0 + 0.3f, 0f, null, false);
+            S(R, "Sink", 0.5f, 0.02f, 0.36f, M("sink", "#B9C3CF"), 4.4f, ch + 0.052f, Kz0 + 0.3f, 0f, null, false);
             B(R, "Fridge", 0.72f, 1.85f, 0.68f, M("fridge", "#8FD3B6"), Kx1 - 0.42f, 0.925f, Kz0 + 0.38f);
             // kitchen table + chairs: ducks run underneath, only the legs collide
             var KT = (x: 5.1f, z: 0.6f, w: 1.25f, d: 0.8f, h: 0.74f);
@@ -326,7 +382,7 @@ namespace MicroduckVR.EditorTools
             const string R = "garden";
             float Gz0 = 3.94f, Gz1 = 7.6f, Gx0 = -3.5f, Gx1 = 3.5f;
             var stone = M("stone", "#C9C3D6");
-            B(R, "Patio slab", 2.2f, 0.006f, 0.5f, stone, 0f, 0.003f, Gz0 + 0.25f, 0f, "stone");
+            S(R, "Patio slab", 2.2f, 0.006f, 0.5f, stone, 0f, 0.003f, Gz0 + 0.25f, 0f, "stone");
             for (int i = 0; i < 7; i++)
             {
                 float t = i / 6f, x = Mathf.Sin(t * 2.4f) * 0.9f - 0.2f, z = Gz0 + 0.75f + t * 2.5f, r = 0.2f + (i % 2) * 0.04f;
