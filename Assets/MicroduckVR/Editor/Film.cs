@@ -18,7 +18,7 @@ namespace MicroduckVR.EditorTools
 {
     /// <summary>
     /// Films the game from inside the editor: a list of shots, each with its own camera move and its own bit of
-    /// scripted play, rendered frame by frame at a fixed 30 fps (the game clock is stepped, so nothing stutters)
+    /// scripted play, rendered frame by frame on a stepped game clock (so nothing stutters; see Quality for the cinema settings)
     /// with the game's own sound, one MP4 per shot under Logs/film. Preview writes three small stills per shot.
     /// </summary>
     public static partial class Film
@@ -29,45 +29,82 @@ namespace MicroduckVR.EditorTools
             public Action start; public Action<float> tick;
         }
 
-        const int W = 1920, H = 1080, Fps = 30;
-        static List<Shot> shots; static int si; static float elapsed; static bool started, preview;
-        static string tag, dir; static Camera cam; static RenderTexture rt; static Texture2D tex; static MediaEncoder enc; static FilmRig rig;
+        /// <summary>How a film is rendered. Cinema: every frame is rendered at twice the size and filtered down
+        /// (no jaggies, steady ink lines), several sub-frames are blended (real motion blur, 180 degree shutter),
+        /// with depth of field and a light grade, 60 frames a second.</summary>
+        class Quality { public int w = 1920, h = 1080, fps = 30, ss = 1, sub = 1, acc = 1, bitrate = 10000000; public bool post; }
+        static readonly Quality Plain = new Quality(), Cinema = new Quality { fps = 60, ss = 2, bitrate = 45000000, post = true },
+                                Stills = new Quality { w = 480, h = 270, post = true };
+        static Quality Q = Plain;
+        /// <summary>Game seconds per simulated frame at normal speed.</summary>
+        static float Dt => 1f / (Q.fps * Q.sub);
+        /// <summary>Slow motion for the current shot (2 = half speed). A shot may change it while it runs.</summary>
+        static float Slow = 1f;
+        /// <summary>0..1 through the current shot, in screen time (what camera moves should ease along).</summary>
+        static float U;
+
+        const int Fps = 30;
+        static List<Shot> shots; static int si, sub, outFrames; static float elapsed, outT; static bool started, preview;
+        static string tag, dir; static Camera cam; static RenderTexture rt, accum, outRt; static Texture2D tex; static MediaEncoder enc; static FilmRig rig; static Material accMat;
         static readonly HashSet<string> fired = new HashSet<string>(); static readonly HashSet<int> stills = new HashSet<int>();
         static readonly List<Renderer> hidden = new List<Renderer>();
         static StreamWriter manifest; static int savedCapture; static bool audioOn; static Texture2D atlas;
+        static UnityEngine.Rendering.Volume volume; static UnityEngine.Rendering.Universal.DepthOfField dof;
+        static float savedShadowDist; static int savedCascades; static AnisotropicFiltering savedAniso; static float savedLod;
+        // focus: where the lens is focused and how wide open it is (f-number; big = everything sharp)
+        static Vector3 focusPoint; static float fstop = 4f;
 
         static PlayerDuck P => PlayerDuck.Instance;
         static Vector3 Pos => P.Body.Pos;
         static BagMenu Bag => P.GetComponent<BagMenu>();
 
-        [MenuItem("Microduck/Film/Trailer")] public static void Trailer() => Begin("trailer", TrailerShots(), false);
-        [MenuItem("Microduck/Film/Trailer (preview stills)")] public static void TrailerPreview() => Begin("trailer", TrailerShots(), true);
-        [MenuItem("Microduck/Film/Demo")] public static void Demo() => Begin("demo", DemoShots(), false);
+        [MenuItem("Microduck/Film/Trailer")] public static void Trailer() => Begin("trailer", TrailerShots(), false, Cinema);
+        [MenuItem("Microduck/Film/Trailer (preview stills)")] public static void TrailerPreview() => Begin("trailer", TrailerShots(), true, Stills);
+        [MenuItem("Microduck/Film/Demo")] public static void Demo() => Begin("demo", DemoShots(), false, Plain);
         /// <summary>Only the tutorial part of the walkthrough (to re-film it on its own).</summary>
-        public static void DemoTutorial() => Begin("demo_tutorial", DemoShots().GetRange(0, 1), false);
-        [MenuItem("Microduck/Film/Demo (preview stills)")] public static void DemoPreview() => Begin("demo", DemoShots(), true);
+        public static void DemoTutorial() => Begin("demo_tutorial", DemoShots().GetRange(0, 1), false, Plain);
+        [MenuItem("Microduck/Film/Demo (preview stills)")] public static void DemoPreview() => Begin("demo", DemoShots(), true, new Quality { w = 480, h = 270 });
+        /// <summary>A few named trailer shots only, e.g. to re-film them: set Only first.</summary>
+        public static string Only = "";
+        public static void TrailerOnly() { var all = TrailerShots(); var pick = all.FindAll(x => ("," + Only + ",").Contains("," + x.name + ",")); Begin("trailer_only", pick, false, Cinema); }
 
-        static void Begin(string t, List<Shot> list, bool prev)
+        static void Begin(string t, List<Shot> list, bool prev, Quality q)
         {
             if (!Application.isPlaying || P == null) { Debug.Log("[Microduck] film needs Play mode"); return; }
             if (rig != null) { Debug.Log("[Microduck] film already running"); return; }
-            tag = t; shots = list; preview = prev; si = 0; elapsed = 0f; started = false;
+            tag = t; shots = list; preview = prev; Q = q; si = 0; elapsed = 0f; started = false;
             dir = Path.Combine("Logs", "film", tag + (prev ? "_preview" : "")); if (Directory.Exists(dir)) Directory.Delete(dir, true); Directory.CreateDirectory(dir);
             manifest = new StreamWriter(Path.Combine(dir, "manifest.txt"));
-            int w = prev ? 480 : W, h = prev ? 270 : H;
             if (prev) atlas = new Texture2D(1440, 270 * 6, TextureFormat.RGBA32, false);
             var go = new GameObject("Film camera"); cam = go.AddComponent<Camera>(); cam.enabled = false;
             cam.nearClipPlane = 0.01f; cam.farClipPlane = 90f; cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = ComicLook.Hex("#9AD8F2");
             cam.stereoTargetEye = StereoTargetEyeMask.None;
-            go.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>().renderPostProcessing = false;
-            rt = new RenderTexture(w, h, 24) { antiAliasing = 4 }; cam.targetTexture = rt;
-            tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
-            savedCapture = Time.captureFramerate; Time.captureFramerate = Fps;
+            var cd = go.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>(); cd.renderPostProcessing = Q.post;
+            cd.antialiasing = UnityEngine.Rendering.Universal.AntialiasingMode.None;
+            rt = new RenderTexture(Q.w * Q.ss, Q.h * Q.ss, 24) { antiAliasing = 4, filterMode = FilterMode.Bilinear }; cam.targetTexture = rt;
+            accum = new RenderTexture(Q.w, Q.h, 0, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
+            outRt = new RenderTexture(Q.w, Q.h, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            accMat = new Material(Shader.Find("Hidden/Microduck/FilmAccum"));
+            tex = new Texture2D(Q.w, Q.h, TextureFormat.RGBA32, false);
+            savedCapture = Time.captureFramerate; Time.captureFramerate = Q.fps * Q.sub;
             audioOn = !prev && AudioRenderer.Start();
             ComicPop.Viewer = cam;
-            foreach (var tb in UnityEngine.Object.FindObjectsByType<ThoughtBubbles>(FindObjectsSortMode.None)) tb.viewer = cam;
+            foreach (var tb in UnityEngine.Object.FindObjectsByType<ThoughtBubbles>(FindObjectsSortMode.None)) { tb.viewer = cam; if (Q.post) tb.showThoughts = false; }
+            // the film look: a real lens (depth of field), a touch of grade; and the engine's quality dials turned up
+            if (Q.post)
+            {
+                var vg = new GameObject("Film volume"); volume = vg.AddComponent<UnityEngine.Rendering.Volume>(); volume.isGlobal = true; volume.priority = 100f;
+                var prof = ScriptableObject.CreateInstance<UnityEngine.Rendering.VolumeProfile>(); volume.profile = prof;
+                dof = prof.Add<UnityEngine.Rendering.Universal.DepthOfField>(true);
+                dof.mode.Override(UnityEngine.Rendering.Universal.DepthOfFieldMode.Bokeh); dof.bladeCount.Override(7); dof.bladeCurvature.Override(1f);
+                var ca = prof.Add<UnityEngine.Rendering.Universal.ColorAdjustments>(true); ca.saturation.Override(9f); ca.contrast.Override(7f); ca.postExposure.Override(0.06f);
+                var vi = prof.Add<UnityEngine.Rendering.Universal.Vignette>(true); vi.intensity.Override(0.2f); vi.smoothness.Override(0.5f);
+            }
+            var pipe = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+            if (pipe != null) { savedShadowDist = pipe.shadowDistance; savedCascades = pipe.shadowCascadeCount; if (Q.post) { pipe.shadowDistance = 45f; pipe.shadowCascadeCount = 4; } }
+            savedAniso = QualitySettings.anisotropicFiltering; savedLod = QualitySettings.lodBias; QualitySettings.anisotropicFiltering = AnisotropicFiltering.ForceEnable; QualitySettings.lodBias = 4f;
             rig = new GameObject("Film rig").AddComponent<FilmRig>(); rig.OnFrame = Frame;
-            Debug.Log($"[Microduck] film {tag}: {shots.Count} shots, {(prev ? "preview" : "full")}");
+            Debug.Log($"[Microduck] film {tag}: {shots.Count} shots, {(prev ? "preview" : "full")}, {Q.w}x{Q.h}@{Q.fps} ss{Q.ss} sub{Q.sub}/{Q.acc}");
         }
 
         static void End()
@@ -75,10 +112,16 @@ namespace MicroduckVR.EditorTools
             CloseEncoder();
             if (audioOn) AudioRenderer.Stop();
             Time.captureFramerate = savedCapture; ComicPop.Viewer = null;
-            foreach (var tb in UnityEngine.Object.FindObjectsByType<ThoughtBubbles>(FindObjectsSortMode.None)) tb.viewer = P != null ? P.cam : null;
+            foreach (var tb in UnityEngine.Object.FindObjectsByType<ThoughtBubbles>(FindObjectsSortMode.None)) { tb.viewer = P != null ? P.cam : null; tb.showThoughts = true; }
             Reset(); GameHud.Hidden = false;
             manifest.Dispose();
-            cam.targetTexture = null; UnityEngine.Object.Destroy(rt); UnityEngine.Object.Destroy(tex); UnityEngine.Object.Destroy(cam.gameObject); UnityEngine.Object.Destroy(rig.gameObject); rig = null;
+            var pipe = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+            if (pipe != null) { pipe.shadowDistance = savedShadowDist; pipe.shadowCascadeCount = savedCascades; }
+            QualitySettings.anisotropicFiltering = savedAniso; QualitySettings.lodBias = savedLod;
+            if (volume != null) { UnityEngine.Object.Destroy(volume.gameObject); volume = null; dof = null; }
+            cam.targetTexture = null;
+            foreach (var o in new UnityEngine.Object[] { rt, accum, outRt, tex, accMat, cam.gameObject, rig.gameObject }) UnityEngine.Object.Destroy(o);
+            rig = null;
             Debug.Log($"[Microduck] film {tag} done");
         }
 
@@ -91,12 +134,13 @@ namespace MicroduckVR.EditorTools
             var s = shots[si];
             if (!started)
             {
-                started = true; elapsed = 0f; fired.Clear(); stills.Clear(); Reset(); camInit = false; biteAt = -1f; grabPhase = 0; phaseT = 0f;
+                started = true; elapsed = 0f; outT = 0f; outFrames = 0; sub = 0; Slow = 1f; U = 0f; fstop = 4f;
+                fired.Clear(); stills.Clear(); Reset(); camInit = false; biteAt = -1f; grabPhase = 0; phaseT = 0f;
                 s.start?.Invoke();
                 if (!preview)
                 {
-                    var va = new VideoTrackEncoderAttributes(new H264EncoderAttributes { gopSize = 30, numConsecutiveBFrames = 0, profile = VideoEncodingProfile.H264High })
-                    { frameRate = new MediaRational(Fps), width = (uint)W, height = (uint)H, targetBitRate = 10000000 };
+                    var va = new VideoTrackEncoderAttributes(new H264EncoderAttributes { gopSize = (uint)Q.fps, numConsecutiveBFrames = 0, profile = VideoEncodingProfile.H264High })
+                    { frameRate = new MediaRational(Q.fps), width = (uint)Q.w, height = (uint)Q.h, targetBitRate = (uint)Q.bitrate };
                     string path = Path.Combine(dir, $"{si:D2}_{s.name}.mp4");
                     if (audioOn) enc = new MediaEncoder(path, va, new AudioTrackAttributes { sampleRate = new MediaRational(AudioSettings.outputSampleRate), channelCount = 2, language = "und" });
                     else enc = new MediaEncoder(path, va);
@@ -104,36 +148,61 @@ namespace MicroduckVR.EditorTools
                 manifest.WriteLine($"{si:D2}_{s.name}|{s.dur:F2}|{s.caption}"); manifest.Flush();
             }
             float t = elapsed - s.pre;
+            U = Mathf.Clamp01(outT / s.dur);
             cam.cullingMask = s.fp ? P.cam.cullingMask : ~0;
+            focusPoint = cam.transform.position + cam.transform.forward * 3f;
             s.tick?.Invoke(t);
+            if (dof != null)
+            {
+                float d = Mathf.Max(0.05f, Vector3.Dot(focusPoint - cam.transform.position, cam.transform.forward));
+                dof.focusDistance.Override(d); dof.aperture.Override(Mathf.Clamp(fstop, 1f, 32f));
+                dof.focalLength.Override(Mathf.Clamp(12f / Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad), 8f, 200f));
+            }
             // sound: keep the offline renderer in step with the stepped clock, even during the run-up
             NativeArray<float> buf = default;
             if (audioOn) { int n = AudioRenderer.GetSampleCountForCaptureFrame(); buf = new NativeArray<float>(n * 2, Allocator.Temp); AudioRenderer.Render(buf); }
+            bool lastSub = sub == Q.sub - 1;
             if (t >= 0f)
             {
                 bool shoot = !preview;
                 if (preview)
                 {
-                    int k = t < 1f / Fps ? 0 : t >= s.dur * 0.5f && t < s.dur * 0.5f + 1f / Fps ? 1 : t >= s.dur - 2f / Fps ? 2 : -1;
-                    if (k >= 0 && stills.Add(k)) shoot = true;
+                    int k = outT < 1f / Q.fps ? 0 : outT >= s.dur * 0.5f && outT < s.dur * 0.5f + 1f / Q.fps ? 1 : outT >= s.dur - 2f / Q.fps ? 2 : -1;
+                    shoot = k >= 0 && !stills.Contains(k); if (shoot) stills.Add(k);
                 }
-                if (shoot)
+                if (shoot && sub >= Q.sub - Q.acc)
                 {
                     hidden.Clear();
                     foreach (var v in UnityEngine.Object.FindObjectsByType<ComfortVignette>(FindObjectsSortMode.None)) { var r = v.GetComponent<Renderer>(); if (r != null && r.enabled) { r.enabled = false; hidden.Add(r); } }
                     cam.Render();
                     foreach (var r in hidden) r.enabled = true;
-                    var prevRt = RenderTexture.active; RenderTexture.active = rt;
-                    tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0); tex.Apply(false);
+                    var prevRt = RenderTexture.active;
+                    if (sub == Q.sub - Q.acc) { RenderTexture.active = accum; GL.Clear(false, true, Color.clear); }
+                    accMat.SetFloat("_Weight", 1f / Q.acc); Graphics.Blit(rt, accum, accMat);
+                    if (lastSub)
+                    {
+                        Graphics.Blit(accum, outRt);
+                        RenderTexture.active = outRt; tex.ReadPixels(new Rect(0, 0, Q.w, Q.h), 0, 0); tex.Apply(false);
+                        if (preview) atlas.SetPixels32((stills.Count - 1) * 480, (5 - si % 6) * 270, 480, 270, tex.GetPixels32());
+                        else enc.AddFrame(tex);
+                    }
                     RenderTexture.active = prevRt;
-                    if (preview) atlas.SetPixels32((stills.Count - 1) * 480, (5 - si % 6) * 270, 480, 270, tex.GetPixels32());
-                    else { enc.AddFrame(tex); if (audioOn) enc.AddSamples(buf); }
                 }
+                if (!preview && audioOn)
+                {
+                    // slow motion has no usable sound: keep the track the right length with silence
+                    if (Mathf.Abs(Slow - 1f) < 0.01f) enc.AddSamples(buf);
+                    else { int n = Mathf.RoundToInt(AudioSettings.outputSampleRate / (float)(Q.fps * Q.sub)); var z = new NativeArray<float>(n * 2, Allocator.Temp, NativeArrayOptions.ClearMemory); enc.AddSamples(z); z.Dispose(); }
+                }
+                if (lastSub) { outFrames++; outT = outFrames / (float)Q.fps; }
             }
             if (buf.IsCreated) buf.Dispose();
-            elapsed += 1f / Fps;
-            if (t + 1f / Fps >= s.dur && preview && (si % 6 == 5 || si == shots.Count - 1)) { atlas.Apply(false); File.WriteAllBytes(Path.Combine(dir, $"sheet_{si / 6}.jpg"), atlas.EncodeToJPG(78)); atlas.SetPixels32(new Color32[1440 * 270 * 6]); }
-            if (t + 1f / Fps >= s.dur) { CloseEncoder(); Debug.Log($"[Microduck] film shot {si:D2} {s.name} ok  ({Info()})"); si++; started = false; }
+            elapsed += Dt / Mathf.Max(0.05f, Slow);
+            sub = t >= 0f ? (sub + 1) % Q.sub : 0;
+            Time.captureFramerate = Mathf.Max(1, Mathf.RoundToInt(Q.fps * Q.sub * Mathf.Max(0.05f, Slow)));
+            bool done = outT >= s.dur - 1e-4f;
+            if (done && preview && (si % 6 == 5 || si == shots.Count - 1)) { atlas.Apply(false); File.WriteAllBytes(Path.Combine(dir, $"sheet_{si / 6}.jpg"), atlas.EncodeToJPG(78)); atlas.SetPixels32(new Color32[1440 * 270 * 6]); }
+            if (done) { CloseEncoder(); Debug.Log($"[Microduck] film shot {si:D2} {s.name} ok  ({Info()})"); si++; started = false; }
         }
 
         static string Info() => $"pos {Pos.ToString("F2")} grabs {P.GrabCount} drops {P.DropCount} ducks {DuckBrain.All.Count} card {TutorialCoach.DebugTitle}";
@@ -150,19 +219,25 @@ namespace MicroduckVR.EditorTools
         static void Look(Vector3 from, Vector3 at, float fov = 40f)
         {
             cam.transform.position = from; cam.transform.rotation = Quaternion.LookRotation(at - from, Vector3.up); cam.fieldOfView = fov;
+            focusPoint = at;
         }
+        /// <summary>Focus the lens on a point, with an f-number (2 = very shallow, 16 = everything sharp).</summary>
+        static void Focus(Vector3 at, float f) { focusPoint = at; fstop = f; }
+        static float Lerp(float a, float b, float u) => Mathf.Lerp(a, b, E(u));
+        static Vector3 Lerp(Vector3 a, Vector3 b, float u) => Vector3.Lerp(a, b, E(u));
         /// <summary>The same, eased so a moving subject is followed like by a camera operator, not a robot.</summary>
         static void Soft(Vector3 from, Vector3 at, float fov = 40f, float lag = 0.25f)
         {
             if (!camInit) { camInit = true; camPos = from; lookPos = at; camVel = lookVel = Vector3.zero; }
-            camPos = Vector3.SmoothDamp(camPos, from, ref camVel, lag, 100f, 1f / Fps);
-            lookPos = Vector3.SmoothDamp(lookPos, at, ref lookVel, lag * 0.7f, 100f, 1f / Fps);
+            camPos = Vector3.SmoothDamp(camPos, from, ref camVel, lag, 100f, Dt);
+            lookPos = Vector3.SmoothDamp(lookPos, at, ref lookVel, lag * 0.7f, 100f, Dt);
             Look(camPos, lookPos, fov);
         }
         /// <summary>Through the duck's own eyes (the player's view), looking the way given.</summary>
         static void Eyes(float yawDeg, float pitchDeg = 8f, float fov = 92f)
         {
             cam.transform.position = P.cam.transform.position; cam.transform.rotation = Quaternion.Euler(pitchDeg, yawDeg, 0f); cam.fieldOfView = fov;
+            focusPoint = cam.transform.position + cam.transform.forward * 1.2f; fstop = 16f;
         }
         static void Chase(float dist = 0.5f, float height = 0.28f, float fov = 55f, float side = 0f)
         {
@@ -184,12 +259,12 @@ namespace MicroduckVR.EditorTools
             if (P.Held != null) { grabPhase = 2; PlayerDuck.DebugBeak = 0f; return true; }
             if (grabPhase == 0)
             {
-                PlayerDuck.DebugBeak = 1f; phaseT += 1f / Fps;
+                PlayerDuck.DebugBeak = 1f; phaseT += Dt;
                 var d = thing - Pos; d.y = 0f;
                 if (d.magnitude > 0.1f) PlayerDuck.DebugWalk = d.normalized; else Stop();
                 if (phaseT > 0.6f && (Grabbable.Nearest(P.Body.BeakGap(), 0.02f) != null || phaseT > 6f)) { grabPhase = 1; phaseT = 0f; PlayerDuck.DebugBeak = 0f; Stop(); }
             }
-            else if (grabPhase == 1) { phaseT += 1f / Fps; if (phaseT > 0.5f) { grabPhase = 0; phaseT = 0.3f; } }   // missed: try again
+            else if (grabPhase == 1) { phaseT += Dt; if (phaseT > 0.5f) { grabPhase = 0; phaseT = 0.3f; } }   // missed: try again
             return false;
         }
         static void Drop() { if (P.Held != null) PlayerDuck.DebugBeak = 1f; else PlayerDuck.DebugBeak = 0f; }

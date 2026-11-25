@@ -26,7 +26,7 @@ namespace MicroduckVR.EditorTools
                 tick = t =>
                 {
                     GameHud.Hidden = false;
-                    string card = TutorialCoach.DebugTitle; if (card != lastCard) { Debug.Log($"[Microduck] film card at {t:F1}: {card}"); lastCard = card; cardT = 0f; grabPhase = 0; phaseT = 0f; PlayerDuck.DebugBeak = 0f; Stop(); } else cardT += 1f / Fps;
+                    string card = TutorialCoach.DebugTitle; if (card != lastCard) { Debug.Log($"[Microduck] film card at {t:F1}: {card}"); lastCard = card; cardT = 0f; grabPhase = 0; phaseT = 0f; PlayerDuck.DebugBeak = 0f; Stop(); } else cardT += Dt;
                     var b = MirrorStation.Instance.Board; var bag = Bag; var eye = P.cam.transform.position; float pitch = 6f;
                     if (card.StartsWith("MAKE YOUR DUCK"))
                     {
@@ -40,7 +40,7 @@ namespace MicroduckVR.EditorTools
                         At(cardT, 0f, "tolr", () => { Place(V(-1.6f, 0f, 0.6f), 55f); viewYaw = 55f; });
                         if (cardT > 1.8f) PlayerDuck.DebugWalk = Fwd(viewYaw * Mathf.Deg2Rad);
                     }
-                    else if (card.StartsWith("TURN")) { if (cardT > 1.6f) { viewYaw = Mathf.MoveTowards(viewYaw, 110f, 60f / Fps); P.FaceView(viewYaw * Mathf.Deg2Rad); PlayerDuck.DebugWalk = Fwd(viewYaw * Mathf.Deg2Rad); } }
+                    else if (card.StartsWith("TURN")) { if (cardT > 1.6f) { viewYaw = Mathf.MoveTowards(viewYaw, 110f, 60f * Dt); P.FaceView(viewYaw * Mathf.Deg2Rad); PlayerDuck.DebugWalk = Fwd(viewYaw * Mathf.Deg2Rad); } }
                     else if (card.StartsWith("OPEN YOUR BEAK")) { if (cardT > 1.8f) PlayerDuck.DebugBeak = 1f; pitch = 24f; }
                     else if (card.StartsWith("GRAB IT"))
                     {
@@ -62,7 +62,7 @@ namespace MicroduckVR.EditorTools
                         bag.SetDebugAim(new Ray(eye, p - eye)); At(cardT, 1.8f, "putcar", () => bag.DebugPress());
                     }
                     else if (card.StartsWith("CLOSE THE BAG")) At(cardT, 1.6f, "bagclose", () => { bag.SetDebugAim(null); bag.Close(); });
-                    else if (card.StartsWith("ROLLER SKATES")) { viewYaw = Mathf.MoveTowards(viewYaw, 75f, 60f / Fps); P.FaceView(viewYaw * Mathf.Deg2Rad); At(cardT, 1.8f, "skon", () => Skates(true)); }
+                    else if (card.StartsWith("ROLLER SKATES")) { viewYaw = Mathf.MoveTowards(viewYaw, 75f, 60f * Dt); P.FaceView(viewYaw * Mathf.Deg2Rad); At(cardT, 1.8f, "skon", () => Skates(true)); }
                     else if (card.StartsWith("ROLL!")) { if (cardT > 1f) PlayerDuck.DebugWalk = Fwd(viewYaw * Mathf.Deg2Rad); }
                     else if (card.StartsWith("BOOST")) { PlayerDuck.DebugWalk = Fwd((viewYaw + 180f) * Mathf.Deg2Rad); if (cardT > 1.5f) PlayerSkates.DebugBoost = 1f; }
                     else { PlayerSkates.DebugBoost = null; if (card.StartsWith("DRIFT")) Stop(); }
