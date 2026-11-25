@@ -161,3 +161,10 @@ the headset over Link, and a push to `main`.
 - Profile with the Unity Profiler (Play mode over Link) and the Meta Quest Link performance HUD.
 </content>
 </invoke>
+
+## Progress
+
+M0 to M8 are done (Link test, being the duck, the house, the flock, toys and the bag, skates, games and emotes,
+mirror and garage, Windows build). Additions on the way: a lived-in, cluttered house with physics toys and a toy
+train, an illustrated first-run tutorial, and a third-person view. The optional sensors view from the web garage
+is not ported.

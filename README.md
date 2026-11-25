@@ -12,18 +12,35 @@
 
 ## Status
 
-Being ported from the browser version ([play it here](https://r1chi33333.github.io/microduck-lab-preview/)).
-The plan and milestones are in [docs/PORTING_PLAN.md](docs/PORTING_PLAN.md).
+All milestones of the port are in: the house, the flock, toys and the toy bag, roller skates, the laser,
+football, the house race, emotes, swapping ducks, third person, the mirror, the garage and a first-run tutorial.
+The browser version is [here](https://r1chi33333.github.io/microduck-lab-preview/); the plan is in
+[docs/PORTING_PLAN.md](docs/PORTING_PLAN.md).
 
 ## Platform
 
 - Unity 6000.6.7f1, Universal Render Pipeline, OpenXR
 - Windows PC, Meta Quest Pro over Quest Link / Air Link
 
-## Playing (once there's a build)
+## Playing
 
 1. Connect the Quest Pro with Quest Link and set Meta Horizon Link as the active OpenXR runtime.
-2. Open the project in Unity 6000.6.7f1 and press Play, or run the Windows build from `Builds/`.
+2. Run `Builds/Windows/MicroduckLabVR.exe` (make it with **Microduck > Build Windows**), or open the project
+   in Unity 6000.6.7f1 and press Play in `Assets/MicroduckVR/Scenes/House.unity`.
+
+| Control | What it does |
+|---|---|
+| Left stick | Walk towards where you look (on skates: steer) |
+| Right stick | Snap turn; in third person it aims your head (click: view behind you) |
+| Right trigger | Open the beak; let go next to a toy to grab it, squeeze again to drop |
+| A | Chirp |
+| B | Roller skates on / off (left grip: drift, left trigger: boost) |
+| X | Dance |
+| Y | Toy bag: toys, bin, help, credits, football, race, swap duck, view, emotes |
+| Right grip | Laser dot for the ducks to chase |
+| Left stick click | First / third person |
+
+On the desktop without a headset: WASD walk, Q/E turn, Space beak, C chirp, K skates, Tab bag, L laser, V view.
 
 ## Credits and licence
 
