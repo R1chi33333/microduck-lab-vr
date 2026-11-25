@@ -193,7 +193,7 @@ namespace MicroduckVR.EditorTools
             var tm = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
             var layers = tm.FindProperty("layers");
             void Set(int i, string n) { var p = layers.GetArrayElementAtIndex(i); if (p.stringValue != n) p.stringValue = n; }
-            Set(DuckSetup.LayerWorld, "World"); Set(DuckSetup.LayerDuck, "Duck"); Set(DuckSetup.LayerToy, "Toy"); Set(DuckSetup.LayerPlayerHead, "PlayerHead");
+            Set(DuckSetup.LayerWorld, "World"); Set(DuckSetup.LayerDuck, "Duck"); Set(DuckSetup.LayerToy, "Toy"); Set(DuckSetup.LayerPlayerHead, "PlayerHead"); Set(DuckSetup.LayerProp, "Prop");
             tm.ApplyModifiedProperties();
         }
     }

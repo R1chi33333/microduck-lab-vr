@@ -148,6 +148,40 @@ namespace MicroduckVR.Comic
             return mesh;
         }
 
+        /// <summary>Flat ring (annulus) of the given height, centred on the origin, axis = local y. Mug handles, rails, wheel tyres, pitch circles.</summary>
+        public static Mesh Ring(float rOuter, float rInner, float height, int sides = 24)
+        {
+            string key = $"ring {rOuter:F4},{rInner:F4},{height:F4},{sides}";
+            if (cache.TryGetValue(key, out var cached) && cached != null) return cached;
+            var v = new List<Vector3>(); var n = new List<Vector3>(); var t = new List<int>();
+            float y0 = -height / 2f, y1 = height / 2f;
+            void Wall(float r, float sgn)
+            {
+                int b = v.Count;
+                for (int i = 0; i <= sides; i++)
+                {
+                    float a = i / (float)sides * Mathf.PI * 2f; var d = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                    v.Add(d * r + Vector3.up * y0); n.Add(d * sgn); v.Add(d * r + Vector3.up * y1); n.Add(d * sgn);
+                }
+                for (int i = 0; i < sides; i++) { int q = b + i * 2; AddTri(t, v, n, q, q + 1, q + 2); AddTri(t, v, n, q + 2, q + 1, q + 3); }
+            }
+            void Cap(float y, Vector3 nn)
+            {
+                int b = v.Count;
+                for (int i = 0; i <= sides; i++)
+                {
+                    float a = i / (float)sides * Mathf.PI * 2f; var d = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                    v.Add(d * rInner + Vector3.up * y); n.Add(nn); v.Add(d * rOuter + Vector3.up * y); n.Add(nn);
+                }
+                for (int i = 0; i < sides; i++) { int q = b + i * 2; AddTri(t, v, n, q, q + 1, q + 2); AddTri(t, v, n, q + 2, q + 1, q + 3); }
+            }
+            Wall(rOuter, 1f); Wall(rInner, -1f); Cap(y1, Vector3.up); Cap(y0, Vector3.down);
+            var mesh = new Mesh { name = "ComicRing " + key };
+            mesh.SetVertices(v); mesh.SetNormals(n); mesh.SetTriangles(t, 0); mesh.RecalculateBounds();
+            cache[key] = mesh;
+            return mesh;
+        }
+
         /// <summary>Adds a triangle wound so its face normal agrees with the vertices' intended normal (Unity: clockwise = front).</summary>
         static void AddTri(List<int> t, List<Vector3> v, List<Vector3> n, int a, int b, int c)
         {
