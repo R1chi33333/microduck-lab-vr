@@ -8,12 +8,12 @@ namespace MicroduckVR.Player
 {
     /// <summary>
     /// The player IS this duck. The HMD drives the duck's gaze; the left stick walks (relative to where
-    /// you look) and the procedural legs step; snap turn on the right stick; right trigger opens the beak,
+    /// you look) and the procedural legs step; smooth or snap turn on the right stick; right trigger opens the beak,
     /// letting go on a toy grabs it, squeezing again drops it.
     ///
     /// Comfort: the camera is NOT attached to the head bones. It rides a "virtual eye" above the duck's
-    /// ground point at a fixed eye height, with damped vertical motion, and keeps a small slice of your
-    /// real head movement for parallax. Bows, nods, bobbing and falls never move the view.
+    /// ground point at a fixed eye height, with damped vertical motion; real head movement adds on top,
+    /// scaled down with the world, for natural parallax. Bows, nods, bobbing and falls never move the view.
     /// The XR Origin is scaled down (default 0.15) so the stereo baseline shrinks and the house reads giant.
     /// </summary>
     [DefaultExecutionOrder(10)]
@@ -27,7 +27,9 @@ namespace MicroduckVR.Player
 
         [Header("Feel")]
         [Range(0.08f, 0.3f)] public float worldScale = 0.15f;     // XR Origin scale: smaller = bigger world
-        [Range(0f, 0.6f)] public float headParallax = 0.25f;       // share of your real head motion kept
+        public enum TurnMode { Smooth, Snap }
+        public TurnMode turnMode = TurnMode.Smooth;
+        public float smoothTurnDegPerSec = 110f;
         public float snapDegrees = 30f;
         public float speedScale = 1f;
         public float bodyFollowDeg = 55f;                          // body turns to face where you look past this
@@ -40,7 +42,7 @@ namespace MicroduckVR.Player
         float yaw, yawRate, eyeHeight, eyeY, eyeYVel, vy;
         Vector3 vel, headBaseline;
         bool turnLatched;
-        float originYaw;
+        float originYaw, turnVel;
         Grabbable held;
         bool beakWasOpen;
         float chirpT;
@@ -77,16 +79,26 @@ namespace MicroduckVR.Player
         {
             float dt = Mathf.Min(Time.deltaTime, 1f / 30f);
 
-            // ---- snap turn (pivot the view around the eye)
+            // ---- turning: smooth (default) or snap; the view pivots around the eye
             float tx = input.Turn.ReadValue<Vector2>().x;
-            if (!turnLatched && Mathf.Abs(tx) > 0.7f)
+            if (turnMode == TurnMode.Smooth)
             {
-                turnLatched = true;
-                float d = Mathf.Sign(tx) * snapDegrees;
+                float wantTurn = Mathf.Abs(tx) > 0.2f ? Mathf.Sign(tx) * Mathf.InverseLerp(0.2f, 1f, Mathf.Abs(tx)) * smoothTurnDegPerSec : 0f;
+                turnVel = Mathf.MoveTowards(turnVel, wantTurn, smoothTurnDegPerSec * 4f * dt);   // eased start and stop
+                float d = turnVel * dt;
                 originYaw += d; yaw += d * Mathf.Deg2Rad;
-                if (vignette != null) vignette.Pulse(0.35f);
             }
-            else if (Mathf.Abs(tx) < 0.3f) turnLatched = false;
+            else
+            {
+                if (!turnLatched && Mathf.Abs(tx) > 0.7f)
+                {
+                    turnLatched = true;
+                    float d = Mathf.Sign(tx) * snapDegrees;
+                    originYaw += d; yaw += d * Mathf.Deg2Rad;
+                    if (vignette != null) vignette.Pulse(0.35f);
+                }
+                else if (Mathf.Abs(tx) < 0.3f) turnLatched = false;
+            }
 
             // ---- walk, relative to where the player looks
             Vector2 stick = input.Move.ReadValue<Vector2>();
@@ -152,7 +164,7 @@ namespace MicroduckVR.Player
             }
 
             if (vignette != null)
-                vignette.Target = vignetteStrength * Mathf.Clamp01(realVel.magnitude / Gait.MaxSpeed * 0.8f + Mathf.Abs(yawRate) * 0.25f);
+                vignette.Target = vignetteStrength * Mathf.Clamp01(realVel.magnitude / Gait.MaxSpeed * 0.8f + Mathf.Abs(yawRate) * 0.25f + Mathf.Abs(turnVel) / smoothTurnDegPerSec * 0.6f);
         }
 
         void LateUpdate()
@@ -170,11 +182,12 @@ namespace MicroduckVR.Player
             if (Mathf.Abs(target - eyeY) > 0.3f) { eyeY = target; eyeYVel = 0f; }
 
             Vector3 eye = new Vector3(mover.transform.position.x, eyeY, mover.transform.position.z);
-            // keep a slice of real head motion as parallax, drifting back to centre over a second or so
+            // Only a slowly drifting baseline of the head position goes into the origin. The tracked pose
+            // itself (applied by the TrackedPoseDriver right before rendering) stays untouched on top of it,
+            // so head motion is never a frame late: no judder when turning the head.
             Vector3 headLocal = cam.transform.localPosition;
-            headBaseline = Vector3.Lerp(headBaseline, headLocal, 1f - Mathf.Exp(-dt / 1.2f));
-            Vector3 offsetLocal = headBaseline + (headLocal - headBaseline) * (1f - headParallax);
-            xrOrigin.position = eye - xrOrigin.rotation * (offsetLocal * worldScale);
+            headBaseline = Vector3.Lerp(headBaseline, headLocal, 1f - Mathf.Exp(-dt / 1.5f));
+            xrOrigin.position = eye - xrOrigin.rotation * (headBaseline * worldScale);
         }
     }
 }
