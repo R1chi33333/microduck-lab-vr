@@ -64,6 +64,22 @@ namespace MicroduckVR.EditorTools
             }
         }
 
+        /// <summary>Play mode only: first-person view from the player's eye, plus an overview of the room.</summary>
+        [MenuItem("Microduck/Debug/Capture Play Views")]
+        public static void PlayViews()
+        {
+            if (!Application.isPlaying) { Debug.Log("[Microduck] PlayViews needs Play mode"); return; }
+            var pd = Object.FindFirstObjectByType<MicroduckVR.Player.PlayerDuck>();
+            if (pd == null || pd.cam == null) { Debug.Log("[Microduck] no PlayerDuck"); return; }
+            var t = pd.cam.transform;
+            string stamp = System.DateTime.Now.ToString("HHmmss");
+            Shoot("fp_" + stamp, t.position, t.position + t.forward, 1280, 960, 90f, pd.cam.cullingMask);
+            Shoot("fp_down_" + stamp, t.position, t.position + t.forward * 0.6f + Vector3.down * 0.5f, 1280, 960, 90f, pd.cam.cullingMask);
+            Shoot("overview_" + stamp, new Vector3(2.3f, 1.9f, 2.2f), new Vector3(0f, 0.1f, 0.2f), 1280, 800, 60f);
+            var b = pd.Body;
+            Debug.Log($"[Microduck] play views {stamp}: eye={t.position.ToString("F3")} duck={b.transform.position.ToString("F3")} yaw={b.Yaw:F2} originScale={pd.xrOrigin.localScale.x:F2} fps={1f / Time.smoothDeltaTime:F0} xr={UnityEngine.XR.XRSettings.isDeviceActive}");
+        }
+
         public static DuckBody SpawnDuck(Vector3 pos, float yaw)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RigImporter.GlbPath);
@@ -77,12 +93,12 @@ namespace MicroduckVR.EditorTools
             return body;
         }
 
-        public static void Shoot(string name, Vector3 from, Vector3 lookAt, int w = 960, int h = 720, float fov = 40f)
+        public static void Shoot(string name, Vector3 from, Vector3 lookAt, int w = 960, int h = 720, float fov = 40f, int cullingMask = ~0)
         {
             Directory.CreateDirectory(ShotDir);
             var go = new GameObject("ShotCam");
             var cam = go.AddComponent<Camera>();
-            cam.fieldOfView = fov; cam.nearClipPlane = 0.005f; cam.farClipPlane = 50f;
+            cam.fieldOfView = fov; cam.nearClipPlane = 0.005f; cam.farClipPlane = 50f; cam.cullingMask = cullingMask;
             cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = new Color(1f, 0.97f, 0.91f);
             go.transform.position = from; go.transform.LookAt(lookAt);
             var rt = new RenderTexture(w, h, 24) { antiAliasing = 4 };
