@@ -1,5 +1,6 @@
 using System.IO;
 using MicroduckVR.Duck;
+using MicroduckVR.Audio;
 using MicroduckVR.Flock;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -28,7 +29,8 @@ namespace MicroduckVR.EditorTools
 
             var rigPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(RigImporter.GlbPath);
             var map = AssetDatabase.LoadAssetAtPath<DuckJointMap>(RigImporter.JointMapPath);
-            SceneBuilderM1.MakePlayer(new Vector3(-0.2f, 0f, 1.5f), 180f, rigPrefab, map);
+            var player = SceneBuilderM1.MakePlayer(new Vector3(-0.2f, 0f, 1.5f), 180f, rigPrefab, map);
+            var pa = player.gameObject.AddComponent<DuckAudio>(); pa.seed = 3; pa.idleChirps = false;
 
             // the flock: two in the living room, one in each other room (web spawn points, X mirrored)
             var flock = new (string room, Vector3 pos, float yaw)[]
@@ -43,11 +45,15 @@ namespace MicroduckVR.EditorTools
                 var (room, pos, yaw) = flock[i];
                 var d = SceneBuilderM1.MakeDuck("Duck " + (i + 1) + " (" + room + ")", pos, yaw, rigPrefab, map, false);
                 d.GetComponent<DuckSetup>().skin = skins[i];
-                var w = d.AddComponent<WanderDuck>();
-                w.seed = 11 + i * 7;
-                var r = HouseBuilder.RoomRects[room];
-                w.boundsMin = new Vector2(r.x, r.y); w.boundsMax = new Vector2(r.z, r.w);
+                var brain = d.AddComponent<DuckBrain>();
+                brain.seed = 11 + i * 7; brain.index = i;
+                d.AddComponent<DuckAudio>().seed = 11 + i * 7;
             }
+
+            // thought bubbles over the flock
+            var tb = new GameObject("Thought Bubbles").AddComponent<ThoughtBubbles>();
+            tb.font = AssetDatabase.LoadAssetAtPath<Font>("Assets/MicroduckVR/Fonts/Bangers-Regular.ttf");
+            tb.viewer = player.cam;
 
             // toys: some on the living floor, some in the kitchen and bedroom (X mirrored from the web props list)
             SceneBuilderM1.MakeToy("Foam cube", PrimitiveType.Cube, new Vector3(-0.1f, 0.012f, 1.25f), Vector3.one * 0.022f, new Color(1f, 0.79f, 0.16f));

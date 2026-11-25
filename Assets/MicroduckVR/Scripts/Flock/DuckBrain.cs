@@ -1,0 +1,244 @@
+using System;
+using System.Collections.Generic;
+using MicroduckVR.Duck;
+using MicroduckVR.Player;
+using MicroduckVR.World;
+using UnityEngine;
+
+namespace MicroduckVR.Flock
+{
+    /// <summary>
+    /// The AI duck's brain (port of agent.js think / _pick / _steerAvoid / _route): follow the player,
+    /// roam to another room through the doorways, wander, fetch a toy (walk up, bow, bite, carry, drop),
+    /// sit, idle with emotes. Boids-style spacing and a whisker probe keep ducks apart and off ledges.
+    /// Publishes its intent (state + context) for the thought bubbles and fires events (got, drop, bed...).
+    /// </summary>
+    [DefaultExecutionOrder(10)]
+    [RequireComponent(typeof(DuckSetup))]
+    public class DuckBrain : MonoBehaviour
+    {
+        public static readonly List<DuckBrain> All = new List<DuckBrain>();
+        public int seed = 1;
+        public int index;
+
+        public string State { get; private set; } = "idle";
+        public string Context { get; private set; } = "";        // room name, toy label...
+        public event Action<DuckBrain, string, string> OnEvent;  // (duck, kind, context)
+        public DuckBody Body => body;
+        public Vector3 Pos => mover != null ? mover.transform.position : transform.position;
+        public float Speed { get; private set; }
+        public string Surface { get; private set; } = "wood";
+
+        DuckBody body; CharacterController mover;
+        System.Random rng;
+        float t, dur, yaw, yawRate, vy, stuckT, bedT, boing;
+        Vector3 vel, lastPos;
+        Vector3? target;
+        List<Vector3> route; int ri; float best, routeStuck;
+        // toy task
+        Grabbable toy, held; float taskT; string taskPhase;
+
+        float R(float a = 0f, float b = 1f) => a + (float)rng.NextDouble() * (b - a);
+
+        void OnEnable() { All.Add(this); }
+        void OnDisable() { All.Remove(this); }
+
+        void Start()
+        {
+            var s = GetComponent<DuckSetup>(); body = s.Body; mover = s.Mover;
+            rng = new System.Random(seed); yaw = body.Yaw; lastPos = Pos;
+            Pick(null); t = R(0f, dur * 0.6f);
+        }
+
+        // ------------------------------------------------------------------ decisions
+        void Pick(string force)
+        {
+            float r = R();
+            t = 0f; target = null; route = null; body.SitTarget = false;
+            if (held == null) { toy = null; taskPhase = null; body.ReachState.weight = 0f; body.JawTarget = 0f; }
+            State = force ?? (r < 0.3f ? "follow" : r < 0.42f ? "roam" : r < 0.66f ? "wander" : r < 0.8f ? "toy" : r < 0.9f ? "sit" : "idle");
+            if (State == "follow" && PlayerDuck.Instance == null) State = "wander";
+            dur = State switch { "roam" => 40f, "follow" => R(8f, 16f), "wander" => R(7f, 13f), "toy" => 14f, "sit" => R(3f, 6f), _ => R(1.5f, 3.5f) };
+            Context = "";
+            if (State == "idle" && R() < 0.5f) body.PlayEmote(new[] { "nod", "look", "dance", "shake" }[rng.Next(4)]);
+        }
+
+        (float v, float w) Think(float dt)
+        {
+            if (body.Fallen) return (0f, 0f);
+            t += dt;
+            if (held != null || toy != null) return ToyTask(dt);
+            if (t > dur) Pick(null);
+            switch (State)
+            {
+                case "follow":
+                {
+                    var L = PlayerDuck.Instance;
+                    if (L == null) { Pick("wander"); break; }
+                    int slot = index % 5;
+                    Vector3 lf = GltfSpace.Forward(L.Body.Yaw);
+                    Vector3 back = -lf * (0.22f + 0.13f * (slot / 2));
+                    Vector3 side = new Vector3(lf.z, 0f, -lf.x) * ((slot % 2 == 1 ? 1f : -1f) * (0.1f + 0.02f * slot));
+                    Vector3 goal = L.Body.Pos + back + side;
+                    float d = Flat(goal - Pos).magnitude;
+                    if (d < 0.04f && L.Speed < 0.02f) return (0f, Mathf.Clamp(Wrap(L.Body.Yaw - yaw) * 3f, -1.2f, 1.2f));
+                    return SteerAvoid(goal, Gait.MaxSpeed * Mathf.Clamp(d / 0.25f, 0.4f, 1f), 0.03f);
+                }
+                case "roam":
+                {
+                    if (route == null)
+                    {
+                        var rooms = new List<string>(HouseLayout.Spawns.Keys);
+                        string here = HouseLayout.RoomAt(Pos);
+                        rooms.Remove(here);
+                        string to = rooms[rng.Next(rooms.Count)];
+                        var sp = HouseLayout.Spawns[to]; var dest = sp[rng.Next(sp.Length)];
+                        route = HouseLayout.Route(Pos, dest); ri = 0; best = 99f; routeStuck = 0f;
+                        Context = HouseLayout.RoomName[to];
+                    }
+                    if (ri >= route.Count) { route = null; Pick("idle"); break; }
+                    var tgt = route[ri];
+                    float dd = Flat(tgt - Pos).magnitude;
+                    if (dd < 0.12f) { ri++; best = 99f; if (ri >= route.Count) { route = null; Pick("idle"); } break; }
+                    if (dd < best - 0.02f) { best = dd; routeStuck = 0f; } else if ((routeStuck += dt) > 4f) { route = null; Pick("wander"); break; }
+                    return SteerAvoid(tgt, Gait.MaxSpeed * 0.85f, 0.03f);
+                }
+                case "wander":
+                {
+                    if (!target.HasValue || Flat(target.Value - Pos).magnitude < 0.04f)
+                    {
+                        if (target.HasValue)
+                        {
+                            State = "idle"; t = 0f; dur = R(1f, 3f);
+                            if (R() < 0.3f) body.PlayEmote(new[] { "look", "nod", "dance" }[rng.Next(3)]);
+                            break;
+                        }
+                        target = HouseLayout.RandomSpot(Pos, 0.6f, rng);
+                    }
+                    return SteerAvoid(target.Value, Gait.MaxSpeed * 0.7f, 0.03f);
+                }
+                case "toy":
+                {
+                    Grabbable bestToy = null; float bd = 0.7f;
+                    foreach (var g in Grabbable.All)
+                    {
+                        if (g.IsHeld) continue;
+                        Vector3 gp = g.transform.position;
+                        float d = Flat(gp - Pos).magnitude;
+                        if (d < bd && Mathf.Abs(gp.y - Pos.y) < 0.05f) { bd = d; bestToy = g; }
+                    }
+                    if (bestToy == null) { Pick("wander"); break; }
+                    toy = bestToy; taskPhase = "approach"; taskT = 0f; Context = toy.label;
+                    return (0f, 0f);
+                }
+                case "sit":
+                    if (!body.SitTarget && t < 0.2f) body.SitTarget = true;
+                    if (t > dur - 0.5f) body.SitTarget = false;
+                    return (0f, 0f);
+            }
+            return (0f, 0f);
+        }
+
+        (float v, float w) ToyTask(float dt)
+        {
+            taskT += dt;
+            if (held != null)
+            {
+                // carry it around for a bit, then put it down
+                if (taskPhase == "carry")
+                {
+                    if (!target.HasValue || Flat(target.Value - Pos).magnitude < 0.05f) target = HouseLayout.RandomSpot(Pos, 0.5f, rng);
+                    if (taskT > 4.5f) { taskPhase = "drop"; taskT = 0f; }
+                    return SteerAvoid(target.Value, Gait.MaxSpeed * 0.6f, 0.03f);
+                }
+                if (taskPhase == "drop")
+                {
+                    body.JawStop = 0f; body.JawTarget = 0.5f;
+                    if (taskT > 0.25f)
+                    {
+                        held.Release(Vector3.zero); OnEvent?.Invoke(this, "drop", held.label); held = null; body.JawTarget = 0f;
+                        Pick(R() < 0.5f ? "idle" : "wander");
+                    }
+                    return (0f, 0f);
+                }
+            }
+            if (toy == null || toy.IsHeld || taskT > 10f) { toy = null; body.ReachState.weight = 0f; body.JawTarget = 0f; Pick("wander"); return (0f, 0f); }
+            Vector3 tp = toy.transform.position;
+            Vector3 to = Flat(tp - Pos); float dist = to.magnitude;
+            if (taskPhase == "approach")
+            {
+                // stand ~8 cm short of the toy, facing it
+                if (dist > 0.1f) return SteerAvoid(tp - to.normalized * 0.08f, Gait.MaxSpeed * 0.6f, 0.02f);
+                float err = Wrap(Mathf.Atan2(to.x, to.z) - yaw);
+                if (Mathf.Abs(err) > 0.12f) return (0f, Mathf.Clamp(err * 3f, -1.5f, 1.5f));
+                taskPhase = "reach"; taskT = 0f;
+            }
+            if (taskPhase == "reach")
+            {
+                body.ReachState.target = tp; body.ReachState.weight = 1f; body.JawTarget = 0.5f;
+                if (Vector3.Distance(body.BeakGap(), tp) < 0.03f && taskT > 0.5f)
+                {
+                    if (toy.TryHold(this)) { held = toy; toy = null; body.JawTarget = 0f; body.JawStop = 0.12f; body.ReachState.weight = 0f; taskPhase = "carry"; taskT = 0f; target = null; OnEvent?.Invoke(this, "got", held.label); }
+                }
+                else if (taskT > 3f) { taskPhase = "approach"; taskT = 0f; body.ReachState.weight = 0f; }
+                return (0f, 0f);
+            }
+            return (0f, 0f);
+        }
+
+        /// <summary>Steer to a goal with separation from other ducks (and the player) and a whisker probe for ledges and furniture.</summary>
+        (float v, float w) SteerAvoid(Vector3 goal, float speed, float tol)
+        {
+            Vector3 to = Flat(goal - Pos); float dist = to.magnitude;
+            if (dist < tol) return (0f, 0f);
+            to /= dist;
+            Vector3 sep = Vector3.zero;
+            void Push(Vector3 other) { var d = Flat(Pos - other); float L = d.magnitude; if (L < 0.19f && L > 1e-4f) sep += d / L * ((0.19f - L) / 0.19f); }
+            foreach (var o in All) if (o != this) Push(o.Pos);
+            if (PlayerDuck.Instance != null) Push(PlayerDuck.Instance.Body.Pos);
+            Vector3 dir = to + sep * 1.6f;
+            // whisker: a step up or a drop ahead, or furniture in the way -> bend around it
+            Vector3 pr = dir.normalized;
+            Vector3 probe = Pos + pr * 0.12f;
+            float gy = WorldQueries.GroundNear(probe.x, probe.z, Pos.y + 0.06f);
+            bool blocked = Physics.Raycast(Pos + Vector3.up * 0.08f, pr, 0.14f, WorldQueries.WorldMask, QueryTriggerInteraction.Ignore);
+            if (gy > Pos.y + 0.03f || gy < Pos.y - 0.03f || blocked) dir = Quaternion.AngleAxis((index % 2 == 1 ? 0.9f : -0.9f) * Mathf.Rad2Deg, Vector3.up) * dir;
+            float desired = Mathf.Atan2(dir.x, dir.z), err = Wrap(desired - yaw);
+            float w = Mathf.Clamp(err * 4f, -Gait.MaxYawRate, Gait.MaxYawRate);
+            float v = speed * Mathf.Clamp01(1f - Mathf.Abs(err) / 1.1f) * Mathf.Clamp(dist / 0.1f, 0.3f, 1f);
+            return (v, w);
+        }
+
+        // ------------------------------------------------------------------ per frame
+        void Update()
+        {
+            float dt = Mathf.Min(Time.deltaTime, 1f / 30f);
+            var (v, w) = Think(dt);
+            // surface: slippery tiles, slow water, bouncy bed
+            var surf = SurfaceTag.At(Pos);
+            string st = surf != null ? surf.type : "wood";
+            if (st != Surface) { var prevS = Surface; Surface = st; if (st == "bed" || st == "water" || st == "tile") OnEvent?.Invoke(this, st, ""); if (st == "bed") boing = 1f; }
+            if (st == "water") v *= 0.55f;
+            float grip = surf != null ? Mathf.Lerp(0.18f, 1f, Mathf.InverseLerp(0.15f, 0.7f, surf.Friction)) : 1f;
+            yaw += w * dt;
+            Vector3 want = GltfSpace.Forward(yaw) * v;
+            vel = Vector3.MoveTowards(vel, want, 0.6f * grip * dt + (grip > 0.9f ? 1f : 0f) * dt);
+            vy = mover.isGrounded ? -0.05f : vy - 9.81f * dt;
+            mover.Move(new Vector3(vel.x, vy, vel.z) * dt);
+            Vector3 p = Pos;
+            Speed = Flat(p - lastPos).magnitude / Mathf.Max(dt, 1e-4f);
+            // unstick: wanting to move but not moving
+            if (v > 0.05f && Speed < 0.01f) { stuckT += dt; if (stuckT > 1.2f) { stuckT = 0f; target = HouseLayout.RandomSpot(p, 0.3f, rng); } } else stuckT = 0f;
+            lastPos = p;
+            yawRate = w;
+            bedT = st == "bed" ? bedT + dt : 0f;
+            boing *= Mathf.Exp(-2.2f * dt);
+            body.Hop = st == "bed" ? Mathf.Abs(Mathf.Sin(bedT * 13f + seed)) * (0.011f * Mathf.Clamp01(Speed / 0.02f) + 0.026f * boing) : Mathf.MoveTowards(body.Hop, 0f, 0.2f * dt);
+            body.Step(dt, p, yaw, Flat(vel), yawRate);
+            if (held != null) { held.transform.position = body.BeakGap(); held.transform.rotation = Quaternion.LookRotation(body.HeadDir(), Vector3.up); }
+        }
+
+        static Vector3 Flat(Vector3 v) => new Vector3(v.x, 0f, v.z);
+        static float Wrap(float a) => Mathf.Atan2(Mathf.Sin(a), Mathf.Cos(a));
+    }
+}

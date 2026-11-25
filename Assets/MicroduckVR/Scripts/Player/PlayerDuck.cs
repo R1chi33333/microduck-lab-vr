@@ -47,11 +47,14 @@ namespace MicroduckVR.Player
         bool beakWasOpen;
         float chirpT, bedT;
 
+        public static PlayerDuck Instance { get; private set; }
+        public float Speed => new Vector2(vel.x, vel.z).magnitude;
         public DuckBody Body => body;
         public Grabbable Held => held;
 
         void Start()
         {
+            Instance = this;
             setup = GetComponent<DuckSetup>();
             body = setup.Body; mover = setup.Mover;
             input = new DuckInput(); input.Enable();
@@ -64,7 +67,7 @@ namespace MicroduckVR.Player
             TrySetDeviceOrigin();
         }
 
-        void OnDestroy() { input?.Disable(); }
+        void OnDestroy() { input?.Disable(); if (Instance == this) Instance = null; }
 
         static void TrySetDeviceOrigin()
         {
@@ -152,7 +155,7 @@ namespace MicroduckVR.Player
             }
             beakWasOpen = open;
 
-            if (input.Chirp.WasPressedThisFrame()) chirpT = 0.25f;
+            if (input.Chirp.WasPressedThisFrame()) { chirpT = 0.25f; var au = GetComponent<MicroduckVR.Audio.DuckAudio>(); if (au != null) au.Chirp(); }
             if (chirpT > 0f) { chirpT -= dt; if (held == null) body.JawTarget = Mathf.Max(body.JawTarget, 0.55f); }
             if (input.Emote.WasPressedThisFrame()) body.PlayEmote("dance");
 
