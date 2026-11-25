@@ -39,6 +39,8 @@ namespace MicroduckVR.Player
         DuckBody body;
         CharacterController mover;
         DuckInput input;
+        PlayerSkates skates;
+        public PlayerSkates Skates => skates;
         float yaw, yawRate, eyeHeight, eyeY, eyeYVel, vy;
         Vector3 vel, headBaseline;
         bool turnLatched;
@@ -60,6 +62,8 @@ namespace MicroduckVR.Player
             setup = GetComponent<DuckSetup>();
             body = setup.Body; mover = setup.Mover;
             input = new DuckInput(); input.Enable();
+            skates = GetComponent<PlayerSkates>(); if (skates == null) skates = gameObject.AddComponent<PlayerSkates>();
+            skates.Init(body);
             yaw = body.Yaw;
             eyeHeight = body.EyePosition.y - body.transform.position.y;
             eyeY = body.transform.position.y + eyeHeight;
@@ -124,22 +128,36 @@ namespace MicroduckVR.Player
             if (DebugWalk.HasValue) want = DebugWalk.Value.normalized * Gait.MaxSpeed * speedScale;
             var surf = SurfaceTag.At(mover.transform.position);
             string surfType = surf != null ? surf.type : "wood";
-            if (surfType == "water") want *= 0.55f;
-            float grip = surf != null ? Mathf.Lerp(0.18f, 1f, Mathf.InverseLerp(0.15f, 0.7f, surf.Friction)) : 1f;   // tiles: you slide
-            vel = Vector3.MoveTowards(vel, want, 0.9f * grip * dt);   // gentle acceleration (comfort)
-
-            // ---- body facing: walk direction, or follow the head when it looks far away
             float prevYaw = yaw;
-            float targetYaw = yaw;
-            if (vel.magnitude > 0.02f) targetYaw = Mathf.Atan2(vel.x, vel.z);
-            else if (Mathf.Abs(Mathf.DeltaAngle(yaw * Mathf.Rad2Deg, hy * Mathf.Rad2Deg)) > bodyFollowDeg) targetYaw = hy;
-            float dy = Mathf.DeltaAngle(yaw * Mathf.Rad2Deg, targetYaw * Mathf.Rad2Deg) * Mathf.Deg2Rad;
-            yaw += Mathf.Clamp(dy, -Gait.MaxYawRate * 1.4f * dt, Gait.MaxYawRate * 1.4f * dt);
+            Vector3 before = mover.transform.position;
+            if (skates.On)
+            {
+                // on skates: the stick says where to go (relative to the head); the skates carve towards it
+                Vector3 stickW = fwd * stick.y + right * stick.x;
+                if (stickW.magnitude > 1f) stickW.Normalize();
+                if (DebugWalk.HasValue) stickW = DebugWalk.Value.normalized;
+                vel = skates.Step(dt, stickW, surf != null ? surf.Friction : 0.7f, mover.transform.position, ref yaw);
+            }
+            else
+            {
+                if (surfType == "water") want *= 0.55f;
+                float grip = surf != null ? Mathf.Lerp(0.18f, 1f, Mathf.InverseLerp(0.15f, 0.7f, surf.Friction)) : 1f;   // tiles: you slide
+                vel = Vector3.MoveTowards(vel, want, 0.9f * grip * dt);   // gentle acceleration (comfort)
+
+                // ---- body facing: walk direction, or follow the head when it looks far away
+                float targetYaw = yaw;
+                if (vel.magnitude > 0.02f) targetYaw = Mathf.Atan2(vel.x, vel.z);
+                else if (Mathf.Abs(Mathf.DeltaAngle(yaw * Mathf.Rad2Deg, hy * Mathf.Rad2Deg)) > bodyFollowDeg) targetYaw = hy;
+                float dy = Mathf.DeltaAngle(yaw * Mathf.Rad2Deg, targetYaw * Mathf.Rad2Deg) * Mathf.Deg2Rad;
+                yaw += Mathf.Clamp(dy, -Gait.MaxYawRate * 1.4f * dt, Gait.MaxYawRate * 1.4f * dt);
+            }
             yawRate = dt > 0f ? Mathf.DeltaAngle(prevYaw * Mathf.Rad2Deg, yaw * Mathf.Rad2Deg) * Mathf.Deg2Rad / dt : 0f;
 
             // ---- move the capsule
             vy = mover.isGrounded ? -0.05f : vy - 9.81f * dt;
-            mover.Move(new Vector3(vel.x, vy, vel.z) * dt);
+            Vector3 step = new Vector3(vel.x, vy, vel.z) * dt;
+            mover.Move(step);
+            if (skates.On) skates.AfterMove(step, mover.transform.position - before);
             Vector3 p = mover.transform.position;
             Vector3 realVel = new Vector3(vel.x, 0f, vel.z);
 
@@ -170,6 +188,7 @@ namespace MicroduckVR.Player
             if (!BagMenu.Busy && input.Chirp.WasPressedThisFrame()) { chirpT = 0.25f; var au = GetComponent<MicroduckVR.Audio.DuckAudio>(); if (au != null) au.Chirp(); }
             if (chirpT > 0f) { chirpT -= dt; if (held == null) body.JawTarget = Mathf.Max(body.JawTarget, 0.55f); }
             if (input.Emote.WasPressedThisFrame()) body.PlayEmote("dance");
+            if (!BagMenu.Busy && input.Skates.WasPressedThisFrame()) skates.Toggle(yaw, vel);
 
             // ---- gaze from the head
             if (cam != null) body.LookAt.gazeDir = cam.transform.forward;
@@ -186,7 +205,7 @@ namespace MicroduckVR.Player
             }
 
             if (vignette != null)
-                vignette.Target = vignetteStrength * Mathf.Clamp01(realVel.magnitude / Gait.MaxSpeed * 0.8f + Mathf.Abs(yawRate) * 0.25f + Mathf.Abs(turnVel) / smoothTurnDegPerSec * 0.6f);
+                vignette.Target = vignetteStrength * Mathf.Clamp01(realVel.magnitude / (skates.On ? skates.TopSpeed : Gait.MaxSpeed) * (skates.On ? 0.9f : 0.8f) + (skates.Drifting ? 0.25f : 0f) + (skates.On ? 0f : Mathf.Abs(yawRate) * 0.25f) + Mathf.Abs(turnVel) / smoothTurnDegPerSec * 0.6f);
         }
 
         void LateUpdate()
@@ -197,7 +216,7 @@ namespace MicroduckVR.Player
             xrOrigin.rotation = Quaternion.Euler(0f, originYaw, 0f);
 
             // eye height follows the ground point with a damped spring: no bob, no bow, no fall tumble
-            float target = mover.transform.position.y + eyeHeight + body.Hop * 0.3f;
+            float target = mover.transform.position.y + eyeHeight + body.Hop * 0.3f + body.SkateW * SkatePair.Height;
             float k = 60f, c = 2f * Mathf.Sqrt(k);
             eyeYVel += (k * (target - eyeY) - c * eyeYVel) * dt;
             eyeY += eyeYVel * dt;

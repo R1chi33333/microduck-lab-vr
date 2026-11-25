@@ -110,7 +110,11 @@ namespace MicroduckVR.EditorTools
             go.transform.position = from; go.transform.LookAt(lookAt);
             var rt = new RenderTexture(w, h, 24) { antiAliasing = 4 };
             cam.targetTexture = rt;
+            // the comfort vignette is a quad in front of the player's eyes: keep it out of debug shots
+            var vig = new System.Collections.Generic.List<Renderer>();
+            foreach (var v in Object.FindObjectsByType<MicroduckVR.Player.ComfortVignette>(FindObjectsSortMode.None)) { var r = v.GetComponent<Renderer>(); if (r != null && r.enabled) { r.enabled = false; vig.Add(r); } }
             cam.Render();
+            foreach (var r in vig) r.enabled = true;
             RenderTexture.active = rt;
             var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
             tex.ReadPixels(new Rect(0, 0, w, h), 0, 0); tex.Apply();
