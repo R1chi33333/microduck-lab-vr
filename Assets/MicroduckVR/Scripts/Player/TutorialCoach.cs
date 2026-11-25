@@ -31,6 +31,14 @@ namespace MicroduckVR.Player
 
         static TutorialCoach inst;
         public static void ShowHelp() { if (inst != null) inst.OpenHelp(); }
+        public static void ShowSheet(string title, string text, string footer) { if (inst != null) { inst.index = -1; inst.help = true; inst.Show(title, text, footer); inst.diagram.Highlight(); } }
+        public const string CreditsText =
+            "MICRODUCK LAB VR\nMADE BY YUTONG JIN\n\n" +
+            "ROBOT: POLLEN ROBOTICS\n(CC BY-NC-SA 4.0)\n" +
+            "FONT: BANGERS, VERNON ADAMS (OFL)\n" +
+            "BUILT WITH UNITY, URP, OPENXR\n" +
+            "HOUSE, TOYS AND SOUNDS: MADE IN CODE\n" +
+            "THANKS FOR PLAYING!";
         public static void Restart() { if (inst != null) inst.Begin(); }
         public static void HideAll() { if (inst != null) { inst.help = false; inst.index = -1; inst.card.gameObject.SetActive(false); } }
 

@@ -99,11 +99,39 @@ namespace MicroduckVR.Comic
         };
 
         /// <summary>Recolour a duck rig with toon materials for a skin; hide small hardware and internals.</summary>
+        /// <summary>Customised duck: a base colourway, then optional colourways per part (head, body, legs, feet).</summary>
+        public static readonly (string part, Regex re)[] PaintParts =
+        {
+            ("head", new Regex("^(shell_head|shell_beak)", RegexOptions.IgnoreCase)),
+            ("body", new Regex("^shell_body", RegexOptions.IgnoreCase)),
+            ("legs", new Regex("^leg_", RegexOptions.IgnoreCase)),
+            ("feet", new Regex("^foot_", RegexOptions.IgnoreCase)),
+        };
+
+        public static void ApplyCustom(Transform rig, string baseSkin, IDictionary<string, string> parts)
+        {
+            ApplyToDuck(rig, baseSkin);
+            if (parts == null) return;
+            foreach (var r in rig.GetComponentsInChildren<Renderer>(true))
+            {
+                if (!r.enabled || IsAccessory(r)) continue;
+                string n = MeshName(r);
+                foreach (var (part, re) in PaintParts)
+                {
+                    if (!re.IsMatch(n) || !parts.TryGetValue(part, out var sid) || string.IsNullOrEmpty(sid) || !Skins.TryGetValue(sid, out var skin)) continue;
+                    string kind = KindFor(n);
+                    var mat = ToonMaterial(ColorFor(kind, skin), sid + ":" + kind, kind == "shell" ? 0.35f : 0f);
+                    var mats = r.sharedMaterials; for (int i = 0; i < mats.Length; i++) mats[i] = mat; r.sharedMaterials = mats;
+                }
+            }
+        }
+
         public static void ApplyToDuck(Transform rig, string skinId = "cream")
         {
             var skin = Skins.TryGetValue(skinId, out var sk) ? sk : Skins["cream"];
             foreach (var r in rig.GetComponentsInChildren<Renderer>(true))
             {
+                if (IsAccessory(r)) continue;
                 string n = MeshName(r);
                 if (Hide.IsMatch(n) || Internal.IsMatch(n)) { r.enabled = false; continue; }
                 string kind = KindFor(n);
@@ -117,7 +145,10 @@ namespace MicroduckVR.Comic
         }
 
         // glTFast puts a mesh on the node's GameObject, or on "primitive" children when a mesh has several
-        static string MeshName(Renderer r)
+        /// <summary>Things worn on the duck (skates) keep their own colours.</summary>
+        static bool IsAccessory(Renderer r) { for (var t = r.transform; t != null; t = t.parent) if (t.name.StartsWith("Skate ")) return true; return false; }
+
+        public static string MeshName(Renderer r)
         {
             var t = r.transform;
             while (t != null && (t.name.StartsWith("primitive") || t.name.StartsWith("Primitive"))) t = t.parent;

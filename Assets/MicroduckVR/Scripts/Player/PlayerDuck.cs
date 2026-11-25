@@ -76,6 +76,11 @@ namespace MicroduckVR.Player
             var lp = GetComponent<MicroduckVR.Games.LaserPointer>(); if (lp == null) lp = gameObject.AddComponent<MicroduckVR.Games.LaserPointer>();
             lp.cam = cam; var bag = GetComponent<BagMenu>(); if (bag != null) lp.rightHand = bag.rightHand;
             if (GetComponent<TutorialCoach>() == null) gameObject.AddComponent<TutorialCoach>().cam = cam;
+            // the bedroom mirror and the garage (they also put your saved look on)
+            TMPro.TMP_FontAsset fa = null;
+            if (bag != null && bag.font != null) fa = TMPro.TMP_FontAsset.CreateFontAsset(bag.font);
+            MicroduckVR.Custom.MirrorStation.Ensure(this, fa);
+            MicroduckVR.Custom.Garage.Ensure(this, fa);
             yaw = body.Yaw;
             eyeHeight = body.EyePosition.y - body.transform.position.y;
             eyeY = body.transform.position.y + eyeHeight;
@@ -224,7 +229,7 @@ namespace MicroduckVR.Player
             Walked += realVel.magnitude * dt;
 
             // ---- beak and grabbing
-            float trig = BagMenu.Busy ? 0f : input.Beak.ReadValue<float>();   // the trigger works the bag while it is open
+            float trig = BagMenu.Busy || MicroduckVR.Custom.WorldPanel.AnyAimed ? 0f : input.Beak.ReadValue<float>();   // the trigger works the bag while it is open
             bool open = trig > 0.35f;
             if (held == null)
             {

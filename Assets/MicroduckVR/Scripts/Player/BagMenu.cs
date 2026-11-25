@@ -82,7 +82,7 @@ namespace MicroduckVR.Player
             panel = new GameObject("Bag panel").transform;
             var entries = ToyCatalog.All;
             // toys, then the bin and help, then one row of actions (games, emotes, swap, view)
-            int nA = entries.Count + 2, rowsA = Mathf.CeilToInt(nA / (float)Cols), n = nA + Actions.Length;
+            int nA = entries.Count + 3, rowsA = Mathf.CeilToInt(nA / (float)Cols), n = nA + Actions.Length;
             float w = Cols * (Tile + Gap) + Gap * 2f, h = (rowsA + 1) * (Tile + Gap) + 0.008f + 0.05f;
             var slab = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(w, h, 0.006f), new ComicMesh.Style { radius = 0.01f, segments = 3 }), Unlit("#FFFFFF", "bag_slab"));
             slab.localPosition = new Vector3(0f, -0.004f, 0.004f);
@@ -110,7 +110,7 @@ namespace MicroduckVR.Player
                 }
                 else if (i > entries.Count)
                 {
-                    var (akind, alabel, acol) = i == entries.Count + 1 ? ("help", "HELP", "#FFF2B0") : Actions[i - nA];
+                    var (akind, alabel, acol) = i == entries.Count + 1 ? ("help", "HELP", "#FFF2B0") : i == entries.Count + 2 ? ("credits", "CREDITS", "#E6E9F0") : Actions[i - nA];
                     kind = akind;
                     tile.GetComponent<MeshRenderer>().sharedMaterial = Unlit(acol, "bag_action_" + akind);
                     model = new GameObject("label").transform; model.SetParent(tile, false); model.localPosition = new Vector3(0f, 0f, -0.0035f);
@@ -187,7 +187,7 @@ namespace MicroduckVR.Player
             ("dance", "DANCE", "#FFE2EC"), ("nod", "NOD", "#FFE2EC"), ("shake", "SHAKE", "#FFE2EC"), ("look", "LOOK", "#FFE2EC"),
         };
         readonly Dictionary<Transform, Material> baseMat = new Dictionary<Transform, Material>();
-        static bool IsAction(string k) { if (k == "help") return true; foreach (var a in Actions) if (a.kind == k) return true; return false; }
+        static bool IsAction(string k) { if (k == "help" || k == "credits") return true; foreach (var a in Actions) if (a.kind == k) return true; return false; }
 
         void DoAction(string kind)
         {
@@ -200,6 +200,7 @@ namespace MicroduckVR.Player
                 case "swap": if (pd != null) pd.SwapWithNearest(); break;
                 case "view": if (pd != null) pd.SetThirdPerson(!pd.thirdPerson); break;
                 case "help": TutorialCoach.ShowHelp(); break;
+                case "credits": TutorialCoach.ShowSheet("CREDITS", TutorialCoach.CreditsText, "Y TO CLOSE"); break;
                 default: if (pd != null) pd.Body.PlayEmote(kind); break;
             }
         }
@@ -310,6 +311,7 @@ namespace MicroduckVR.Player
             if (kind == "swap") return "BECOME THE DUCK IN FRONT";
             if (kind == "view") return "FIRST / THIRD PERSON";
             if (kind == "help") return "HOW TO PLAY";
+            if (kind == "credits") return "WHO MADE THIS";
             if (IsAction(kind)) return kind.ToUpperInvariant() + "!";
             var e = ToyCatalog.Get(kind);
             return $"{e.label.ToUpperInvariant()}  {Count(kind)}/{e.cap}" + (e.graspable ? "" : "  (KICK IT!)");

@@ -31,17 +31,7 @@ namespace MicroduckVR.Audio
             rng = new System.Random(seed * 7919 + 13);
             var s = GetComponent<DuckSetup>(); body = s.Body; brain = GetComponent<DuckBrain>();
             voice = MakeSource("voice", 1f); steps = MakeSource("steps", 0.5f);
-            // timbre from the seed
-            float basePitch = 700f + (float)rng.NextDouble() * 500f;      // Hz
-            float buzz = 0.15f + (float)rng.NextDouble() * 0.35f;          // second harmonic
-            float vib = 6f + (float)rng.NextDouble() * 10f;
-            chirps = new[]
-            {
-                Chirp(basePitch, 1.35f, 0.12f, buzz, vib),
-                Chirp(basePitch * 1.1f, 0.8f, 0.10f, buzz, vib),
-                Chirp(basePitch * 0.95f, 1.6f, 0.16f, buzz, vib),
-            };
-            hello = Concat(Chirp(basePitch, 1.4f, 0.09f, buzz, vib), Silence(0.05f), Chirp(basePitch * 1.2f, 1.5f, 0.11f, buzz, vib));
+            BuildVoice();
             boing = Chirp(260f, 2.2f, 0.18f, 0.05f, 0f);
             splash = Noise(0.22f, 0.6f, 0.9f);
             stepWood = Noise(0.035f, 0.35f, 0.5f); stepTile = Noise(0.03f, 0.85f, 0.55f);
@@ -54,6 +44,30 @@ namespace MicroduckVR.Audio
                 else if (kind == "water") voice.PlayOneShot(splash, volume * 0.8f);
             };
             nextIdle = Time.time + 3f + (float)rng.NextDouble() * 10f;
+        }
+
+        /// <summary>Give the duck another voice (customising): rebuilds the chirps from a new seed.</summary>
+        public void SetVoice(int newSeed)
+        {
+            seed = newSeed;
+            if (voice == null) return;          // not started yet: Start builds it from the seed
+            BuildVoice(); Hello();
+        }
+
+        void BuildVoice()
+        {
+            var vr = new System.Random(seed * 7919 + 13);
+            // timbre from the seed
+            float basePitch = 700f + (float)vr.NextDouble() * 500f;      // Hz
+            float buzz = 0.15f + (float)vr.NextDouble() * 0.35f;          // second harmonic
+            float vib = 6f + (float)vr.NextDouble() * 10f;
+            chirps = new[]
+            {
+                Chirp(basePitch, 1.35f, 0.12f, buzz, vib),
+                Chirp(basePitch * 1.1f, 0.8f, 0.10f, buzz, vib),
+                Chirp(basePitch * 0.95f, 1.6f, 0.16f, buzz, vib),
+            };
+            hello = Concat(Chirp(basePitch, 1.4f, 0.09f, buzz, vib), Silence(0.05f), Chirp(basePitch * 1.2f, 1.5f, 0.11f, buzz, vib));
         }
 
         AudioSource MakeSource(string n, float vol)
