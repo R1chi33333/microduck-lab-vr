@@ -172,7 +172,8 @@ namespace MicroduckVR.Player
             if (blocked < 0.5f) return;
             if (sv.magnitude > CrashSpeed * comfortScale && !body.Fallen)
             {
-                body.StartTip(new Vector3(intended.x, 0f, intended.z).normalized);
+                // bounce off and sit down backwards: tipping forwards put the duck's head through the wall it had just hit
+                body.StartTip(-new Vector3(intended.x, 0f, intended.z).normalized);
                 sfxSrc.PlayOneShot(clackClip, 1f); EmitSparks(10, 1f);
                 sv = Vector3.zero;
             }

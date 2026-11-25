@@ -28,11 +28,14 @@ Material:
     - _DepthThreshold: 0.07
     - _FadeEnd: 70
     - _FadeStart: 16
+    - _FarThin: 0
     - _GrassInkFar: 3
     - _GrassInkNear: 1
     - _GrassStep: 0.012
     - _LineWidth: 2.7
     - _NormalThreshold: 0.58
+    - _ThinFar: 2.2
+    - _ThinNear: 0.7
     m_Colors:
     - _InkColor: {r: 0.10599997, g: 0.07799999, b: 0.18799996, a: 1}
   m_BuildTextureStacks: []

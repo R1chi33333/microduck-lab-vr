@@ -28,6 +28,8 @@ namespace MicroduckVR.Player
             public float max = float.PositiveInfinity;                           // only the talking cards time out
             public Func<bool> lost; public int back = 1;                         // precondition gone: step back
             public Vector2 offset;                                               // card shift (right, up) so it never covers what you work on
+            public Func<Vector3?> focus;                                         // ... measured from the direction of this thing, not of your nose:
+                                                                                 // a card beside the mirror must not run away when you turn to read it
         }
         static readonly (int, float)[] Press = { (0, 0.55f), (1, 0.45f) }, Hold = { (0, 0.4f), (1, 1.3f) }, LetGo = { (1, 1.0f), (0, 0.8f) },
                                        LeftRight = { (0, 0.35f), (1, 0.5f), (0, 0.35f), (2, 0.5f) };
@@ -51,6 +53,8 @@ namespace MicroduckVR.Player
             "THANKS FOR PLAYING!";
         public static string DebugTitle => inst != null && inst.card.gameObject.activeSelf ? inst.title.text + " [" + inst.counter.text + "]" : "(none)";
         public static void Restart() { if (inst != null) inst.Begin(); }
+        /// <summary>Editor checks: jump straight to a step.</summary>
+        public static void DebugGo(int i) { if (inst != null) { inst.help = false; inst.Go(i); } }
         public static void HideAll() { if (inst != null) { inst.help = false; inst.index = -1; inst.card.gameObject.SetActive(false); } }
 
         void Start()
@@ -67,9 +71,9 @@ namespace MicroduckVR.Player
             // Every step waits until you have really done the thing; nothing moves on by itself except the talking cards.
             steps = new[]
             {
-                new Step { title = "HI, LITTLE DUCK!", body = "YOU ARE THE DUCK.\nFIRST, LET'S MAKE YOU LOOK\nTHE WAY YOU LIKE!", max = 4.5f, done = () => stepT > 4f, enter = ToMirror, offset = new Vector2(-0.12f, -0.02f) },
-                new Step { pic = "trigger_r", seq = Press, title = "MAKE YOUR DUCK", offset = new Vector2(-0.12f, -0.02f),
-                           body = "THAT'S YOU IN THE MIRROR!\nPOINT YOUR RIGHT HAND AT THE BOARD,\nPULL THE TRIGGER TO PICK COLOURS.\nPRESS DONE! WHEN YOU LIKE IT.",
+                new Step { title = "HI, LITTLE DUCK!", body = "YOU ARE THE DUCK.\nFIRST, LET'S MAKE YOU LOOK\nTHE WAY YOU LIKE!", max = 4.5f, done = () => stepT > 4f, enter = ToMirror, offset = new Vector2(-0.25f, -0.02f), focus = AtMirror },
+                new Step { pic = "trigger_r", seq = Press, title = "MAKE YOUR DUCK", offset = new Vector2(-0.25f, -0.02f), focus = AtMirror,
+                           body = "THAT'S YOU IN THE MIRROR!\nPOINT YOUR RIGHT HAND AT THE BOARD ON YOUR RIGHT,\nPULL THE TRIGGER TO PICK COLOURS.\nPRESS DONE! WHEN YOU LIKE IT.",
                            done = () => MicroduckVR.Custom.MirrorStation.SaveCount > save0 },
                 new Step { pic = "stick_l", seq = Hold, title = "WADDLE", body = "PUSH THE LEFT STICK TO WALK\nTOWARDS WHERE YOU LOOK.\nGO FOR A LITTLE WALK!", done = () => pd.Walked - walk0 > 0.4f },
                 new Step { pic = "stick_r", seq = LeftRight, title = "TURN", body = "FLICK THE RIGHT STICK\nLEFT OR RIGHT TO TURN ROUND.", done = () => pd.SnapCount > snap0 || pd.Turned - turn0 > 40f },
@@ -79,17 +83,17 @@ namespace MicroduckVR.Player
                 new Step { pic = "trigger_r", seq = Press, title = "DROP IT", body = "CARRY IT WHEREVER YOU LIKE.\nSQUEEZE THE TRIGGER AGAIN TO DROP IT.", done = () => pd.DropCount > drop0, lost = () => pd.Held == null && pd.DropCount == drop0 },
                 new Step { pic = "a", seq = Press, title = "QUACK!", body = "PRESS A TO QUACK.", done = () => pd.ChirpCount > chirp0 },
                 new Step { pic = "y", seq = Press, title = "TOY BAG", body = "PRESS Y TO OPEN YOUR TOY BAG.", done = () => bag != null && bag.State == BagMenu.Mode.Panel },
-                new Step { pic = "trigger_r", seq = Press, title = "PICK A TOY", body = "POINT YOUR RIGHT HAND AT A TOY\nAND PULL THE TRIGGER.", offset = new Vector2(-0.31f, 0.04f),
+                new Step { pic = "trigger_r", seq = Press, title = "PICK A TOY", body = "POINT YOUR RIGHT HAND AT A TOY\nAND PULL THE TRIGGER.", offset = new Vector2(-0.32f, 0.03f), focus = () => bag != null && bag.State == BagMenu.Mode.Panel ? bag.PanelPos : (Vector3?)null,
                            done = () => bag.State == BagMenu.Mode.Place, lost = () => bag.State == BagMenu.Mode.Closed },
-                new Step { pic = "trigger_r", seq = Press, title = "PUT IT DOWN", body = "POINT AT THE FLOOR NEAR YOU.\nPULL THE TRIGGER TO DROP THE TOY THERE.",
+                new Step { pic = "trigger_r", seq = Press, title = "PUT IT DOWN", offset = new Vector2(0f, 0.15f), body = "POINT AT THE FLOOR NEAR YOU.\nPULL THE TRIGGER TO DROP THE TOY THERE.",
                            done = () => bag.PlacedCount > placed0, lost = () => bag.State != BagMenu.Mode.Place, back = 2 },
                 new Step { pic = "y", seq = Press, title = "CLOSE THE BAG", body = "PRESS Y TO PUT THE BAG AWAY.", done = () => !BagMenu.Busy },
                 new Step { pic = "b", seq = Press, title = "ROLLER SKATES", body = "PRESS B TO PUT ON YOUR SKATES.", done = () => sk != null && sk.On },
-                new Step { pic = "stick_l", seq = Hold, title = "ROLL!", body = "PUSH THE LEFT STICK TO SKATE.\nTAKE A LAP!", done = () => pd.Walked - walk0 > 1.5f, lost = () => !sk.On },
-                new Step { pic = "trigger_l", seq = Press, title = "BOOST", body = "PULL THE LEFT TRIGGER\nFOR A BURST OF SPEED.", done = () => sk.Boosting, lost = () => !sk.On, back = 2 },
-                new Step { pic = "drift", seq = Hold, title = "DRIFT", body = "GET SOME SPEED, THEN HOLD THE LEFT GRIP\nAND STEER TO SLIDE ROUND A CORNER.", done = () => sk.Drifting, lost = () => !sk.On, back = 3, max = 75f },
+                new Step { pic = "stick_l", seq = Hold, title = "ROLL!", offset = new Vector2(0f, 0.15f), body = "PUSH THE LEFT STICK TO SKATE.\nTAKE A LAP!", done = () => pd.Walked - walk0 > 1.5f, lost = () => !sk.On },
+                new Step { pic = "trigger_l", seq = Press, title = "BOOST", offset = new Vector2(0f, 0.15f), body = "PULL THE LEFT TRIGGER\nFOR A BURST OF SPEED.", done = () => sk.Boosting, lost = () => !sk.On, back = 2 },
+                new Step { pic = "drift", seq = Hold, title = "DRIFT", offset = new Vector2(0f, 0.15f), body = "GET SOME SPEED, THEN HOLD THE LEFT GRIP\nAND STEER TO SLIDE ROUND A CORNER.", done = () => sk.Drifting, lost = () => !sk.On, back = 3, max = 75f },
                 new Step { pic = "b", seq = Press, title = "SKATES OFF", body = "PRESS B AGAIN TO TAKE THEM OFF.", done = () => !sk.On },
-                new Step { pic = "grip_r", seq = Hold, title = "LASER DOT", body = "HOLD THE RIGHT GRIP AND POINT AT THE FLOOR.\nTHE OTHER DUCKS LOVE CHASING THE DOT!",
+                new Step { pic = "grip_r", seq = Hold, title = "LASER DOT", offset = new Vector2(0f, 0.15f), body = "HOLD THE RIGHT GRIP AND POINT AT THE FLOOR.\nTHE OTHER DUCKS LOVE CHASING THE DOT!",
                            done = () => { heldT = LaserPointer.Active ? heldT + Time.deltaTime : heldT; return heldT > 1.5f; } },
                 new Step { pic = "click_l", seq = Press, title = "SEE YOURSELF", body = "CLICK THE LEFT STICK IN\nTO STEP OUT AND SEE YOUR DUCK.", done = () => pd.thirdPerson },
                 new Step { pic = "stick_r", seq = LeftRight, title = "LOOK AROUND", body = "OUT HERE THE RIGHT STICK\nMOVES YOUR DUCK'S HEAD. TRY IT!", done = () => pd.HeadAimAmount > 0.6f, lost = () => !pd.thirdPerson },
@@ -119,7 +123,7 @@ namespace MicroduckVR.Player
             snap0 = pd.SnapCount; chirp0 = pd.ChirpCount; grab0 = pd.GrabCount; drop0 = pd.DropCount; view0 = pd.ViewToggles; walk0 = pd.Walked; turn0 = pd.Turned;
             save0 = MicroduckVR.Custom.MirrorStation.SaveCount; placed0 = bag != null ? bag.PlacedCount : 0;
             steps[index].enter?.Invoke();
-            Show(steps[index].title, steps[index].body, $"{index + 1}/{steps.Length}");
+            Show(steps[index].title, steps[index].body.Replace('\n', ' '), $"{index + 1}/{steps.Length}");
             animI = 0; animT = 0f; SetFrame();
         }
 
@@ -143,6 +147,8 @@ namespace MicroduckVR.Player
                  "Y TO CLOSE");
         }
 
+        static Vector3? AtMirror() => MicroduckVR.Custom.MirrorStation.Centre;
+
         void SpawnPracticeToy()
         {
             // a rubber duck right in front, so there is something to grab
@@ -157,27 +163,39 @@ namespace MicroduckVR.Player
         {
             root = new GameObject("Tutorial").transform;
             card = new GameObject("card").transform; card.SetParent(root, false);
-            var slab = new GameObject("slab"); slab.transform.SetParent(card, false); slab.transform.localPosition = new Vector3(0f, 0f, 0.003f);
-            slab.AddComponent<MeshFilter>().sharedMesh = ComicMesh.RoundedBox(new Vector3(0.3f, 0.115f, 0.004f), new ComicMesh.Style { radius = 0.01f, segments = 3 });
-            var m = ComicLook.ToonMaterial(ComicLook.Hex("#FFFDF5"), "tutorial_card"); m.SetFloat("_Unlit", 1f);
-            var mr = slab.AddComponent<MeshRenderer>(); mr.sharedMaterial = m; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            var tab = new GameObject("tab"); tab.transform.SetParent(card, false); tab.transform.localPosition = new Vector3(0f, 0.047f, 0.002f);
-            tab.AddComponent<MeshFilter>().sharedMesh = ComicMesh.RoundedBox(new Vector3(0.3f, 0.02f, 0.004f), new ComicMesh.Style { radius = 0.006f, segments = 3 });
-            var tm = ComicLook.ToonMaterial(ComicLook.Hex("#FFC43D"), "tutorial_tab"); tm.SetFloat("_Unlit", 1f);
-            var tr = tab.AddComponent<MeshRenderer>(); tr.sharedMaterial = tm; tr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            title = Text(0.2f, new Vector3(0f, 0.047f, -0.001f), ComicLook.Hex("#FF5D73"));
-            body = Text(0.055f, new Vector3(0.055f, -0.008f, -0.001f), ComicLook.Ink);
-            body.textWrappingMode = TextWrappingModes.Normal; body.enableAutoSizing = true; body.fontSizeMin = 0.04f; body.fontSizeMax = 0.11f; body.rectTransform.sizeDelta = new Vector2(0.18f, 0.08f); body.lineSpacing = -10f;
-            counter = Text(0.08f, new Vector3(0.125f, -0.05f, -0.001f), ComicLook.Hex("#97A0AE"));
-            counter.alignment = TextAlignmentOptions.Right; counter.rectTransform.sizeDelta = new Vector2(0.05f, 0.01f);
+            // two backs: the step card (picture + a few words) and the taller sheet (help, credits). Everything on them is
+            // sized to read in the headset from where the card floats: body text about 1.5 degrees of letter height or more
+            slabStep = Back(new Vector2(CW, CH)); slabSheet = Back(new Vector2(SW, SH));
+            title = Text(0.24f, Vector3.zero, ComicLook.Ink);
+            body = Text(12f, Vector3.zero, ComicLook.Ink);
+            body.textWrappingMode = TextWrappingModes.Normal; body.enableAutoSizing = true; body.fontSizeMin = 8f; body.fontSizeMax = 17f; body.lineSpacing = -8f;
+            counter = Text(0.1f, Vector3.zero, ComicLook.Hex("#5B6472"));
+            counter.alignment = TextAlignmentOptions.Right; counter.rectTransform.sizeDelta = new Vector2(0.14f, 0.014f);
             // the comic drawing of the two controllers, the buttons to press painted yellow and ringed in red
             var pq = GameObject.CreatePrimitive(PrimitiveType.Quad); Destroy(pq.GetComponent<Collider>());
             pq.name = "controllers"; picture = pq.transform; picture.SetParent(card, false);
-            picture.localPosition = new Vector3(-0.072f, -0.008f, -0.002f); picture.localScale = new Vector3(0.135f, 0.0886f, 1f);
+            picture.localPosition = new Vector3(-0.09f, -0.016f, -0.002f); picture.localScale = new Vector3(0.15f, 0.0984f, 1f);
             picMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
             picMat.SetFloat("_AlphaClip", 1f); picMat.SetFloat("_Cutoff", 0.4f); picMat.EnableKeyword("_ALPHATEST_ON");
             var pmr = pq.GetComponent<MeshRenderer>(); pmr.sharedMaterial = picMat; pmr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             card.gameObject.SetActive(false);
+        }
+
+        const float CW = 0.34f, CH = 0.15f, SW = 0.37f, SH = 0.27f, TabH = 0.032f;
+        Transform slabStep, slabSheet;
+        /// <summary>A cream card with a yellow title strip across its top.</summary>
+        Transform Back(Vector2 size)
+        {
+            var g = new GameObject("back").transform; g.SetParent(card, false);
+            var slab = new GameObject("slab"); slab.transform.SetParent(g, false); slab.transform.localPosition = new Vector3(0f, 0f, 0.003f);
+            slab.AddComponent<MeshFilter>().sharedMesh = ComicMesh.RoundedBox(new Vector3(size.x, size.y, 0.004f), new ComicMesh.Style { radius = 0.01f, segments = 3 });
+            var m = ComicLook.ToonMaterial(ComicLook.Hex("#FFFDF5"), "tutorial_card"); m.SetFloat("_Unlit", 1f);
+            var mr = slab.AddComponent<MeshRenderer>(); mr.sharedMaterial = m; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            var tab = new GameObject("tab"); tab.transform.SetParent(g, false); tab.transform.localPosition = new Vector3(0f, size.y / 2f - TabH / 2f, 0.002f);
+            tab.AddComponent<MeshFilter>().sharedMesh = ComicMesh.RoundedBox(new Vector3(size.x, TabH, 0.004f), new ComicMesh.Style { radius = 0.006f, segments = 3 });
+            var tm = ComicLook.ToonMaterial(ComicLook.Hex("#FFC43D"), "tutorial_tab"); tm.SetFloat("_Unlit", 1f);
+            var tr = tab.AddComponent<MeshRenderer>(); tr.sharedMaterial = tm; tr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            return g;
         }
 
         TextMeshPro Text(float size, Vector3 at, Color c)
@@ -201,28 +219,59 @@ namespace MicroduckVR.Player
         void Show(string t, string b, string c)
         {
             title.text = t; body.text = b; counter.text = c;
-            body.fontSizeMax = b.Split('\n').Length > 4 ? 0.075f : 0.11f;
-            // the help sheet uses the whole card for text; steps show the controllers on the left
+            // the help sheet uses a taller card, all of it for text; steps show the controllers on the left
             bool sheet = help;
+            float w = sheet ? SW : CW, h = sheet ? SH : CH;
+            slabStep.gameObject.SetActive(!sheet); slabSheet.gameObject.SetActive(sheet);
             picture.gameObject.SetActive(!sheet);
-            body.transform.localPosition = sheet ? new Vector3(0f, -0.006f, -0.001f) : new Vector3(0.073f, -0.008f, -0.001f);
-            body.rectTransform.sizeDelta = sheet ? new Vector2(0.28f, 0.085f) : new Vector2(0.145f, 0.08f);
+            title.transform.localPosition = new Vector3(0f, h / 2f - TabH / 2f - 0.001f, -0.001f); title.rectTransform.sizeDelta = new Vector2(w - 0.02f, TabH);
+            body.transform.localPosition = sheet ? new Vector3(0f, -TabH / 2f + 0.006f, -0.001f) : new Vector3(0.082f, -0.014f, -0.001f);
+            // TMP's auto-size searches in steps of 0.05 pt, hopeless at these sizes: the body is set at 100x and scaled down
+            body.transform.localScale = Vector3.one * 0.01f;
+            body.rectTransform.sizeDelta = (sheet ? new Vector2(w - 0.03f, h - TabH - 0.04f) : new Vector2(0.16f, h - TabH - 0.022f)) * 100f;
+            body.fontSizeMin = 8f; body.fontSizeMax = sheet ? 20f : 17f;
+            counter.fontSize = sheet ? 0.15f : 0.1f;
+            counter.transform.localPosition = new Vector3(w / 2f - 0.08f, -h / 2f + (sheet ? 0.014f : 0.011f), -0.001f);
             card.gameObject.SetActive(true);
             card.localScale = Vector3.one * 0.3f; holdT = 0f;
             Place(true);
         }
 
+        float cardYaw, fit = 1f; bool yawGlide; int viewSeen = -1;
         void Place(bool snap)
         {
             if (cam == null) return;
+            var eye = cam.transform.position;
             var f = cam.transform.forward; f.y = 0f; if (f.sqrMagnitude < 1e-4f) f = Vector3.forward; f.Normalize();
-            var want = cam.transform.position + f * 0.3f + Vector3.down * 0.07f;
-            // some steps keep the card out of the way of what you are doing (the mirror board, the open toy bag)
-            if (!help && index >= 0 && index < steps.Length) { var o = steps[index].offset; want += Vector3.Cross(Vector3.up, f) * o.x + Vector3.up * o.y; }
-            float angle = Vector3.Angle(root.position - cam.transform.position, f);
-            if (snap || Vector3.Distance(root.position, want) > 0.5f) root.position = want;
-            else if (angle > 30f || Vector3.Distance(root.position, want) > 0.1f) root.position = Vector3.Lerp(root.position, want, 1f - Mathf.Exp(-3f * Time.deltaTime));
-            root.rotation = Quaternion.LookRotation(root.position - cam.transform.position, Vector3.up);
+            Step st = !help && index >= 0 && index < steps.Length ? steps[index] : null;
+            bool anchored = false;
+            if (st != null && st.focus != null)
+            {
+                var fp = st.focus();
+                if (fp.HasValue) { var d = fp.Value - eye; d.y = 0f; if (d.sqrMagnitude > 1e-4f) { f = d.normalized; anchored = true; } }
+            }
+            // The card rides with your eyes, so it is always the same distance away however fast you skate, but it only
+            // turns after you: it stays put while you glance about and swings round once you have turned well away.
+            float yawWant = Mathf.Atan2(f.x, f.z) * Mathf.Rad2Deg;
+            if (snap || anchored || viewSeen != pd.ViewToggles) { cardYaw = yawWant; yawGlide = false; viewSeen = pd.ViewToggles; }
+            else
+            {
+                float d = Mathf.DeltaAngle(cardYaw, yawWant);
+                if (Mathf.Abs(d) > 32f) yawGlide = true;
+                if (yawGlide) { cardYaw = Mathf.LerpAngle(cardYaw, yawWant, 1f - Mathf.Exp(-5f * Time.deltaTime)); if (Mathf.Abs(d) < 2f) yawGlide = false; }
+            }
+            var dir = Quaternion.Euler(0f, cardYaw, 0f) * Vector3.forward;
+            // in third person the duck stands low in the middle of the view: the card sits above it
+            var want = eye + dir * (help ? 0.36f : 0.34f) + Vector3.down * (help ? 0.03f : pd.thirdPerson ? 0f : 0.075f);
+            // some steps keep the card out of the way of what you are doing (the mirror, the open toy bag, the floor ahead)
+            if (st != null) { var o = st.offset; want += Vector3.Cross(Vector3.up, dir) * o.x + Vector3.up * o.y; }
+            // never inside a wall or a piece of furniture: come closer to the eyes instead, and shrink to look the same size
+            var to = want - eye; float dist = to.magnitude; fit = 1f;
+            if (Physics.SphereCast(eye, 0.03f, to / dist, out var hit, dist, MicroduckVR.Duck.WorldQueries.WorldMask, QueryTriggerInteraction.Ignore))
+            { float near = Mathf.Max(0.14f, hit.distance - 0.02f); want = eye + to / dist * near; fit = near / dist; }
+            root.position = want;
+            root.rotation = Quaternion.LookRotation(want - eye, Vector3.up);
+            MicroduckVR.Flock.DuckBrain.ClearView(eye, want);
         }
 
         void LateUpdate()
@@ -232,7 +281,7 @@ namespace MicroduckVR.Player
             if (!card.gameObject.activeSelf) return;
             Place(false);
             holdT += Time.deltaTime;
-            card.localScale = Vector3.one * (holdT < 0.2f ? Mathf.SmoothStep(0.3f, 1f, holdT / 0.2f) : 1f);
+            card.localScale = Vector3.one * (holdT < 0.2f ? Mathf.SmoothStep(0.3f, 1f, holdT / 0.2f) : 1f) * fit;
             if (skipA.WasPressedThisFrame()) { if (help) { help = false; card.gameObject.SetActive(false); } else Finish(); return; }
             if (help) return;
             if (index < 0) return;

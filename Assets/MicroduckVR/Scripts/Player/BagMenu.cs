@@ -26,6 +26,7 @@ namespace MicroduckVR.Player
         public enum Mode { Closed, Panel, Place, Trash }
         public Mode State { get; private set; } = Mode.Closed;
         public int PlacedCount { get; private set; }
+        public Vector3 PanelPos => panel.position;
         public Vector3 TileWorld(string kind) { foreach (var t in tiles) if (t.kind == kind) return t.tile.position; return panel.position; }
         public string Selected { get; private set; }
 
@@ -35,6 +36,8 @@ namespace MicroduckVR.Player
         InputAction menuA, selectA, navA;
         Transform panel; TextMeshPro footer;
         readonly List<(Transform tile, Transform model, string kind)> tiles = new List<(Transform, Transform, string)>();
+        readonly List<Vector2> tileHalf = new List<Vector2>();          // half size of each tile, for aiming
+        const int ACols = 4; const float AH = 0.024f;                   // the word buttons: four wide ones a row, so their labels are big enough to read
         int hover = -1;
         ComicBeam laser;
         GameObject ghost; string ghostKind; Transform ghostRing;
@@ -83,23 +86,28 @@ namespace MicroduckVR.Player
             panel = new GameObject("Bag panel").transform;
             var entries = ToyCatalog.All;
             // toys, then the bin and help, then one row of actions (games, emotes, swap, view)
-            int nA = entries.Count + 3, rowsA = Mathf.CeilToInt(nA / (float)Cols), n = nA + Actions.Length;
-            int rowsB = Mathf.CeilToInt(Actions.Length / (float)Cols);
-            float w = Cols * (Tile + Gap) + Gap * 2f, h = (rowsA + rowsB) * (Tile + Gap) + 0.008f + 0.05f;
+            // toys and the bin as picture tiles; under them the word buttons (games, emotes, ducks, help)
+            int nA = entries.Count + 1, rowsA = Mathf.CeilToInt(nA / (float)Cols), n = nA + Actions.Length;
+            int rowsB = Mathf.CeilToInt(Actions.Length / (float)ACols);
+            float w = Cols * (Tile + Gap) + Gap * 2f, h = rowsA * (Tile + Gap) + 0.008f + rowsB * (AH + Gap) + 0.056f;
+            float aw = (Cols * (Tile + Gap) - Gap - (ACols - 1) * Gap) / ACols;
             var slab = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(w, h, 0.006f), new ComicMesh.Style { radius = 0.01f, segments = 3 }), Unlit("#FFFFFF", "bag_slab"));
             slab.localPosition = new Vector3(0f, -0.004f, 0.004f);
             var tab = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(0.11f, 0.03f, 0.005f), new ComicMesh.Style { radius = 0.008f, segments = 3 }), Unlit("#FFC43D", "bag_tab"));
             tab.localPosition = new Vector3(0f, h / 2f + 0.002f, -0.0015f); tab.localRotation = Quaternion.Euler(0f, 0f, -2f);
             var title = Text(panel, "TOY BAG!", 0.16f, new Vector3(0f, h / 2f + 0.001f, -0.0045f));
             title.color = ComicLook.Ink; title.transform.localRotation = Quaternion.Euler(0f, 0f, -2f);
-            footer = Text(panel, "", 0.075f, new Vector3(0f, -h / 2f + 0.008f, -0.001f));
+            footer = Text(panel, "", 0.13f, new Vector3(0f, -h / 2f + 0.011f, -0.001f)); footer.rectTransform.sizeDelta = new Vector2(w, 0.03f);
             float x0 = -(Cols - 1) * (Tile + Gap) / 2f, y0 = h / 2f - 0.045f;
             for (int i = 0; i < n; i++)
             {
-                int c = i < nA ? i % Cols : (i - nA) % Cols;
-                float yy = i < nA ? y0 - (i / Cols) * (Tile + Gap) : y0 - (rowsA + (i - nA) / Cols) * (Tile + Gap) - 0.008f;
-                var tile = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(Tile, Tile, 0.004f), new ComicMesh.Style { radius = 0.005f, segments = 2 }), tileMat);
-                tile.localPosition = new Vector3(x0 + c * (Tile + Gap), yy, 0f);
+                bool word = i >= nA; int j = i - nA;
+                var size = word ? new Vector2(aw, AH) : new Vector2(Tile, Tile);
+                var at = word ? new Vector2(-(ACols - 1) * (aw + Gap) / 2f + (j % ACols) * (aw + Gap), y0 - rowsA * (Tile + Gap) - 0.008f + (Tile - AH) / 2f - (j / ACols) * (AH + Gap))
+                              : new Vector2(x0 + (i % Cols) * (Tile + Gap), y0 - (i / Cols) * (Tile + Gap));
+                var tile = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(size.x, size.y, 0.004f), new ComicMesh.Style { radius = 0.005f, segments = 2 }), tileMat);
+                tile.localPosition = new Vector3(at.x, at.y, 0f);
+                tileHalf.Add(size / 2f);
                 Transform model; string kind;
                 if (i < entries.Count)
                 {
@@ -112,15 +120,14 @@ namespace MicroduckVR.Player
                     vis.transform.localScale = Vector3.one * s; vis.transform.localPosition = -b.center * s;
                     model.localPosition = new Vector3(0f, 0f, -0.014f); model.localRotation = Quaternion.Euler(-20f, 0f, 0f);
                 }
-                else if (i > entries.Count)
+                else if (word)
                 {
-                    var (akind, alabel, acol) = i == entries.Count + 1 ? ("help", "HELP", "#FFC43D") : i == entries.Count + 2 ? ("credits", "CREDITS", "#8FD35A") : Actions[i - nA];
+                    var (akind, alabel, acol) = Actions[j];
                     kind = akind;
                     tile.GetComponent<MeshRenderer>().sharedMaterial = Unlit(acol, "bag_action_" + akind);
                     model = new GameObject("label").transform; model.SetParent(tile, false); model.localPosition = new Vector3(0f, 0f, -0.0035f);
-                    var lt = Text(model, alabel, alabel.Length > 6 ? 0.08f : 0.11f, Vector3.zero); lt.textWrappingMode = TextWrappingModes.Normal;
-                    if (acol != "#FFC43D" && acol != "#8FD35A") lt.color = ComicLook.Hex("#FFF6E4");
-                    lt.rectTransform.sizeDelta = new Vector2(Tile, Tile);
+                    var lt = Text(model, alabel, alabel.Length > 9 ? 0.125f : 0.15f, Vector3.zero);
+                    lt.rectTransform.sizeDelta = size;
                 }
                 else
                 {
@@ -169,7 +176,11 @@ namespace MicroduckVR.Player
             var eye = cam.transform.position; var f = cam.transform.forward; f.y = 0f;
             if (f.sqrMagnitude < 1e-4f) f = Vector3.forward;
             f.Normalize();
-            panel.position = eye + f * Dist + Vector3.down * 0.03f;
+            var want = eye + f * Dist + Vector3.down * 0.03f;
+            // never inside a wall or a piece of furniture: come closer to the eyes instead, and shrink to look the same size
+            var to = want - eye; float dist = to.magnitude, k = 1f;
+            if (Physics.SphereCast(eye, 0.04f, to / dist, out var hit, dist, WorldQueries.WorldMask, QueryTriggerInteraction.Ignore)) { float near = Mathf.Max(0.16f, hit.distance - 0.02f); want = eye + to / dist * near; k = near / dist; }
+            panel.position = want; panel.localScale = Vector3.one * k;
             panel.rotation = Quaternion.LookRotation(f, Vector3.up);
             panel.gameObject.SetActive(true);
             SetMode(Mode.Panel);
@@ -185,9 +196,10 @@ namespace MicroduckVR.Player
             ("football", "FOOTBALL", "#FF8A3D"), ("race", "RACE", "#7B61FF"), ("swap", "SWAP DUCK", "#1FA6A0"), ("view", "VIEW", "#3A86FF"),
             ("dance", "DANCE", "#FF5D73"), ("nod", "NOD", "#FF5D73"), ("shake", "SHAKE", "#FF5D73"), ("look", "LOOK", "#FF5D73"),
             ("addduck", "ADD DUCK", "#FFC43D"), ("removeduck", "REMOVE DUCK", "#7B61FF"), ("mirror", "MY LOOK", "#FF8A3D"), ("tutorial", "TUTORIAL", "#8FD35A"),
+            ("help", "HELP", "#FFC43D"), ("credits", "CREDITS", "#8FD35A"),
         };
         readonly Dictionary<Transform, Material> baseMat = new Dictionary<Transform, Material>();
-        static bool IsAction(string k) { if (k == "help" || k == "credits") return true; foreach (var a in Actions) if (a.kind == k) return true; return false; }
+        static bool IsAction(string k) { foreach (var a in Actions) if (a.kind == k) return true; return false; }
 
         void DoAction(string kind)
         {
@@ -244,6 +256,7 @@ namespace MicroduckVR.Player
 
             if (State == Mode.Panel)
             {
+                MicroduckVR.Flock.DuckBrain.ClearView(cam.transform.position, panel.position);
                 // spin the previews; hover by laser (or arrow keys on the desktop)
                 foreach (var (_, model, k) in tiles) if (!IsAction(k)) model.localRotation = Quaternion.Euler(-20f, pulse * 40f, 0f);
                 var plane = new Plane(-panel.forward, panel.position);
@@ -255,7 +268,7 @@ namespace MicroduckVR.Player
                     for (int i = 0; i < tiles.Count; i++)
                     {
                         var tp = tiles[i].tile.localPosition;
-                        if (Mathf.Abs(lp.x - tp.x) <= (Tile + Gap) / 2f && Mathf.Abs(lp.y - tp.y) <= (Tile + Gap) / 2f) { h = i; break; }
+                        if (Mathf.Abs(lp.x - tp.x) <= tileHalf[i].x + Gap / 2f && Mathf.Abs(lp.y - tp.y) <= tileHalf[i].y + Gap / 2f) { h = i; break; }
                     }
                 }
                 var nav = navA.ReadValue<Vector2>();
@@ -329,7 +342,7 @@ namespace MicroduckVR.Player
             if (h == hover) return;
             if (hover >= 0) { tiles[hover].tile.GetComponent<MeshRenderer>().sharedMaterial = baseMat[tiles[hover].tile]; tiles[hover].tile.localScale = Vector3.one; }
             hover = h;
-            if (hover >= 0) { tiles[hover].tile.GetComponent<MeshRenderer>().sharedMaterial = tileHover; tiles[hover].tile.localScale = Vector3.one * 1.15f; Play(clickClip, 0.4f); }
+            if (hover >= 0) { tiles[hover].tile.GetComponent<MeshRenderer>().sharedMaterial = tileHover; tiles[hover].tile.localScale = Vector3.one * (tileHalf[hover].x > Tile ? 1.06f : 1.15f); Play(clickClip, 0.4f); }
         }
 
         static int Count(string kind)

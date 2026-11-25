@@ -152,8 +152,8 @@ namespace MicroduckVR.Flock
                 shown++;
                 // pop in, hold, shrink out; always face the viewer (upright, no roll)
                 float s = b.age < 0.18f ? Mathf.SmoothStep(0.2f, 1.12f, b.age / 0.18f) : b.age < 0.3f ? Mathf.Lerp(1.12f, 1f, (b.age - 0.18f) / 0.12f) : b.age > SHOW ? Mathf.Lerp(1f, 0f, (b.age - SHOW) / FADE) : 1f;
-                float distScale = Mathf.Clamp(dist / 0.9f, 1f, 2.6f);      // far bubbles stay readable
-                b.go.transform.position = p + Vector3.up * 0.02f * (distScale - 1f);
+                float distScale = Mathf.Clamp(dist / 0.55f, 0.6f, 6f);    // the same size in your eye near or far: small beside you, readable across the room
+                b.go.transform.position = p + Vector3.up * 0.037f * (distScale - 1f);
                 Vector3 look = p - eye; look.y = 0f;
                 if (look.sqrMagnitude > 1e-6f) b.go.transform.rotation = Quaternion.LookRotation(look.normalized, Vector3.up);
                 b.go.transform.localScale = Vector3.one * s * distScale;

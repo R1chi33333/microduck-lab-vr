@@ -56,7 +56,7 @@ namespace MicroduckVR.Games
                 g.rotation = Quaternion.LookRotation(Flat(nxt - prv).normalized, Vector3.up);
                 var m = i == 0 ? gateStart : gateOff;
                 // a chunky comic arch: fat posts on feet, a banner with a checker strip and the gate number, a thick floor ring
-                float w = r * 0.9f, top = 0.22f;
+                float w = r * 0.9f, top = 0.36f;      // clear of a duck's head (0.27 m)
                 foreach (var sx in new[] { -1f, 1f })
                 {
                     ToyKit.Cyl(g, new Vector3(sx * w, top / 2f, 0f), 0.016f, top, "#FFFFFF", default, 0.013f, 14);
@@ -84,9 +84,27 @@ namespace MicroduckVR.Games
                     if (mr.name != "chk") mr.sharedMaterial = m;
                     mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
                 }
+                // the gate's number, big, on both sides above the banner
+                var font = GameHud.Get().Font;
+                foreach (var fz in new[] { -1f, 1f })
+                {
+                    var ng = new GameObject("chk"); ng.transform.SetParent(g, false);    // "chk": keeps its own material when the gate changes colour
+                    ng.transform.localPosition = new Vector3(0f, top + 0.06f, 0f); ng.transform.localRotation = Quaternion.Euler(0f, fz > 0f ? 180f : 0f, 0f);
+                    var nt = ng.AddComponent<TMPro.TextMeshPro>(); if (font != null) nt.font = font;
+                    nt.text = i == 0 ? "GO" : i.ToString(); nt.fontSize = 0.9f; nt.alignment = TMPro.TextAlignmentOptions.Center; nt.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
+                    nt.color = ComicLook.Ink; nt.rectTransform.sizeDelta = new Vector2(0.3f, 0.1f);
+                }
                 gates.Add((g, m));
             }
+            // a bouncing pointer over the gate to go for next: seen from across a room, over the furniture
+            beacon = new GameObject("Next gate pointer").transform; beacon.SetParent(transform, false);
+            ToyKit.Cyl(beacon, new Vector3(0f, 0.045f, 0f), 0.004f, 0.09f, "#FF5D73", default, 0.05f, 18);
+            ToyKit.Cyl(beacon, new Vector3(0f, 0.115f, 0f), 0.02f, 0.05f, "#FF5D73", default, 0.02f, 14);
+            var bm = Unlit("#FF5D73", "race_beacon");
+            foreach (var mr in beacon.GetComponentsInChildren<MeshRenderer>()) { mr.sharedMaterial = bm; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; }
+            beacon.gameObject.SetActive(false);
         }
+        Transform beacon;
 
         public void StartRace()
         {
@@ -110,7 +128,7 @@ namespace MicroduckVR.Games
             GameHud.Get().Caption("GET READY!");
         }
 
-        public void StopRace() { active = false; frozen = false; foreach (var (g, _) in gates) g.gameObject.SetActive(false); GameHud.Get().Clear(); }
+        public void StopRace() { active = false; frozen = false; foreach (var (g, _) in gates) g.gameObject.SetActive(false); if (beacon != null) beacon.gameObject.SetActive(false); GameHud.Get().Clear(); }
 
         /// <summary>The gate the player's duck should head for next (filming and tests).</summary>
         public Vector3? PlayerTarget() { var pd = PlayerDuck.Instance; return pd != null && prog.TryGetValue(pd, out var P) && !P.done ? Cps[P.next].p : (Vector3?)null; }
@@ -157,7 +175,21 @@ namespace MicroduckVR.Games
                     foreach (var mr in gates[i].g.GetComponentsInChildren<MeshRenderer>()) if (mr.name != "chk") mr.sharedMaterial = mat;
                     gates[i].g.localScale = Vector3.one * (on ? 1f + 0.05f * Mathf.Sin(Time.time * 6f) : 1f);
                 }
-                hud.Caption(me.done ? $"FINISHED {Place(finish.IndexOf(PlayerDuck.Instance) + 1)}  {me.time:0.0}s" : $"LAP {me.lap}/{Laps}   {Position(PlayerDuck.Instance)}/{prog.Count}   {t:0.0}s");
+                hud.Caption(me.done ? $"FINISHED {Place(finish.IndexOf(PlayerDuck.Instance) + 1)}  {me.time:0.0}s"
+                    : $"{(Laps > 1 ? $"LAP {me.lap}/{Laps}   " : "")}GATE {(me.next == 0 ? Cps.Length : me.next)}/{Cps.Length}   {Place(Position(PlayerDuck.Instance))}   {t:0.0}s");
+                // where to go: the pointer over the next gate, and arrows on the HUD when that gate is not in front of you
+                beacon.gameObject.SetActive(!me.done);
+                int turn = 0;
+                if (!me.done)
+                {
+                    var gp = gates[me.next].g.position;
+                    beacon.position = gp + Vector3.up * (0.56f + 0.03f * Mathf.Abs(Mathf.Sin(Time.time * 5f)));
+                    beacon.rotation = Quaternion.Euler(0f, Time.time * 120f, 0f);
+                    var ct = PlayerDuck.Instance.cam.transform;
+                    float ang = Vector3.SignedAngle(Flat(ct.forward), Flat(gp - ct.position), Vector3.up);
+                    if (!frozen && Mathf.Abs(ang) > 32f) turn = ang > 0f ? 1 : -1;
+                }
+                hud.Arrow(turn);
             }
             if (endAt < 0f && (finish.Count >= Mathf.Min(prog.Count, 3) || (PlayerDuck.Instance != null && prog.TryGetValue(PlayerDuck.Instance, out var pm) && pm.done))) endAt = t + 4f;
             if (endAt > 0f && t > endAt) StopRace();

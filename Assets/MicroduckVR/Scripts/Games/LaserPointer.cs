@@ -21,6 +21,8 @@ namespace MicroduckVR.Games
 
         InputAction holdA;
         ComicBeam beam;
+        /// <summary>Filming: only the dot, not the line from the hand (on film it reads as a pole standing on the floor).</summary>
+        public static bool HideBeam;
         float t;
 
         void Start()
@@ -44,7 +46,7 @@ namespace MicroduckVR.Games
             if (DebugPoint.HasValue) { hitOk = Physics.Raycast(DebugPoint.Value + Vector3.up * 0.3f, Vector3.down, out hit, 1f, WorldQueries.WorldMask); from = DebugPoint.Value + Vector3.up * 0.3f; }
             else if (on) hitOk = Physics.Raycast(from, dir, out hit, 6f, WorldQueries.WorldMask | (1 << DuckSetup.LayerProp), QueryTriggerInteraction.Ignore);
             Active = on && hitOk;
-            beam.Show(Active);
+            beam.Show(Active && !HideBeam);
             if (!Active) return;
             Point = hit.point;
             beam.Set(from, hit.point, hit.normal);

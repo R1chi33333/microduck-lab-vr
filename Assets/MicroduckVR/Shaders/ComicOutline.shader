@@ -14,6 +14,9 @@ Shader "Microduck/ComicOutline"
         _GrassInkNear ("Grass clump ink: full until (m)", Float) = 0.9
         _GrassInkFar ("Grass clump ink: gone by (m)", Float) = 2.6
         _GrassStep ("Grass clump depth step (m)", Float) = 0.012
+        _FarThin ("Thinner line on far things (0 off)", Range(0, 0.8)) = 0
+        _ThinNear ("Thinner from (m)", Float) = 0.6
+        _ThinFar ("Thinnest by (m)", Float) = 2.0
     }
     SubShader
     {
@@ -31,7 +34,8 @@ Shader "Microduck/ComicOutline"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
 
             float4 _InkColor;
-            float _LineWidth, _DepthThreshold, _NormalThreshold, _FadeStart, _FadeEnd, _GrassInkNear, _GrassInkFar, _GrassStep;
+            float _LineWidth, _DepthThreshold, _NormalThreshold, _FadeStart, _FadeEnd, _GrassInkNear, _GrassInkFar, _GrassStep, _FarThin, _ThinNear, _ThinFar;
+            float _InkCamScale;      // set while a mirror draws its reflection: the line weight for that picture (0 = as usual)
 
             // a grass tuft's silhouette: the neighbour is something else (another tuft, the soil, an object) and lies behind it
             float TuftEdge(float3 nc, float zc, float3 nn, float zn) { return (zn - zc > _GrassStep && (abs(nn.y - nc.y) + abs(nn.z - nc.z) > 0.012 || dot(nn, nn) >= 0.25)) ? 1.0 : 0.0; }
@@ -44,9 +48,10 @@ Shader "Microduck/ComicOutline"
                 float2 uv = i.texcoord;
                 half4 col = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
                 // the width is in pixels of a 1000 px tall image, so headset eyes and screenshots get the same weight of line
-                float2 px = _LineWidth * max(_ScaledScreenParams.y / 1000.0, 0.6) / _ScaledScreenParams.xy;
-
                 float zc = EyeDepth(uv);
+                // (filming, at several samples a pixel: a finer pen on things further off, so a duck across the room is drawn, not blotted)
+                float2 px = _LineWidth * (_InkCamScale > 0.001 ? _InkCamScale : 1.0) * (1.0 - _FarThin * smoothstep(_ThinNear, _ThinFar, zc)) * max(_ScaledScreenParams.y / 1000.0, 0.6) / _ScaledScreenParams.xy;
+
                 float zl = EyeDepth(uv - float2(px.x, 0)), zr = EyeDepth(uv + float2(px.x, 0));
                 float zd = EyeDepth(uv - float2(0, px.y)), zu = EyeDepth(uv + float2(0, px.y));
 

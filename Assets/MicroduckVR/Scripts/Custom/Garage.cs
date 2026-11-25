@@ -53,31 +53,31 @@ namespace MicroduckVR.Custom
         {
             flash = ComicLook.ToonMaterial(ComicLook.Hex("#FFF1D6"), "garage_flash"); flash.SetFloat("_Unlit", 1f);
             var go = new GameObject("Garage board"); go.transform.SetParent(transform, false);
-            go.transform.position = Turntable + new Vector3(0f, 0.24f, -0.5f);
-            go.transform.rotation = Quaternion.LookRotation(go.transform.position - (Turntable + new Vector3(0f, 0.3f, 0.2f)), Vector3.up);
-            board = go.AddComponent<WorldPanel>(); board.font = font; board.cam = pd.cam; board.reach = 1.5f;
-            MirrorStation.Sign(font, "DUCK GARAGE", Turntable + new Vector3(0f, 0.62f, -0.56f), Quaternion.LookRotation(Vector3.back, Vector3.up), 0.6f, "#FF8A3D");
+            board = go.AddComponent<WorldPanel>(); board.font = font; board.cam = pd.cam; board.reach = 1.2f;
+            MirrorStation.Sign(font, "DUCK GARAGE", new Vector3(-2.96f, 0.5f, Turntable.z), Quaternion.LookRotation(Vector3.left, Vector3.up), 1.5f, "#FF8A3D");     // on the wall behind the turntable, facing the room
             var bag = pd.GetComponent<BagMenu>(); if (bag != null) board.rightHand = bag.rightHand;
-            const float bw = 0.34f, bh = 0.3f;
+            // sized to read from where it floats beside your duck on the turntable (see WorldPanel.follow)
+            const float bw = 0.44f, bh = 0.4f;
+            board.follow = true; board.focus = Turntable; board.readDist = 0.42f; board.sideDeg = 42f; board.minY = bh / 2f + 0.03f;
             board.panelRect = new Rect(-bw / 2f, -bh / 2f, bw, bh);
-            board.Slab(new Vector2(bw, bh), "#3D3B4F", new Vector3(0f, 0f, 0.003f), 0.12f);
-            board.Slab(new Vector2(bw, 0.03f), "#FFC43D", new Vector3(0f, bh / 2f - 0.015f, 0f), 0.4f);
-            board.Label("GARAGE", new Vector3(0f, bh / 2f - 0.016f, -0.004f), 0.17f, "#1B1430", bw);
+            board.Slab(new Vector2(bw, bh), "#3D3B4F", new Vector3(0f, 0f, 0.003f), 0.1f);
+            board.Slab(new Vector2(bw, 0.04f), "#FFC43D", new Vector3(0f, bh / 2f - 0.02f, 0f), 0.4f);
+            board.Label("GARAGE", new Vector3(0f, bh / 2f - 0.021f, -0.004f), 0.22f, "#1B1430", bw);
             int k = 0;
-            foreach (var t in new[] { "SHELL", "LEGS", "SERVOS" }) { var tt = t; board.Add("tab_" + t, t, new Vector2(-0.1f + k++ * 0.1f, bh / 2f - 0.05f), new Vector2(0.09f, 0.024f), "#E6E9F0", () => { tab = tt; selected = null; Layout(); }, 0.08f); }
-            // up to 15 rows in two columns; each row: name + condition bar
+            foreach (var t in new[] { "SHELL", "LEGS", "SERVOS" }) { var tt = t; board.Add("tab_" + t, t, new Vector2(-0.135f + k++ * 0.135f, bh / 2f - 0.064f), new Vector2(0.125f, 0.034f), "#E6E9F0", () => { tab = tt; selected = null; Layout(); }, 0.17f); }
+            // up to 16 rows in two columns; each row: name + condition bar
             for (int i = 0; i < 16; i++)
             {
                 int col = i / 8, r = i % 8;
-                var c = new Vector2(-0.083f + col * 0.166f, bh / 2f - 0.082f + -r * 0.022f);
-                var row = board.Add("row_" + i, "", c, new Vector2(0.16f, 0.019f), "#FFFDF5", null, 0.05f);
+                var c = new Vector2(-0.108f + col * 0.216f, bh / 2f - 0.108f + -r * 0.031f);
+                var row = board.Add("row_" + i, "", c, new Vector2(0.208f, 0.027f), "#FFFDF5", null, 0.05f);
                 var idx = i; row.click = () => Pick(idx);
-                row.text = board.Label("", new Vector3(c.x - 0.075f, c.y + 0.001f, -0.006f), 0.05f, "#1B1430", 0.1f, TextAlignmentOptions.Left);
-                board.Slab(new Vector2(0.05f, 0.007f), "#B9C3CF", new Vector3(c.x + 0.05f, c.y, -0.005f), 0.5f);
-                var fill = board.Slab(new Vector2(0.05f, 0.007f), "#8FD35A", new Vector3(c.x + 0.05f, c.y, -0.007f), 0.5f);
+                row.text = board.Label("", new Vector3(c.x - 0.03f, c.y + 0.001f, -0.0135f), 0.155f, "#1B1430", 0.138f, TextAlignmentOptions.Left);
+                board.Slab(new Vector2(0.05f, 0.009f), "#B9C3CF", new Vector3(c.x + 0.072f, c.y, -0.0135f), 0.5f, 0.002f);
+                var fill = board.Slab(new Vector2(0.05f, 0.009f), "#8FD35A", new Vector3(c.x + 0.072f, c.y, -0.0155f), 0.5f, 0.002f);
                 rows.Add((row, fill, null));
             }
-            board.Add("replace", "REPLACE PART", new Vector2(0f, -bh / 2f + 0.025f), new Vector2(0.16f, 0.032f), "#FF8A3D", Replace, 0.09f);
+            board.Add("replace", "REPLACE PART", new Vector2(0f, -bh / 2f + 0.03f), new Vector2(0.24f, 0.044f), "#FF8A3D", Replace, 0.22f);
             Layout();
             go.SetActive(false);
         }
@@ -95,7 +95,7 @@ namespace MicroduckVR.Custom
                 if (!on) continue;
                 row.text.text = list[i].label;
                 float c = Condition(list[i]) / 100f;
-                fill.localScale = new Vector3(c, 1f, 1f); fill.localPosition = new Vector3(row.rect.center.x + 0.05f - 0.025f * (1f - c), row.rect.center.y, -0.007f);
+                fill.localScale = new Vector3(c, 1f, 1f); fill.localPosition = new Vector3(row.rect.center.x + 0.072f - 0.025f * (1f - c), row.rect.center.y, -0.0155f);
                 fill.GetComponent<MeshRenderer>().sharedMaterial = WorldPanel.Unlit(c > 0.6f ? "#8FD35A" : c > 0.3f ? "#FFC43D" : "#FF5D73");
                 board.Select(row, list[i] == selected);
             }
@@ -135,7 +135,8 @@ namespace MicroduckVR.Custom
         {
             if (pd == null) return;
             var flat = pd.Body.Pos - Turntable; flat.y = 0f;
-            bool on = flat.magnitude < 0.22f;
+            bool on = flat.magnitude < (inside ? 0.28f : 0.2f);        // a little slack, so standing on the edge does not flicker the board
+            board.focus = pd.Body.Pos;
             if (on != inside)
             {
                 inside = on; board.gameObject.SetActive(on);

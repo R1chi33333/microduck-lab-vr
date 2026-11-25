@@ -18,6 +18,15 @@ namespace MicroduckVR.Flock
     public class DuckBrain : MonoBehaviour
     {
         public static readonly List<DuckBrain> All = new List<DuckBrain>();
+
+        // ---- a card or board the player is reading: ducks do not stand between it and the player's eyes
+        static Vector3 readZone; static float readRadius, readUntil; static bool readAlways;
+        /// <summary>Call every frame while something is being read: keeps the flock out of the way between eyes and panel.
+        /// 'always' also during a match or a race (filming).</summary>
+        public static void ClearView(Vector3 eye, Vector3 panel, bool always = false)
+        {
+            readZone = Vector3.Lerp(eye, panel, 0.6f); readRadius = Mathf.Max(0.2f, Vector3.Distance(eye, panel) * 0.55f); readUntil = Time.time + 0.25f; readAlways = always;
+        }
         public int seed = 1;
         public int index;
 
@@ -293,6 +302,17 @@ namespace MicroduckVR.Flock
         {
             float dt = Mathf.Min(Time.deltaTime, 1f / 30f);
             var (v, w) = Think(dt);
+            if (Time.time < readUntil && (readAlways || (!MicroduckVR.Games.RaceGame.Active && !MicroduckVR.Games.FootballGame.Active)))
+            {
+                var away = Flat(Pos - readZone); float L = away.magnitude;
+                if (L < readRadius)
+                {
+                    if (L < 1e-3f) away = Flat(Pos - (PlayerDuck.Instance != null ? PlayerDuck.Instance.Body.Pos : Pos + Vector3.forward));
+                    float err = Wrap(Mathf.Atan2(away.x, away.z) - yaw);
+                    w = Mathf.Clamp(err * 4f, -Gait.MaxYawRate, Gait.MaxYawRate);
+                    v = Gait.MaxSpeed * 0.9f * Mathf.Clamp01(1f - Mathf.Abs(err) / 1.4f);
+                }
+            }
             // surface: slippery tiles, slow water, bouncy bed
             var surf = SurfaceTag.At(Pos);
             string st = surf != null ? surf.type : "wood";

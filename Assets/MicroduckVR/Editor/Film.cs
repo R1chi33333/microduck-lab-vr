@@ -34,7 +34,7 @@ namespace MicroduckVR.EditorTools
         /// with depth of field and a light grade, 60 frames a second.</summary>
         class Quality { public int w = 1920, h = 1080, fps = 30, ss = 1, sub = 1, acc = 1, bitrate = 10000000; public bool post; }
         static readonly Quality Plain = new Quality(), Cinema = new Quality { fps = 60, ss = 2, bitrate = 45000000, post = true },
-                                Stills = new Quality { w = 480, h = 270, post = true };
+                                Stills = new Quality { w = 480, h = 270 };
         static Quality Q = Plain;
         /// <summary>Game seconds per simulated frame at normal speed.</summary>
         static float Dt => 1f / (Q.fps * Q.sub);
@@ -53,6 +53,9 @@ namespace MicroduckVR.EditorTools
         static float savedShadowDist; static int savedCascades; static AnisotropicFiltering savedAniso; static float savedLod;
         // focus: where the lens is focused and how wide open it is (f-number; big = everything sharp)
         static Vector3 focusPoint; static float fstop = 4f;
+        /// <summary>A shot can ask the flock to keep out of the space right in front of the lens.</summary>
+        static bool LensClear;
+        static Material inkMat; static UnityEngine.Rendering.Universal.UniversalRendererData rdata; static bool lentPost;
 
         static PlayerDuck P => PlayerDuck.Instance;
         static Vector3 Pos => P.Body.Pos;
@@ -100,6 +103,22 @@ namespace MicroduckVR.EditorTools
                 var ca = prof.Add<UnityEngine.Rendering.Universal.ColorAdjustments>(true); ca.saturation.Override(9f); ca.contrast.Override(7f); ca.postExposure.Override(0.06f);
                 var vi = prof.Add<UnityEngine.Rendering.Universal.Vignette>(true); vi.intensity.Override(0.2f); vi.smoothness.Override(0.5f);
             }
+            // The project's renderer was made in code and carries no post-processing data, so depth of field and the grade
+            // silently did nothing: lend it the pipeline's own for the length of the film.
+            rdata = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRendererData>("Assets/MicroduckVR/Settings/MicroduckRenderer.asset");
+            lentPost = false;
+            if (Q.post && rdata != null && rdata.postProcessData == null)
+            {
+                rdata.postProcessData = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.PostProcessData>("Packages/com.unity.render-pipelines.universal/Runtime/Data/PostProcessData.asset");
+                lentPost = rdata.postProcessData != null; rdata.SetDirty();
+                Debug.Log("[Microduck] film: post-processing " + (lentPost ? "on" : "NOT available"));
+            }
+            LaserPointer.HideBeam = Q.post;
+            // a finer pen on far things and a sharper mirror: both only pay off at film resolution
+            inkMat = AssetDatabase.LoadAssetAtPath<Material>(ComicSetup.OutlineMatPath);
+            if (inkMat != null) { inkMat.SetFloat("_FarThin", Q.post && Q.ss > 1 ? 0.5f : 0f); inkMat.SetFloat("_ThinNear", 0.7f); inkMat.SetFloat("_ThinFar", 2.2f); }
+            if (MirrorStation.Instance != null) MirrorStation.Instance.Sharpen(Q.post ? Q.ss * 2 : 1);
+            MirrorStation.Viewer = cam;
             var pipe = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
             if (pipe != null) { savedShadowDist = pipe.shadowDistance; savedCascades = pipe.shadowCascadeCount; if (Q.post) { pipe.shadowDistance = 45f; pipe.shadowCascadeCount = 4; } }
             savedAniso = QualitySettings.anisotropicFiltering; savedLod = QualitySettings.lodBias; QualitySettings.anisotropicFiltering = AnisotropicFiltering.ForceEnable; QualitySettings.lodBias = 4f;
@@ -118,6 +137,11 @@ namespace MicroduckVR.EditorTools
             var pipe = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
             if (pipe != null) { pipe.shadowDistance = savedShadowDist; pipe.shadowCascadeCount = savedCascades; }
             QualitySettings.anisotropicFiltering = savedAniso; QualitySettings.lodBias = savedLod;
+            if (inkMat != null) inkMat.SetFloat("_FarThin", 0f);
+            if (lentPost && rdata != null) { rdata.postProcessData = null; rdata.SetDirty(); lentPost = false; }
+            LaserPointer.HideBeam = false;
+            if (MirrorStation.Instance != null) MirrorStation.Instance.Sharpen(1);
+            MirrorStation.Viewer = null;
             if (volume != null) { UnityEngine.Object.Destroy(volume.gameObject); volume = null; dof = null; }
             cam.targetTexture = null;
             foreach (var o in new UnityEngine.Object[] { rt, accum, outRt, tex, accMat, cam.gameObject, rig.gameObject }) UnityEngine.Object.Destroy(o);
@@ -134,7 +158,7 @@ namespace MicroduckVR.EditorTools
             var s = shots[si];
             if (!started)
             {
-                started = true; elapsed = 0f; outT = 0f; outFrames = 0; sub = 0; Slow = 1f; U = 0f; fstop = 4f;
+                started = true; elapsed = 0f; outT = 0f; outFrames = 0; sub = 0; Slow = 1f; U = 0f; fstop = 4f; LensClear = false;
                 fired.Clear(); stills.Clear(); Reset(); camInit = false; biteAt = -1f; grabPhase = 0; phaseT = 0f;
                 s.start?.Invoke();
                 if (!preview)
@@ -152,6 +176,7 @@ namespace MicroduckVR.EditorTools
             cam.cullingMask = s.fp ? P.cam.cullingMask : ~0;
             focusPoint = cam.transform.position + cam.transform.forward * 3f;
             s.tick?.Invoke(t);
+            if (LensClear) DuckBrain.ClearView(cam.transform.position, cam.transform.position + cam.transform.forward * 0.42f, true);
             if (dof != null)
             {
                 float d = Mathf.Max(0.05f, Vector3.Dot(focusPoint - cam.transform.position, cam.transform.forward));

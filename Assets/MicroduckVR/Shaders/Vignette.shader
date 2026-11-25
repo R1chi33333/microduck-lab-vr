@@ -46,7 +46,7 @@ Shader "Microduck/Vignette"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 float r = length(i.uv - 0.5) * 2.0;              // 0 centre, 1 edge of the quad
-                float inner = lerp(1.25, 0.42, _Strength);        // opening shrinks as strength rises
+                float inner = lerp(0.74, 0.24, _Strength);        // opening shrinks as strength rises (0.6 = the headset's own field of view)
                 float a = smoothstep(inner, inner + _Feather, r) * saturate(_Strength * 4.0);
                 return half4(_Color.rgb, a * _Color.a);
             }

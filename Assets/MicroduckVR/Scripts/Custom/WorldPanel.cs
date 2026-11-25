@@ -42,10 +42,10 @@ namespace MicroduckVR.Custom
         void OnDestroy() { trig?.Disable(); if (Aimed) aimedCount--; }
         void OnDisable() { if (Aimed) { aimedCount--; Aimed = false; } laser?.Show(false); }
 
-        public Transform Slab(Vector2 size, string hex, Vector3 at, float round = 0.25f)
+        public Transform Slab(Vector2 size, string hex, Vector3 at, float round = 0.25f, float thick = 0.004f)
         {
             var go = new GameObject("slab"); go.transform.SetParent(transform, false); go.transform.localPosition = at;
-            go.AddComponent<MeshFilter>().sharedMesh = ComicMesh.RoundedBox(new Vector3(size.x, size.y, 0.004f), new ComicMesh.Style { radius = Mathf.Min(size.x, size.y) * 0.5f * round, segments = 3 });
+            go.AddComponent<MeshFilter>().sharedMesh = ComicMesh.RoundedBox(new Vector3(size.x, size.y, thick), new ComicMesh.Style { radius = Mathf.Min(size.x, size.y) * 0.5f * round, segments = 3 });
             var mr = go.AddComponent<MeshRenderer>(); mr.sharedMaterial = Unlit(hex); mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             return go.transform;
         }
@@ -62,9 +62,9 @@ namespace MicroduckVR.Custom
         public Button Add(string id, string label, Vector2 centre, Vector2 size, string hex, Action click, float textSize = 0.06f)
         {
             var b = new Button { id = id, label = label, rect = new Rect(centre - size / 2f, size), click = click };
-            b.t = Slab(size, hex, new Vector3(centre.x, centre.y, -0.003f), 0.5f);
+            b.t = Slab(size, hex, new Vector3(centre.x, centre.y, -0.006f), 0.35f, 0.012f);     // proud of the board: a clean ink line round each button
             b.mr = b.t.GetComponent<MeshRenderer>(); b.normal = b.mr.sharedMaterial;
-            if (!string.IsNullOrEmpty(label)) b.text = Label(label, new Vector3(centre.x, centre.y, -0.006f), textSize, "#1B1430", size.x);
+            if (!string.IsNullOrEmpty(label)) b.text = Label(label, new Vector3(centre.x, centre.y, -0.0135f), textSize, "#1B1430", size.x);
             buttons.Add(b);
             return b;
         }
@@ -100,5 +100,29 @@ namespace MicroduckVR.Custom
 
         public Rect panelRect;
         Rect PanelRect() => panelRect;
+
+        // ---- reading distance. A board on a wall is far too small to read from where a duck stands, so a board the
+        // player has walked up to floats within reading distance of the eyes (first or third person), off to one side
+        // of the thing they came for, and turns to face them. It only glides after them once they have moved away.
+        public bool follow; public Vector3 focus; public float readDist = 0.42f, sideDeg = 38f, drop = 0.02f, minY = 0.2f;
+        /// <summary>Filming: every board out of the shot.</summary>
+        public static bool HideAll; bool hiddenNow;
+        void LateUpdate()
+        {
+            if (HideAll != hiddenNow) { hiddenNow = HideAll; foreach (var r in GetComponentsInChildren<Renderer>(true)) r.enabled = !hiddenNow; }
+            if (!follow) return;
+            if (cam == null) cam = Camera.main; if (cam == null) return;
+            var eye = cam.transform.position;
+            var d = focus - eye; d.y = 0f; if (d.sqrMagnitude < 1e-4f) d = cam.transform.forward; d.y = 0f; d.Normalize();
+            var want = eye + Quaternion.Euler(0f, sideDeg, 0f) * d * readDist + Vector3.down * drop;
+            want.y = Mathf.Max(want.y, minY);
+            // never inside a wall or a piece of furniture: come closer to the eyes instead, and shrink to look the same size
+            var to = want - eye; float dist = to.magnitude, k = 1f;
+            if (Physics.SphereCast(eye, 0.03f, to / dist, out var hit, dist, MicroduckVR.Duck.WorldQueries.WorldMask, QueryTriggerInteraction.Ignore))
+            { float near = Mathf.Max(0.16f, hit.distance - 0.02f); want = eye + to / dist * near; k = near / dist; }
+            transform.position = want; transform.localScale = Vector3.one * k;
+            transform.rotation = Quaternion.LookRotation(want - eye, Vector3.up);
+            MicroduckVR.Flock.DuckBrain.ClearView(eye, want);
+        }
     }
 }
