@@ -15,7 +15,7 @@ namespace MicroduckVR.EditorTools
     /// (grass, stepping stones, puddle, slope, fence, pots). Web coordinates are written as-is and
     /// mirrored on X here; web floor y = -0.75 becomes Unity y = 0 (so web tabletop y = 0 is 0.75 here).
     /// </summary>
-    public static class HouseBuilder
+    public static partial class HouseBuilder
     {
         const string MatDir = "Assets/MicroduckVR/Materials/House";
         const string MeshDir = "Assets/MicroduckVR/Meshes/House";
@@ -40,6 +40,7 @@ namespace MicroduckVR.EditorTools
                 var g = new GameObject("Room " + k).transform; g.SetParent(root, false); rooms[k] = g;
             }
             Shell(); Living(); Hallway(); Kitchen(); Bedroom(); Garden();
+            Clutter();
             return root;
         }
 

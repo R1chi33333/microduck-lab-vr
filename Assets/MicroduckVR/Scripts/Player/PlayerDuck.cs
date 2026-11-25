@@ -48,6 +48,8 @@ namespace MicroduckVR.Player
         float chirpT, bedT;
 
         public static PlayerDuck Instance { get; private set; }
+        /// <summary>Debug only: when set, the duck walks this world direction at full speed (used by editor tests).</summary>
+        public static Vector3? DebugWalk;
         public float Speed => new Vector2(vel.x, vel.z).magnitude;
         public DuckBody Body => body;
         public Grabbable Held => held;
@@ -65,6 +67,15 @@ namespace MicroduckVR.Player
             if (xrOrigin != null) xrOrigin.localScale = Vector3.one * worldScale;
             if (cam != null) cam.cullingMask &= ~(1 << DuckSetup.LayerPlayerHead);
             TrySetDeviceOrigin();
+        }
+
+        /// <summary>Move the duck (capsule and body) to a point; y is a hint, the duck lands on the surface below it.</summary>
+        public void Teleport(Vector3 pos, float yawRad)
+        {
+            mover.enabled = false; mover.transform.position = pos; mover.enabled = true;
+            vel = Vector3.zero; vy = 0f; yaw = yawRad;
+            body.Teleport(new Vector3(pos.x, WorldQueries.GroundNear(pos.x, pos.z, pos.y), pos.z), yawRad);
+            eyeY = body.BaseY + eyeHeight; eyeYVel = 0f;
         }
 
         void OnDestroy() { input?.Disable(); if (Instance == this) Instance = null; }
@@ -110,6 +121,7 @@ namespace MicroduckVR.Player
             Vector3 fwd = GltfSpace.Forward(hy), right = new Vector3(fwd.z, 0f, -fwd.x);
             Vector3 want = (fwd * stick.y + right * stick.x) * (Gait.MaxSpeed * speedScale);
             if (want.magnitude > Gait.MaxSpeed * speedScale) want = want.normalized * Gait.MaxSpeed * speedScale;
+            if (DebugWalk.HasValue) want = DebugWalk.Value.normalized * Gait.MaxSpeed * speedScale;
             var surf = SurfaceTag.At(mover.transform.position);
             string surfType = surf != null ? surf.type : "wood";
             if (surfType == "water") want *= 0.55f;

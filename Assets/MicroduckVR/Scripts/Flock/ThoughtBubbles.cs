@@ -38,7 +38,7 @@ namespace MicroduckVR.Flock
         class Bubble
         {
             public GameObject go; public Transform slab, tail; public TextMeshPro text;
-            public DuckBrain duck; public float age; public bool live;
+            public DuckBrain duck; public float age; public bool live; public float width;
         }
 
         readonly List<Bubble> pool = new List<Bubble>();
@@ -93,13 +93,24 @@ namespace MicroduckVR.Flock
             if (b == null) { b = pool[0]; foreach (var x in pool) if (x.age > b.age) b = x; }
             b.duck = d; b.age = 0f; b.live = true;
             b.text.text = line.ToUpperInvariant();
-            b.text.ForceMeshUpdate();
-            float w = Mathf.Max(0.07f, b.text.textBounds.size.x + 0.03f), h = 0.042f;
-            b.slab.GetComponent<MeshFilter>().sharedMesh = ComicMesh.RoundedBox(new Vector3(w, h, 0.004f), new ComicMesh.Style { radius = 0.016f, segments = 3, wobble = 0.002f, seed = rng.Next(100) });
-            b.tail.localPosition = new Vector3(w * 0.22f, -h / 2f, 0.001f);
+            b.width = 0f;
+            Fit(b);
         }
 
         void OnDuckEvent(DuckBrain d, string kind, string ctx) => Say(d, kind, ctx);
+
+        /// <summary>Size the bubble to its text. Dynamic font glyphs can be generated a frame late, so this runs
+        /// again while the bubble is young and grows the bubble whenever the measured text got wider.</summary>
+        void Fit(Bubble b)
+        {
+            b.text.ForceMeshUpdate();
+            float textW = Mathf.Max(b.text.textBounds.size.x, b.text.GetPreferredValues(b.text.text).x);
+            float w = Mathf.Max(0.07f, textW + 0.035f), h = 0.042f;
+            if (w <= b.width + 0.001f) return;
+            b.width = w;
+            b.slab.GetComponent<MeshFilter>().sharedMesh = ComicMesh.RoundedBox(new Vector3(Mathf.Round(w * 200f) / 200f, h, 0.004f), new ComicMesh.Style { radius = 0.016f, segments = 3, wobble = 0.002f, seed = 7 });
+            b.tail.localPosition = new Vector3(w * 0.22f, -h / 2f, 0.001f);
+        }
         readonly HashSet<DuckBrain> subscribed = new HashSet<DuckBrain>();
 
         void LateUpdate()
@@ -127,6 +138,7 @@ namespace MicroduckVR.Flock
             {
                 if (!b.live) { b.go.SetActive(false); continue; }
                 b.age += Time.deltaTime;
+                if (b.age < 0.5f) Fit(b);
                 if (b.age > SHOW + FADE || b.duck == null) { b.live = false; b.go.SetActive(false); continue; }
                 Vector3 p = b.duck.Pos + Vector3.up * 0.33f;
                 Vector3 toB = p - eye; float dist = toB.magnitude;

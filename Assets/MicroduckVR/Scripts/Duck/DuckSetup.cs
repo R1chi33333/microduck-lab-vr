@@ -29,7 +29,6 @@ namespace MicroduckVR.Duck
             Body.Ground = (x, z) => WorldQueries.GroundNear(x, z, probeY);   // surface near the duck's height (not the table above it)
             Body.Init(rig, jointMap);
             ComicLook.ApplyToDuck(rig.transform, skin);
-            Body.Ground = (x, z) => WorldQueries.GroundNear(x, z, Body.BaseY);
 
             // the capsule that actually moves through the world; the body follows it
             var m = new GameObject(name + " mover");
@@ -39,6 +38,10 @@ namespace MicroduckVR.Duck
             Mover.radius = 0.05f; Mover.height = 0.2f; Mover.center = new Vector3(0f, 0.105f, 0f);
             Mover.stepOffset = 0.03f; Mover.slopeLimit = 50f; Mover.skinWidth = 0.004f; Mover.minMoveDistance = 0f;
             Body.Teleport(new Vector3(start.x, WorldQueries.GroundNear(start.x, start.z, start.y), start.z), yaw);
+            // feet and body look for the surface just above where the capsule actually stands (it follows ramps
+            // and slopes exactly); probing from the body height could start inside a ramp and miss it
+            var mv = Mover.transform;
+            Body.Ground = (x, z) => WorldQueries.GroundNear(x, z, mv.position.y);
 
             if (hideHeadFromPlayer)
             {
@@ -71,6 +74,6 @@ namespace MicroduckVR.Duck
             return 0f;
         }
 
-        public static float GroundNear(float x, float z, float y) => GroundAt(x, z, y + 0.1f);
+        public static float GroundNear(float x, float z, float y) => GroundAt(x, z, y + 0.2f);
     }
 }
