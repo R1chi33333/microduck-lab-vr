@@ -90,6 +90,7 @@ namespace MicroduckVR.EditorTools
             var rig = (GameObject)Object.Instantiate(prefab);
             var body = root.AddComponent<DuckBody>();
             body.Init(rig, map);
+            MicroduckVR.Comic.ComicLook.ApplyToDuck(rig.transform, "cream");
             return body;
         }
 
@@ -100,6 +101,7 @@ namespace MicroduckVR.EditorTools
             var cam = go.AddComponent<Camera>();
             cam.fieldOfView = fov; cam.nearClipPlane = 0.005f; cam.farClipPlane = 50f; cam.cullingMask = cullingMask;
             cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = new Color(1f, 0.97f, 0.91f);
+            var urp = go.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>(); urp.renderPostProcessing = false;
             go.transform.position = from; go.transform.LookAt(lookAt);
             var rt = new RenderTexture(w, h, 24) { antiAliasing = 4 };
             cam.targetTexture = rt;

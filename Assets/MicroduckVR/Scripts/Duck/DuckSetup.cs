@@ -1,3 +1,4 @@
+using MicroduckVR.Comic;
 using UnityEngine;
 
 namespace MicroduckVR.Duck
@@ -9,6 +10,7 @@ namespace MicroduckVR.Duck
     {
         public GameObject rigPrefab;
         public DuckJointMap jointMap;
+        public string skin = "cream";             // cream | graphite | lavender | sky
         public bool hideHeadFromPlayer;            // the player's own duck: everything but the legs goes to the PlayerHead layer
 
         public DuckBody Body { get; private set; }
@@ -26,6 +28,7 @@ namespace MicroduckVR.Duck
             float probeY = start.y;
             Body.Ground = (x, z) => WorldQueries.GroundNear(x, z, probeY);   // surface near the duck's height (not the table above it)
             Body.Init(rig, jointMap);
+            ComicLook.ApplyToDuck(rig.transform, skin);
             Body.Ground = (x, z) => WorldQueries.GroundNear(x, z, Body.BaseY);
 
             // the capsule that actually moves through the world; the body follows it

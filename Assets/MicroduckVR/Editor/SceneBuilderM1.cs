@@ -44,7 +44,7 @@ namespace MicroduckVR.EditorTools
             camGo.transform.SetParent(origin.transform, false);
             var cam = camGo.AddComponent<Camera>();
             cam.nearClipPlane = 0.01f; cam.farClipPlane = 60f;
-            cam.backgroundColor = new Color(0.98f, 0.95f, 0.88f); cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = MicroduckVR.Comic.ComicLook.Hex("#FFF7E8"); cam.clearFlags = CameraClearFlags.SolidColor;
             camGo.AddComponent<AudioListener>();
             SceneBuilder.AddHeadTracking(camGo);
             var vig = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -107,11 +107,11 @@ namespace MicroduckVR.EditorTools
         static void BuildLivingRoom()
         {
             var room = new GameObject("Living Room").transform;
-            var wood = Mat("Floor wood", new Color(0.91f, 0.62f, 0.35f));
-            var wall = Mat("Wall", new Color(0.99f, 0.95f, 0.86f));
-            var rug = Mat("Rug", new Color(0.55f, 0.42f, 0.78f));
-            var sofaM = Mat("Sofa", new Color(0.15f, 0.62f, 0.62f));
-            var tableM = Mat("Table oak", new Color(0.76f, 0.55f, 0.36f));
+            var wood = Mat("Floor wood", MicroduckVR.Comic.ComicLook.Hex("#E9A85A"));
+            var wall = Mat("Wall", MicroduckVR.Comic.ComicLook.Hex("#FFF2DC"));
+            var rug = Mat("Rug", MicroduckVR.Comic.ComicLook.Hex("#8E6FD6"));
+            var sofaM = Mat("Sofa", MicroduckVR.Comic.ComicLook.Hex("#27B3B0"));
+            var tableM = Mat("Table oak", MicroduckVR.Comic.ComicLook.Hex("#C98A55"));
             var shelfM = Mat("Shelf", new Color(0.97f, 0.97f, 0.95f));
 
             Box(room, "Floor", new Vector3(0f, -0.01f, 0f), new Vector3(6.24f, 0.02f, 5.24f), wood);
@@ -171,9 +171,12 @@ namespace MicroduckVR.EditorTools
         static Material Mat(string name, Color c)
         {
             string p = $"{MatDir}/{name}.mat";
+            var shader = Shader.Find("Microduck/ToonLit");
             var m = AssetDatabase.LoadAssetAtPath<Material>(p);
-            if (m == null) { m = new Material(Shader.Find("Universal Render Pipeline/Lit")); AssetDatabase.CreateAsset(m, p); }
-            m.color = c; m.SetFloat("_Smoothness", 0.15f);
+            if (m == null) { m = new Material(shader); AssetDatabase.CreateAsset(m, p); }
+            m.shader = shader;
+            m.SetColor("_BaseColor", c);
+            m.enableInstancing = true;
             EditorUtility.SetDirty(m);
             return m;
         }
