@@ -45,7 +45,7 @@ namespace MicroduckVR.Player
         float originYaw, turnVel;
         Grabbable held;
         bool beakWasOpen;
-        float chirpT;
+        float chirpT, bedT;
 
         public DuckBody Body => body;
         public Grabbable Held => held;
@@ -107,7 +107,11 @@ namespace MicroduckVR.Player
             Vector3 fwd = GltfSpace.Forward(hy), right = new Vector3(fwd.z, 0f, -fwd.x);
             Vector3 want = (fwd * stick.y + right * stick.x) * (Gait.MaxSpeed * speedScale);
             if (want.magnitude > Gait.MaxSpeed * speedScale) want = want.normalized * Gait.MaxSpeed * speedScale;
-            vel = Vector3.MoveTowards(vel, want, 0.9f * dt);           // gentle acceleration (comfort)
+            var surf = SurfaceTag.At(mover.transform.position);
+            string surfType = surf != null ? surf.type : "wood";
+            if (surfType == "water") want *= 0.55f;
+            float grip = surf != null ? Mathf.Lerp(0.18f, 1f, Mathf.InverseLerp(0.15f, 0.7f, surf.Friction)) : 1f;   // tiles: you slide
+            vel = Vector3.MoveTowards(vel, want, 0.9f * grip * dt);   // gentle acceleration (comfort)
 
             // ---- body facing: walk direction, or follow the head when it looks far away
             float prevYaw = yaw;
@@ -155,6 +159,9 @@ namespace MicroduckVR.Player
             // ---- gaze from the head
             if (cam != null) body.LookAt.gazeDir = cam.transform.forward;
 
+            // bed: boing boing (the body hops; the camera only follows a damped fraction of it)
+            bedT = surfType == "bed" ? bedT + dt : 0f;
+            body.Hop = surfType == "bed" ? Mathf.Abs(Mathf.Sin(bedT * 6.5f)) * 0.028f : Mathf.MoveTowards(body.Hop, 0f, 0.2f * dt);
             body.Step(dt, new Vector3(p.x, p.y, p.z), yaw, realVel, yawRate);
 
             if (held != null)
@@ -175,7 +182,7 @@ namespace MicroduckVR.Player
             xrOrigin.rotation = Quaternion.Euler(0f, originYaw, 0f);
 
             // eye height follows the ground point with a damped spring: no bob, no bow, no fall tumble
-            float target = mover.transform.position.y + eyeHeight;
+            float target = mover.transform.position.y + eyeHeight + body.Hop * 0.3f;
             float k = 60f, c = 2f * Mathf.Sqrt(k);
             eyeYVel += (k * (target - eyeY) - c * eyeYVel) * dt;
             eyeY += eyeYVel * dt;

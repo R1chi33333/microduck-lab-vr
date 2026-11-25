@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MicroduckVR.Duck;
+using MicroduckVR.World;
 using UnityEngine;
 
 namespace MicroduckVR.Flock
@@ -20,7 +21,8 @@ namespace MicroduckVR.Flock
         DuckBody body; CharacterController mover;
         System.Random rng;
         Vector3? target; float wait, yaw, vy;
-        Vector3 vel;
+        Vector3 vel, lastPos;
+        float stuckT, bedT;
 
         void OnEnable() { All.Add(this); }
         void OnDisable() { All.Remove(this); }
@@ -58,7 +60,20 @@ namespace MicroduckVR.Flock
                 float m = d.magnitude;
                 if (m > 0.001f && m < 0.25f) want += d / m * (0.25f - m) * 0.8f;
             }
-            vel = Vector3.MoveTowards(vel, want, 0.6f * dt);
+            var surf = SurfaceTag.At(p);
+            string st = surf != null ? surf.type : "wood";
+            if (st == "water") want *= 0.55f;
+            float grip = surf != null ? Mathf.Lerp(0.18f, 1f, Mathf.InverseLerp(0.15f, 0.7f, surf.Friction)) : 1f;
+            vel = Vector3.MoveTowards(vel, want, 0.6f * grip * dt);
+            // stuck against furniture: give up on this target
+            if (target.HasValue && wait <= 0f)
+            {
+                if ((p - lastPos).magnitude < speed * 0.25f * dt) stuckT += dt; else stuckT = 0f;
+                if (stuckT > 1.5f) { target = null; stuckT = 0f; wait = R(0.3f, 1f); }
+            }
+            lastPos = p;
+            bedT = st == "bed" ? bedT + dt : 0f;
+            body.Hop = st == "bed" ? Mathf.Abs(Mathf.Sin(bedT * 6.5f + seed)) * 0.028f : Mathf.MoveTowards(body.Hop, 0f, 0.2f * dt);
             float prev = yaw;
             if (vel.magnitude > 0.015f)
             {

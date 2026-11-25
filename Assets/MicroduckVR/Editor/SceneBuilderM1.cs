@@ -37,29 +37,7 @@ namespace MicroduckVR.EditorTools
             var rigPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(RigImporter.GlbPath);
             var map = AssetDatabase.LoadAssetAtPath<DuckJointMap>(RigImporter.JointMapPath);
 
-            // the player's duck + XR rig
-            var player = MakeDuck("Player Duck", new Vector3(0.2f, 0f, 1.4f), 180f, rigPrefab, map, true);
-            var origin = new GameObject("XR Origin");
-            var camGo = new GameObject("Main Camera"); camGo.tag = "MainCamera";
-            camGo.transform.SetParent(origin.transform, false);
-            var cam = camGo.AddComponent<Camera>();
-            cam.nearClipPlane = 0.01f; cam.farClipPlane = 60f;
-            cam.backgroundColor = MicroduckVR.Comic.ComicLook.Hex("#FFF7E8"); cam.clearFlags = CameraClearFlags.SolidColor;
-            camGo.AddComponent<AudioListener>();
-            SceneBuilder.AddHeadTracking(camGo);
-            var vig = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            vig.name = "Comfort Vignette";
-            Object.DestroyImmediate(vig.GetComponent<Collider>());
-            vig.transform.SetParent(camGo.transform, false);
-            vig.transform.localPosition = new Vector3(0f, 0f, 0.5f);
-            vig.transform.localScale = Vector3.one * 2.2f;
-            var vigMat = new Material(Shader.Find("Microduck/Vignette"));
-            AssetDatabase.CreateAsset(vigMat, MatDir + "/Vignette.mat");
-            var mr = vig.GetComponent<MeshRenderer>(); mr.sharedMaterial = vigMat;
-            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.receiveShadows = false;
-            var cv = vig.AddComponent<ComfortVignette>();
-            var pd = player.AddComponent<PlayerDuck>();
-            pd.xrOrigin = origin.transform; pd.cam = cam; pd.vignette = cv;
+            MakePlayer(new Vector3(0.2f, 0f, 1.4f), 180f, rigPrefab, map);
 
             // the flock (placeholder wander AI)
             var spots = new[] { (new Vector3(-0.9f, 0f, 0.6f), 40f), (new Vector3(0.8f, 0f, 0.3f), -60f), (new Vector3(-0.2f, 0f, -0.3f), 170f) };
@@ -80,7 +58,35 @@ namespace MicroduckVR.EditorTools
             Debug.Log("[Microduck] Built " + path);
         }
 
-        static GameObject MakeDuck(string name, Vector3 pos, float yawDeg, GameObject rigPrefab, DuckJointMap map, bool isPlayer)
+        internal static PlayerDuck MakePlayer(Vector3 pos, float yawDeg, GameObject rigPrefab, DuckJointMap map)
+        {
+            Directory.CreateDirectory(MatDir);
+            var player = MakeDuck("Player Duck", pos, yawDeg, rigPrefab, map, true);
+            var origin = new GameObject("XR Origin");
+            var camGo = new GameObject("Main Camera"); camGo.tag = "MainCamera";
+            camGo.transform.SetParent(origin.transform, false);
+            var cam = camGo.AddComponent<Camera>();
+            cam.nearClipPlane = 0.01f; cam.farClipPlane = 60f;
+            cam.backgroundColor = MicroduckVR.Comic.ComicLook.Hex("#9AD8F2"); cam.clearFlags = CameraClearFlags.SolidColor;
+            camGo.AddComponent<AudioListener>();
+            SceneBuilder.AddHeadTracking(camGo);
+            var vig = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            vig.name = "Comfort Vignette";
+            Object.DestroyImmediate(vig.GetComponent<Collider>());
+            vig.transform.SetParent(camGo.transform, false);
+            vig.transform.localPosition = new Vector3(0f, 0f, 0.5f);
+            vig.transform.localScale = Vector3.one * 2.2f;
+            var vigMat = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "/Vignette.mat");
+            if (vigMat == null) { vigMat = new Material(Shader.Find("Microduck/Vignette")); AssetDatabase.CreateAsset(vigMat, MatDir + "/Vignette.mat"); }
+            var mr = vig.GetComponent<MeshRenderer>(); mr.sharedMaterial = vigMat;
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.receiveShadows = false;
+            var cv = vig.AddComponent<ComfortVignette>();
+            var pd = player.AddComponent<PlayerDuck>();
+            pd.xrOrigin = origin.transform; pd.cam = cam; pd.vignette = cv;
+            return pd;
+        }
+
+        internal static GameObject MakeDuck(string name, Vector3 pos, float yawDeg, GameObject rigPrefab, DuckJointMap map, bool isPlayer)
         {
             var go = new GameObject(name);
             go.transform.SetPositionAndRotation(pos, Quaternion.Euler(0f, yawDeg, 0f));
@@ -92,7 +98,7 @@ namespace MicroduckVR.EditorTools
             return go;
         }
 
-        static void MakeToy(string name, PrimitiveType type, Vector3 pos, Vector3 size, Color col)
+        internal static void MakeToy(string name, PrimitiveType type, Vector3 pos, Vector3 size, Color col)
         {
             var go = GameObject.CreatePrimitive(type);
             go.name = name; go.layer = DuckSetup.LayerToy;

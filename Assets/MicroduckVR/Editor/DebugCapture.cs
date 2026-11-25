@@ -76,6 +76,8 @@ namespace MicroduckVR.EditorTools
             Shoot("fp_" + stamp, t.position, t.position + t.forward, 1280, 960, 90f, pd.cam.cullingMask);
             Shoot("fp_down_" + stamp, t.position, t.position + t.forward * 0.6f + Vector3.down * 0.5f, 1280, 960, 90f, pd.cam.cullingMask);
             Shoot("overview_" + stamp, new Vector3(2.3f, 1.9f, 2.2f), new Vector3(0f, 0.1f, 0.2f), 1280, 800, 60f);
+            Shoot("house_top_" + stamp, new Vector3(0.01f, 13f, 2.6f), new Vector3(0f, 0f, 2.6f), 1600, 1000, 62f);
+            Shoot("house_angle_" + stamp, new Vector3(-6.5f, 5.5f, 10.5f), new Vector3(0f, 0f, 1.5f), 1600, 1000, 55f);
             var b = pd.Body;
             Debug.Log($"[Microduck] play views {stamp}: eye={t.position.ToString("F3")} duck={b.transform.position.ToString("F3")} yaw={b.Yaw:F2} originScale={pd.xrOrigin.localScale.x:F2} fps={1f / Time.smoothDeltaTime:F0} xr={UnityEngine.XR.XRSettings.isDeviceActive}");
         }
