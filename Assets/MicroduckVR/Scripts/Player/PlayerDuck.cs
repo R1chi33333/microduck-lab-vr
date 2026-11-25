@@ -28,7 +28,7 @@ namespace MicroduckVR.Player
         [Header("Feel")]
         [Range(0.08f, 0.3f)] public float worldScale = 0.15f;     // XR Origin scale: smaller = bigger world
         public enum TurnMode { Smooth, Snap }
-        public TurnMode turnMode = TurnMode.Smooth;
+        public TurnMode turnMode = TurnMode.Snap;        // snap is the comfortable default; smooth is optional
         public float smoothTurnDegPerSec = 110f;
         public float snapDegrees = 30f;
         public float speedScale = 1f;
