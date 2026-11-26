@@ -50,7 +50,8 @@ namespace MicroduckVR.Flock
         Vector3? target;
         List<Vector3> route; int ri; float best, routeStuck;
         // toy task
-        Grabbable toy, held; float taskT; string taskPhase;
+        enum TaskPhase { None, Approach, Reach, Carry, Drop }
+        Grabbable toy, held; float taskT; TaskPhase taskPhase;
 
         float R(float a = 0f, float b = 1f) => a + (float)rng.NextDouble() * (b - a);
 
@@ -113,7 +114,7 @@ namespace MicroduckVR.Flock
         {
             float r = R();
             t = 0f; target = null; route = null; body.SitTarget = false;
-            if (held == null) { toy = null; taskPhase = null; body.ReachState.weight = 0f; body.JawTarget = 0f; }
+            if (held == null) { toy = null; taskPhase = TaskPhase.None; body.ReachState.weight = 0f; body.JawTarget = 0f; }
             State = force ?? (r < 0.3f ? "follow" : r < 0.42f ? "roam" : r < 0.66f ? "wander" : r < 0.8f ? "toy" : r < 0.9f ? "sit" : "idle");
             if (State == "follow" && PlayerTargets.Count == 0) State = "wander";
             dur = State switch { "roam" => 40f, "follow" => R(8f, 16f), "wander" => R(7f, 13f), "toy" => 14f, "sit" => R(3f, 6f), _ => R(1.5f, 3.5f) };
@@ -125,7 +126,7 @@ namespace MicroduckVR.Flock
         public void Teleport(Vector3 pos, float yawRad)
         {
             if (held != null) { held.Release(Vector3.zero); held = null; }
-            toy = null; taskPhase = null; body.ReachState.weight = 0f; body.JawTarget = 0f; body.JawStop = 0f;
+            toy = null; taskPhase = TaskPhase.None; body.ReachState.weight = 0f; body.JawTarget = 0f; body.JawStop = 0f;
             mover.enabled = false; mover.transform.position = pos + Vector3.up * 0.02f; mover.enabled = true;
             yaw = yawRad; vel = Vector3.zero; vy = 0f; lastPos = mover.transform.position;
             body.Teleport(new Vector3(pos.x, WorldQueries.GroundNear(pos.x, pos.z, pos.y + 0.02f), pos.z), yawRad);
@@ -133,7 +134,7 @@ namespace MicroduckVR.Flock
         }
 
         void Mode(string s) { if (State != s) { State = s; Context = ""; } }
-        void DropHeld() { if (held != null) { held.Release(Vector3.zero); OnEvent?.Invoke(this, "drop", held.label); held = null; } toy = null; taskPhase = null; body.ReachState.weight = 0f; body.JawTarget = 0f; body.JawStop = 0f; }
+        void DropHeld() { if (held != null) { held.Release(Vector3.zero); OnEvent?.Invoke(this, "drop", held.label); held = null; } toy = null; taskPhase = TaskPhase.None; body.ReachState.weight = 0f; body.JawTarget = 0f; body.JawStop = 0f; }
 
         // ------------------------------------------------------------------ games (they take over from the normal life)
         float lastKick = -9f, lastPounce = -9f, pounceT = -1f; bool cheered;
@@ -264,7 +265,7 @@ namespace MicroduckVR.Flock
                         if (d < bd && Mathf.Abs(gp.y - Pos.y) < 0.05f) { bd = d; bestToy = g; }
                     }
                     if (bestToy == null) { Pick("wander"); break; }
-                    toy = bestToy; taskPhase = "approach"; taskT = 0f; Context = toy.label;
+                    toy = bestToy; taskPhase = TaskPhase.Approach; taskT = 0f; Context = toy.label;
                     return (0f, 0f);
                 }
                 case "sit":
@@ -281,13 +282,13 @@ namespace MicroduckVR.Flock
             if (held != null)
             {
                 // carry it around for a bit, then put it down
-                if (taskPhase == "carry")
+                if (taskPhase == TaskPhase.Carry)
                 {
                     if (!target.HasValue || Flat(target.Value - Pos).magnitude < 0.05f) target = HouseLayout.RandomSpot(Pos, 0.5f, rng);
-                    if (taskT > 4.5f) { taskPhase = "drop"; taskT = 0f; }
+                    if (taskT > 4.5f) { taskPhase = TaskPhase.Drop; taskT = 0f; }
                     return SteerAvoid(target.Value, Gait.MaxSpeed * 0.6f, 0.03f);
                 }
-                if (taskPhase == "drop")
+                if (taskPhase == TaskPhase.Drop)
                 {
                     body.JawStop = 0f; body.JawTarget = 0.5f;
                     if (taskT > 0.25f)
@@ -301,22 +302,22 @@ namespace MicroduckVR.Flock
             if (toy == null || toy.IsHeld || taskT > 10f) { toy = null; body.ReachState.weight = 0f; body.JawTarget = 0f; Pick("wander"); return (0f, 0f); }
             Vector3 tp = toy.transform.position;
             Vector3 to = Flat(tp - Pos); float dist = to.magnitude;
-            if (taskPhase == "approach")
+            if (taskPhase == TaskPhase.Approach)
             {
                 // stand ~8 cm short of the toy, facing it
                 if (dist > 0.1f) return SteerAvoid(tp - to.normalized * 0.08f, Gait.MaxSpeed * 0.6f, 0.02f);
                 float err = Wrap(Mathf.Atan2(to.x, to.z) - yaw);
                 if (Mathf.Abs(err) > 0.12f) return (0f, Mathf.Clamp(err * 3f, -1.5f, 1.5f));
-                taskPhase = "reach"; taskT = 0f;
+                taskPhase = TaskPhase.Reach; taskT = 0f;
             }
-            if (taskPhase == "reach")
+            if (taskPhase == TaskPhase.Reach)
             {
                 body.ReachState.target = tp; body.ReachState.weight = 1f; body.JawTarget = 0.5f;
                 if (Vector3.Distance(body.BeakGap(), tp) < 0.03f && taskT > 0.5f)
                 {
-                    if (toy.TryHold(this)) { held = toy; toy = null; body.JawTarget = 0f; body.JawStop = 0.12f; body.ReachState.weight = 0f; taskPhase = "carry"; taskT = 0f; target = null; OnEvent?.Invoke(this, "got", held.label); }
+                    if (toy.TryHold(this)) { held = toy; toy = null; body.JawTarget = 0f; body.JawStop = 0.12f; body.ReachState.weight = 0f; taskPhase = TaskPhase.Carry; taskT = 0f; target = null; OnEvent?.Invoke(this, "got", held.label); }
                 }
-                else if (taskT > 3f) { taskPhase = "approach"; taskT = 0f; body.ReachState.weight = 0f; }
+                else if (taskT > 3f) { taskPhase = TaskPhase.Approach; taskT = 0f; body.ReachState.weight = 0f; }
                 return (0f, 0f);
             }
             return (0f, 0f);
