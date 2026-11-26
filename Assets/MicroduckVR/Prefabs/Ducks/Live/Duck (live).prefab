@@ -1,0 +1,116 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8439353753881782899
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 23931936826669923}
+  - component: {fileID: 4653443700866205751}
+  - component: {fileID: 4339910416899431744}
+  - component: {fileID: 2804608797225559373}
+  m_Layer: 0
+  m_Name: Duck (live)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &23931936826669923
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8439353753881782899}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4653443700866205751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8439353753881782899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6505c2575554d9a4380253c09d52ece5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MicroduckVR.Duck.DuckBody
+  MarkerUpper: {fileID: 0}
+  MarkerLower: {fileID: 0}
+  MarkerCam: {fileID: 0}
+  MarkerTof: {fileID: 0}
+  MarkerMouth: {fileID: 0}
+  Pos: {x: 0, y: 0, z: 0}
+  Yaw: 0
+  Vel: {x: 0, y: 0, z: 0}
+  YawRate: 0
+  BaseY: 0
+  Phase: 0
+  CycleHz: 2.2
+  Stepping: 0
+  Jaw: 0
+  JawTarget: 0
+  JawStop: 0
+  CrouchExtra: 0
+  PitchExtra: 0
+  EnabledIK: 1
+  Iters: 3
+  SitTarget: 0
+  CrouchTarget: 0
+  SitW: 0
+  CrouchW: 0
+  Skating: 0
+  SkateLift: 0.022
+  SkateW: 0
+  Stroke: 0
+  StrokeSide: 1
+  Wobble: 0
+  SkateLean: 0
+  LeanW: 0
+  Hop: 0
+  GazeYawOff: 0
+  GazePitchOff: 0
+  HappyWiggle: 0
+--- !u!114 &4339910416899431744
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8439353753881782899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7c0a84c25db5974e82c166b3f80eeb4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MicroduckVR.Duck.DuckSetup
+  rigPrefab: {fileID: 6335741975315257901, guid: 55e7075c3f4b1274e80a883bae83f494, type: 3}
+  jointMap: {fileID: 11400000, guid: 5ea3f9c7b4a8abb48882a6aea43e99f4, type: 2}
+  skin: cream
+  hideHeadFromPlayer: 0
+--- !u!114 &2804608797225559373
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8439353753881782899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02aec379dd6c9e840abb2f2419bdb01a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MicroduckVR.Flock.WanderDuck
+  boundsMin: {x: -1, y: -1}
+  boundsMax: {x: 1, y: 1}
+  speed: 0.1
+  seed: 1

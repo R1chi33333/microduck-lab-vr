@@ -1,0 +1,1460 @@
+{
+    "items": [
+        {
+            "sig": "532f01d5cd2f5730c0845ccc693aabad",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Apple.prefab",
+            "category": "Clutter",
+            "family": "Apple",
+            "name": "Apple"
+        },
+        {
+            "sig": "af518de793dd484bceb108bc7bc4c68a",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Backpack.prefab",
+            "category": "Clutter",
+            "family": "Backpack",
+            "name": "Backpack"
+        },
+        {
+            "sig": "397627b625444483e566180367ddca0d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Ball 2.prefab",
+            "category": "Clutter",
+            "family": "Ball",
+            "name": "Ball 2"
+        },
+        {
+            "sig": "3c7fd90b4c9d86c61d8bf052c8d955a9",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Ball 3.prefab",
+            "category": "Clutter",
+            "family": "Ball",
+            "name": "Ball 3"
+        },
+        {
+            "sig": "f0b85753edebcdbf5222dd3ff316c782",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Ball 4.prefab",
+            "category": "Clutter",
+            "family": "Ball",
+            "name": "Ball 4"
+        },
+        {
+            "sig": "19f8357cb7abc04e8f9eb08851706bd9",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Ball 5.prefab",
+            "category": "Clutter",
+            "family": "Ball",
+            "name": "Ball 5"
+        },
+        {
+            "sig": "fe97e253a6eee14b9e352f6d5f215503",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Ball 6.prefab",
+            "category": "Clutter",
+            "family": "Ball",
+            "name": "Ball 6"
+        },
+        {
+            "sig": "32f73fc35412a6ea24202a1c55290cbf",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Ball 7.prefab",
+            "category": "Clutter",
+            "family": "Ball",
+            "name": "Ball 7"
+        },
+        {
+            "sig": "8f913b79e1a2f80d913d778c222603ce",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Ball.prefab",
+            "category": "Clutter",
+            "family": "Ball",
+            "name": "Ball"
+        },
+        {
+            "sig": "d13a0ce90afe47d3abe01a713edaca10",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Book 2.prefab",
+            "category": "Clutter",
+            "family": "Book",
+            "name": "Book 2"
+        },
+        {
+            "sig": "bd77081b9318c12eb61f1a3aa997c51d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Book 3.prefab",
+            "category": "Clutter",
+            "family": "Book",
+            "name": "Book 3"
+        },
+        {
+            "sig": "6e1cb499332da056a9a5d332e39b0372",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Book 4.prefab",
+            "category": "Clutter",
+            "family": "Book",
+            "name": "Book 4"
+        },
+        {
+            "sig": "d28daaa26ca0342bd4de1c64ca1f60bd",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Book 5.prefab",
+            "category": "Clutter",
+            "family": "Book",
+            "name": "Book 5"
+        },
+        {
+            "sig": "dcd7b085aa3df8a122cbedf02e674b3d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Book 6.prefab",
+            "category": "Clutter",
+            "family": "Book",
+            "name": "Book 6"
+        },
+        {
+            "sig": "dcf7d39f7a224a566b2aeebfa9cf640e",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Book 7.prefab",
+            "category": "Clutter",
+            "family": "Book",
+            "name": "Book 7"
+        },
+        {
+            "sig": "a1b9fd24a80209f3879901b593db5f89",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Book 8.prefab",
+            "category": "Clutter",
+            "family": "Book",
+            "name": "Book 8"
+        },
+        {
+            "sig": "c9bc00cbf571bb2790953a4d678f23e4",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Book block 2.prefab",
+            "category": "Clutter",
+            "family": "Book block",
+            "name": "Book block 2"
+        },
+        {
+            "sig": "75dcad60e77f0b67fd9367749bdffc06",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Book block 3.prefab",
+            "category": "Clutter",
+            "family": "Book block",
+            "name": "Book block 3"
+        },
+        {
+            "sig": "00b897048605baeb08e0566f0385b4ab",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Book block 4.prefab",
+            "category": "Clutter",
+            "family": "Book block",
+            "name": "Book block 4"
+        },
+        {
+            "sig": "400c5b38132af95e73df077b4b8f27d6",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Book block 5.prefab",
+            "category": "Clutter",
+            "family": "Book block",
+            "name": "Book block 5"
+        },
+        {
+            "sig": "447f50ac32c734356d73face962282ca",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Book block 6.prefab",
+            "category": "Clutter",
+            "family": "Book block",
+            "name": "Book block 6"
+        },
+        {
+            "sig": "8219f6234de2d6242bfa23079a65f2be",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Book block.prefab",
+            "category": "Clutter",
+            "family": "Book block",
+            "name": "Book block"
+        },
+        {
+            "sig": "f43a5cceda06b973f89707cfce11b471",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Book.prefab",
+            "category": "Clutter",
+            "family": "Book",
+            "name": "Book"
+        },
+        {
+            "sig": "eed6f69f67245a6a463331d62176cf88",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Bucket.prefab",
+            "category": "Clutter",
+            "family": "Bucket",
+            "name": "Bucket"
+        },
+        {
+            "sig": "b28e425c822e5b9a841ebb413550b961",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Calendar.prefab",
+            "category": "Clutter",
+            "family": "Calendar",
+            "name": "Calendar"
+        },
+        {
+            "sig": "634ac4485d42cedfce08117e23e5a865",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Cardboard box 2.prefab",
+            "category": "Clutter",
+            "family": "Cardboard box",
+            "name": "Cardboard box 2"
+        },
+        {
+            "sig": "caf7550abe26ac4fb49b349726695b7d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Cardboard box 3.prefab",
+            "category": "Clutter",
+            "family": "Cardboard box",
+            "name": "Cardboard box 3"
+        },
+        {
+            "sig": "521482ef7114882806f0dcf9837061ba",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Cardboard box 4.prefab",
+            "category": "Clutter",
+            "family": "Cardboard box",
+            "name": "Cardboard box 4"
+        },
+        {
+            "sig": "f2cfd3481cf33e5fc5f3efbc7460ca05",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Cardboard box 5.prefab",
+            "category": "Clutter",
+            "family": "Cardboard box",
+            "name": "Cardboard box 5"
+        },
+        {
+            "sig": "9d72aa78f81064eee7b760dcd8685c6a",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Cardboard box 6.prefab",
+            "category": "Clutter",
+            "family": "Cardboard box",
+            "name": "Cardboard box 6"
+        },
+        {
+            "sig": "969b81337227eb59e0f9a1de1ff865c8",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Cardboard box 7.prefab",
+            "category": "Clutter",
+            "family": "Cardboard box",
+            "name": "Cardboard box 7"
+        },
+        {
+            "sig": "0fdbb1216861ee95aa7193ce754a7300",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Cardboard box 8.prefab",
+            "category": "Clutter",
+            "family": "Cardboard box",
+            "name": "Cardboard box 8"
+        },
+        {
+            "sig": "47adea0f479be191bf34a5466bf57bcd",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Cardboard box.prefab",
+            "category": "Clutter",
+            "family": "Cardboard box",
+            "name": "Cardboard box"
+        },
+        {
+            "sig": "4750d675f7c09230128593acc9223017",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Cereal box 2.prefab",
+            "category": "Clutter",
+            "family": "Cereal box",
+            "name": "Cereal box 2"
+        },
+        {
+            "sig": "c921db583086bba3c020fe2a9ba5aa9d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Cereal box.prefab",
+            "category": "Clutter",
+            "family": "Cereal box",
+            "name": "Cereal box"
+        },
+        {
+            "sig": "aec5ebd28d79f92cf4bef38bd3fae14f",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Chew bone.prefab",
+            "category": "Clutter",
+            "family": "Chew bone",
+            "name": "Chew bone"
+        },
+        {
+            "sig": "0eaf89a6c3a132007c8b2e8bfa9424a9",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Clock.prefab",
+            "category": "Clutter",
+            "family": "Clock",
+            "name": "Clock"
+        },
+        {
+            "sig": "81518d97009405eef22c88481b0c6d82",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Crayon 2.prefab",
+            "category": "Clutter",
+            "family": "Crayon",
+            "name": "Crayon 2"
+        },
+        {
+            "sig": "37a6f801150fc651a5f3cada5f7ac5d0",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Crayon 3.prefab",
+            "category": "Clutter",
+            "family": "Crayon",
+            "name": "Crayon 3"
+        },
+        {
+            "sig": "45c466c62154a948a8e3530b12b522e1",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Crayon 4.prefab",
+            "category": "Clutter",
+            "family": "Crayon",
+            "name": "Crayon 4"
+        },
+        {
+            "sig": "53e9b13e365670a95fd01d43cbcc0f2c",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Crayon 5.prefab",
+            "category": "Clutter",
+            "family": "Crayon",
+            "name": "Crayon 5"
+        },
+        {
+            "sig": "ab7c6877de589f8bafeb96eee1467a8c",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Crayon 6.prefab",
+            "category": "Clutter",
+            "family": "Crayon",
+            "name": "Crayon 6"
+        },
+        {
+            "sig": "15dae53bed4c40c36fe7a6425e465b29",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Crayon 7.prefab",
+            "category": "Clutter",
+            "family": "Crayon",
+            "name": "Crayon 7"
+        },
+        {
+            "sig": "2051b3b7b5ceb28d2ac87d6b374a0460",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Crayon.prefab",
+            "category": "Clutter",
+            "family": "Crayon",
+            "name": "Crayon"
+        },
+        {
+            "sig": "4d917a4126dcd325c05702b0509d54b6",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Desk lamp.prefab",
+            "category": "Clutter",
+            "family": "Desk lamp",
+            "name": "Desk lamp"
+        },
+        {
+            "sig": "bfd6ac54c3279485b33ec13851b31e79",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Dish rack.prefab",
+            "category": "Clutter",
+            "family": "Dish rack",
+            "name": "Dish rack"
+        },
+        {
+            "sig": "e5164da39daf3ab91eb222bf42119f44",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Doormat.prefab",
+            "category": "Clutter",
+            "family": "Doormat",
+            "name": "Doormat"
+        },
+        {
+            "sig": "9e8af237ce014f042b38833730a294fd",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Drawing 2.prefab",
+            "category": "Clutter",
+            "family": "Drawing",
+            "name": "Drawing 2"
+        },
+        {
+            "sig": "4ea5e8333bafc6c4991ef7da27a6ca07",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Drawing 3.prefab",
+            "category": "Clutter",
+            "family": "Drawing",
+            "name": "Drawing 3"
+        },
+        {
+            "sig": "4199da4ee235206a4c75aec12fa8256a",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Drawing 4.prefab",
+            "category": "Clutter",
+            "family": "Drawing",
+            "name": "Drawing 4"
+        },
+        {
+            "sig": "5036af077b9a98bbdc455586295a1fbc",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Drawing 5.prefab",
+            "category": "Clutter",
+            "family": "Drawing",
+            "name": "Drawing 5"
+        },
+        {
+            "sig": "0d4ba0c4bcdb01b9c34eb9045b25031b",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Drawing.prefab",
+            "category": "Clutter",
+            "family": "Drawing",
+            "name": "Drawing"
+        },
+        {
+            "sig": "5890be114f44bc6e5d7c119f6a60ba4d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Fallen leaf 2.prefab",
+            "category": "Clutter",
+            "family": "Fallen leaf",
+            "name": "Fallen leaf 2"
+        },
+        {
+            "sig": "d068d42898c0f785f54d945f371e027d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Fallen leaf 3.prefab",
+            "category": "Clutter",
+            "family": "Fallen leaf",
+            "name": "Fallen leaf 3"
+        },
+        {
+            "sig": "45a1530b64fdcde8801b29c9bd5ac041",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Fallen leaf.prefab",
+            "category": "Clutter",
+            "family": "Fallen leaf",
+            "name": "Fallen leaf"
+        },
+        {
+            "sig": "6a4f9dfbb7e2b80c553b38357fc0b9f0",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Floor cushion 2.prefab",
+            "category": "Clutter",
+            "family": "Floor cushion",
+            "name": "Floor cushion 2"
+        },
+        {
+            "sig": "bc85e08b1bb15b79c1d31f014f85bcd7",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Floor cushion.prefab",
+            "category": "Clutter",
+            "family": "Floor cushion",
+            "name": "Floor cushion"
+        },
+        {
+            "sig": "ef28c1a1db863ac8fd1158d85372c67b",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Floor mat.prefab",
+            "category": "Clutter",
+            "family": "Floor mat",
+            "name": "Floor mat"
+        },
+        {
+            "sig": "58266238e0e38a7653cfda200024ba50",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Flower 2.prefab",
+            "category": "Clutter",
+            "family": "Flower",
+            "name": "Flower 2"
+        },
+        {
+            "sig": "511dad00690f43b0787a80d8fb0332ed",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Flower 3.prefab",
+            "category": "Clutter",
+            "family": "Flower",
+            "name": "Flower 3"
+        },
+        {
+            "sig": "2f1c0ed1434f2257aa6175df7ab5d286",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Flower 4.prefab",
+            "category": "Clutter",
+            "family": "Flower",
+            "name": "Flower 4"
+        },
+        {
+            "sig": "f617c2392d3ed14d21ac197f9b30ff08",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Flower 5.prefab",
+            "category": "Clutter",
+            "family": "Flower",
+            "name": "Flower 5"
+        },
+        {
+            "sig": "8d50b4e87cd2710aa194daa9f7f3c7b2",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Flower 6.prefab",
+            "category": "Clutter",
+            "family": "Flower",
+            "name": "Flower 6"
+        },
+        {
+            "sig": "428c4b2d033cbcbbd38bdd2565569acf",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Flower 7.prefab",
+            "category": "Clutter",
+            "family": "Flower",
+            "name": "Flower 7"
+        },
+        {
+            "sig": "851917ccd5915178bd0526433636c8d5",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Flower 8.prefab",
+            "category": "Clutter",
+            "family": "Flower",
+            "name": "Flower 8"
+        },
+        {
+            "sig": "5c74a41be26c2c62bdb5431db384ff15",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Flower.prefab",
+            "category": "Clutter",
+            "family": "Flower",
+            "name": "Flower"
+        },
+        {
+            "sig": "69a9ab3595ace0cda6ad21dd4f476356",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Football 2.prefab",
+            "category": "Clutter",
+            "family": "Football",
+            "name": "Football 2"
+        },
+        {
+            "sig": "626be09a45c6896150d20dbcf5799562",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Football 3.prefab",
+            "category": "Clutter",
+            "family": "Football",
+            "name": "Football 3"
+        },
+        {
+            "sig": "c73d372807a6e2f0d0b2882907c0d928",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Football goal 2.prefab",
+            "category": "Clutter",
+            "family": "Football goal",
+            "name": "Football goal 2"
+        },
+        {
+            "sig": "eb757c78f198aea06e8637117d3e6903",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Football goal.prefab",
+            "category": "Clutter",
+            "family": "Football goal",
+            "name": "Football goal"
+        },
+        {
+            "sig": "7b7d6221059bc43563756b82f81a76fd",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Football.prefab",
+            "category": "Clutter",
+            "family": "Football",
+            "name": "Football"
+        },
+        {
+            "sig": "1c955de17b1c3235981f86644880ce88",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Fruit bowl.prefab",
+            "category": "Clutter",
+            "family": "Fruit bowl",
+            "name": "Fruit bowl"
+        },
+        {
+            "sig": "2de704989e6a4647df81af35397a2127",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Game console.prefab",
+            "category": "Clutter",
+            "family": "Game console",
+            "name": "Game console"
+        },
+        {
+            "sig": "0f3107dc0ee0d8ecd68ba00c5293e3b7",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Game pad.prefab",
+            "category": "Clutter",
+            "family": "Game pad",
+            "name": "Game pad"
+        },
+        {
+            "sig": "1a3e0ae938996d5131a61e9b5909a42d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Garden gnome.prefab",
+            "category": "Clutter",
+            "family": "Garden gnome",
+            "name": "Garden gnome"
+        },
+        {
+            "sig": "920177198933dc589c3ec1f60b47a815",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Jar 2.prefab",
+            "category": "Clutter",
+            "family": "Jar",
+            "name": "Jar 2"
+        },
+        {
+            "sig": "04da67e127ff173aabfcedc946325601",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Jar 3.prefab",
+            "category": "Clutter",
+            "family": "Jar",
+            "name": "Jar 3"
+        },
+        {
+            "sig": "9b500d75188371dc98220beac714ebfb",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Jar 4.prefab",
+            "category": "Clutter",
+            "family": "Jar",
+            "name": "Jar 4"
+        },
+        {
+            "sig": "767182a96a87ffb899aacbaae47a9b94",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Jar.prefab",
+            "category": "Clutter",
+            "family": "Jar",
+            "name": "Jar"
+        },
+        {
+            "sig": "9245abeb3fa9ad84aba48f4cb2408221",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Kettle.prefab",
+            "category": "Clutter",
+            "family": "Kettle",
+            "name": "Kettle"
+        },
+        {
+            "sig": "a1dadbb382bba1d19e6b68177cdfd62a",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Key bowl.prefab",
+            "category": "Clutter",
+            "family": "Key bowl",
+            "name": "Key bowl"
+        },
+        {
+            "sig": "28d612d0b3be467756f965a5c6eaa49b",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Laptop.prefab",
+            "category": "Clutter",
+            "family": "Laptop",
+            "name": "Laptop"
+        },
+        {
+            "sig": "24ee68f71b3ddd0c871a4054c7b3fa48",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Laundry pile.prefab",
+            "category": "Clutter",
+            "family": "Laundry pile",
+            "name": "Laundry pile"
+        },
+        {
+            "sig": "b8e196d755ad5b4e53ddcbf114c1e76b",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Lego brick 2.prefab",
+            "category": "Clutter",
+            "family": "Lego brick",
+            "name": "Lego brick 2"
+        },
+        {
+            "sig": "af34738ed636a28128510fc4457a71f2",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Lego brick 3.prefab",
+            "category": "Clutter",
+            "family": "Lego brick",
+            "name": "Lego brick 3"
+        },
+        {
+            "sig": "0704c7cdcf4cbb0938b86269160dbe5c",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Lego brick 4.prefab",
+            "category": "Clutter",
+            "family": "Lego brick",
+            "name": "Lego brick 4"
+        },
+        {
+            "sig": "d5f5e976093daba92f963c13b8242576",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Lego brick.prefab",
+            "category": "Clutter",
+            "family": "Lego brick",
+            "name": "Lego brick"
+        },
+        {
+            "sig": "3d7a8b0304041cca6c60d97c5ea0121c",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Magazine 2.prefab",
+            "category": "Clutter",
+            "family": "Magazine",
+            "name": "Magazine 2"
+        },
+        {
+            "sig": "f0d6212e6e173d311980787e3fd98fef",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Magazine 3.prefab",
+            "category": "Clutter",
+            "family": "Magazine",
+            "name": "Magazine 3"
+        },
+        {
+            "sig": "3b89529b0ce14256ae00c2e102d9b75a",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Magazine 4.prefab",
+            "category": "Clutter",
+            "family": "Magazine",
+            "name": "Magazine 4"
+        },
+        {
+            "sig": "2b2226d8a224735b74cea61a997cb8a1",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Magazine.prefab",
+            "category": "Clutter",
+            "family": "Magazine",
+            "name": "Magazine"
+        },
+        {
+            "sig": "182abd9dd1a4130e93a7458c348a6de0",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Magnet 2.prefab",
+            "category": "Clutter",
+            "family": "Magnet",
+            "name": "Magnet 2"
+        },
+        {
+            "sig": "f4675fa18893d33216d45bd7a3a2f0ff",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Magnet 3.prefab",
+            "category": "Clutter",
+            "family": "Magnet",
+            "name": "Magnet 3"
+        },
+        {
+            "sig": "826bf1366dcc93a6ed0c6db12317e643",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Magnet 4.prefab",
+            "category": "Clutter",
+            "family": "Magnet",
+            "name": "Magnet 4"
+        },
+        {
+            "sig": "6ba67bab958d85eefb9d3d6911e2ce51",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Magnet 5.prefab",
+            "category": "Clutter",
+            "family": "Magnet",
+            "name": "Magnet 5"
+        },
+        {
+            "sig": "435ed9ed277cbd7a3fd89ec3ce838597",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Magnet.prefab",
+            "category": "Clutter",
+            "family": "Magnet",
+            "name": "Magnet"
+        },
+        {
+            "sig": "00811e0d6cd729684d8148241b8453fc",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Mop.prefab",
+            "category": "Clutter",
+            "family": "Mop",
+            "name": "Mop"
+        },
+        {
+            "sig": "8c7ae89c85cc39100b3bdb7c618de0bf",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Mug 2.prefab",
+            "category": "Clutter",
+            "family": "Mug",
+            "name": "Mug 2"
+        },
+        {
+            "sig": "095ebe8c1f6fcfd74e469709a646d654",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Mug 3.prefab",
+            "category": "Clutter",
+            "family": "Mug",
+            "name": "Mug 3"
+        },
+        {
+            "sig": "3a4d58e48bdc04a02c5a03a00f715751",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Mug 4.prefab",
+            "category": "Clutter",
+            "family": "Mug",
+            "name": "Mug 4"
+        },
+        {
+            "sig": "dcf86464da5054d5c3fd7daaf21811d0",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Mug 5.prefab",
+            "category": "Clutter",
+            "family": "Mug",
+            "name": "Mug 5"
+        },
+        {
+            "sig": "7aa837a21079b4f2b8ddf3fe621df774",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Mug.prefab",
+            "category": "Clutter",
+            "family": "Mug",
+            "name": "Mug"
+        },
+        {
+            "sig": "1d7104b63ad0f90b4fc5b90737f64f58",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Notebook.prefab",
+            "category": "Clutter",
+            "family": "Notebook",
+            "name": "Notebook"
+        },
+        {
+            "sig": "533242f337ac77baf001be052cfe5cea",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Orange.prefab",
+            "category": "Clutter",
+            "family": "Orange",
+            "name": "Orange"
+        },
+        {
+            "sig": "0a8c5c81e085d0c3669326f3e2e5dfff",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Pencil pot.prefab",
+            "category": "Clutter",
+            "family": "Pencil pot",
+            "name": "Pencil pot"
+        },
+        {
+            "sig": "8658f4192c3d7c9eeadbf8d584a0d1a0",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Pet bowl 2.prefab",
+            "category": "Clutter",
+            "family": "Pet bowl",
+            "name": "Pet bowl 2"
+        },
+        {
+            "sig": "cf9a66a7ab5b774d4c32932c9c3c3c03",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Pet bowl.prefab",
+            "category": "Clutter",
+            "family": "Pet bowl",
+            "name": "Pet bowl"
+        },
+        {
+            "sig": "f40aafff6d2b3617bd9e878b14135fa0",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Picture 2.prefab",
+            "category": "Clutter",
+            "family": "Picture",
+            "name": "Picture 2"
+        },
+        {
+            "sig": "fc482f59494640a0ad5922022f7fe494",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Picture 3.prefab",
+            "category": "Clutter",
+            "family": "Picture",
+            "name": "Picture 3"
+        },
+        {
+            "sig": "1779f97dcf0a6a2def47df4d6d3e3187",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Picture 4.prefab",
+            "category": "Clutter",
+            "family": "Picture",
+            "name": "Picture 4"
+        },
+        {
+            "sig": "834f8f74f4c138fe2671b32ace73a737",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Picture 5.prefab",
+            "category": "Clutter",
+            "family": "Picture",
+            "name": "Picture 5"
+        },
+        {
+            "sig": "d14881d3c5981f1ff7c4a91f3ce9d1ca",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Picture 6.prefab",
+            "category": "Clutter",
+            "family": "Picture",
+            "name": "Picture 6"
+        },
+        {
+            "sig": "91734bf23548a8eb509c953ac543720a",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Picture.prefab",
+            "category": "Clutter",
+            "family": "Picture",
+            "name": "Picture"
+        },
+        {
+            "sig": "5b4538472df513d73309cbcdfb09c28b",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Plant 2.prefab",
+            "category": "Clutter",
+            "family": "Plant",
+            "name": "Plant 2"
+        },
+        {
+            "sig": "ba8b9d2694c5edbd7eaedb98dcf0d59d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Plant 3.prefab",
+            "category": "Clutter",
+            "family": "Plant",
+            "name": "Plant 3"
+        },
+        {
+            "sig": "664e946cb0efdde110f23d2c46303cc0",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Plant.prefab",
+            "category": "Clutter",
+            "family": "Plant",
+            "name": "Plant"
+        },
+        {
+            "sig": "fb91e28c933c2cc75a57787bbbe3fabd",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Plate 2.prefab",
+            "category": "Clutter",
+            "family": "Plate",
+            "name": "Plate 2"
+        },
+        {
+            "sig": "70973c9e734ecadf5a3dc0b184f378d9",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Plate 3.prefab",
+            "category": "Clutter",
+            "family": "Plate",
+            "name": "Plate 3"
+        },
+        {
+            "sig": "ccddbe4c83eed65d072111976660a1e9",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Plate 4.prefab",
+            "category": "Clutter",
+            "family": "Plate",
+            "name": "Plate 4"
+        },
+        {
+            "sig": "6a00a46b4a857e58167bb96ca0499f2f",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Plate.prefab",
+            "category": "Clutter",
+            "family": "Plate",
+            "name": "Plate"
+        },
+        {
+            "sig": "082ae3c3b20fc31f3f489f611aec2ec9",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Plush bunny 2.prefab",
+            "category": "Clutter",
+            "family": "Plush bunny",
+            "name": "Plush bunny 2"
+        },
+        {
+            "sig": "57e610fe34cb517be1052bc0b9f3d7d4",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Plush bunny.prefab",
+            "category": "Clutter",
+            "family": "Plush bunny",
+            "name": "Plush bunny"
+        },
+        {
+            "sig": "d0c82408121c3cbaa874395de89fb40d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Poster 2.prefab",
+            "category": "Clutter",
+            "family": "Poster",
+            "name": "Poster 2"
+        },
+        {
+            "sig": "be078678d56c5783fe3a97dfff1a9755",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Poster 3.prefab",
+            "category": "Clutter",
+            "family": "Poster",
+            "name": "Poster 3"
+        },
+        {
+            "sig": "2ea99cf0787650b28f50beedab05aa36",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Poster.prefab",
+            "category": "Clutter",
+            "family": "Poster",
+            "name": "Poster"
+        },
+        {
+            "sig": "37fbb311b6272fbf193dd47123afa08b",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Potted bush 2.prefab",
+            "category": "Clutter",
+            "family": "Potted bush",
+            "name": "Potted bush 2"
+        },
+        {
+            "sig": "f5f9f406e938967d3b840c2d5fcb778e",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Potted bush 3.prefab",
+            "category": "Clutter",
+            "family": "Potted bush",
+            "name": "Potted bush 3"
+        },
+        {
+            "sig": "2e5e920ef39f56c88616815803c89ad4",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Potted bush 4.prefab",
+            "category": "Clutter",
+            "family": "Potted bush",
+            "name": "Potted bush 4"
+        },
+        {
+            "sig": "2eed8d03fa0aeb4531421729a311563b",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Potted bush.prefab",
+            "category": "Clutter",
+            "family": "Potted bush",
+            "name": "Potted bush"
+        },
+        {
+            "sig": "0585f9bf2cd28441577430121d7d087b",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Remote.prefab",
+            "category": "Clutter",
+            "family": "Remote",
+            "name": "Remote"
+        },
+        {
+            "sig": "9727a6a0781b00e1606a40d80f1af5af",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Scooter.prefab",
+            "category": "Clutter",
+            "family": "Scooter",
+            "name": "Scooter"
+        },
+        {
+            "sig": "ef8b1cec6ebc9baf6bd6b8ac9266f188",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Shoe 2.prefab",
+            "category": "Clutter",
+            "family": "Shoe",
+            "name": "Shoe 2"
+        },
+        {
+            "sig": "74c8ec9375c898af201b9041ab7f953f",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Shoe 3.prefab",
+            "category": "Clutter",
+            "family": "Shoe",
+            "name": "Shoe 3"
+        },
+        {
+            "sig": "7f3b172820f9ad80dbac00d67bfb9fa4",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Shoe 4.prefab",
+            "category": "Clutter",
+            "family": "Shoe",
+            "name": "Shoe 4"
+        },
+        {
+            "sig": "536dada16989254fb2a4d548a72a8544",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Shoe 5.prefab",
+            "category": "Clutter",
+            "family": "Shoe",
+            "name": "Shoe 5"
+        },
+        {
+            "sig": "2fe840a6f51228a1f17b1f9b4ef20926",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Shoe 6.prefab",
+            "category": "Clutter",
+            "family": "Shoe",
+            "name": "Shoe 6"
+        },
+        {
+            "sig": "3ae6fea4ffda9c334e990a95531fde00",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Shoe 7.prefab",
+            "category": "Clutter",
+            "family": "Shoe",
+            "name": "Shoe 7"
+        },
+        {
+            "sig": "8f869db380e882396317dce97df52743",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Shoe 8.prefab",
+            "category": "Clutter",
+            "family": "Shoe",
+            "name": "Shoe 8"
+        },
+        {
+            "sig": "70071e946710f0be280d777df4b40155",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Shoe.prefab",
+            "category": "Clutter",
+            "family": "Shoe",
+            "name": "Shoe"
+        },
+        {
+            "sig": "e5761dc4dc0e3c960786da53c9e233bf",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Shopping bag 2.prefab",
+            "category": "Clutter",
+            "family": "Shopping bag",
+            "name": "Shopping bag 2"
+        },
+        {
+            "sig": "210294d2930cb526007a5e4f75bf8036",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Shopping bag.prefab",
+            "category": "Clutter",
+            "family": "Shopping bag",
+            "name": "Shopping bag"
+        },
+        {
+            "sig": "6bd7e3d0ad6ce40d6a3b375c6046113e",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Skateboard.prefab",
+            "category": "Clutter",
+            "family": "Skateboard",
+            "name": "Skateboard"
+        },
+        {
+            "sig": "be80f017d784c50a96eaf8847090446b",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Sock 2.prefab",
+            "category": "Clutter",
+            "family": "Sock",
+            "name": "Sock 2"
+        },
+        {
+            "sig": "9b249da1c6f128e9113659f5bab67921",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Sock.prefab",
+            "category": "Clutter",
+            "family": "Sock",
+            "name": "Sock"
+        },
+        {
+            "sig": "35757b6d22fff81a66a12ae59925a761",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Spade.prefab",
+            "category": "Clutter",
+            "family": "Spade",
+            "name": "Spade"
+        },
+        {
+            "sig": "1a15bc5179acfc1c9317c82d0c003848",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Spoon.prefab",
+            "category": "Clutter",
+            "family": "Spoon",
+            "name": "Spoon"
+        },
+        {
+            "sig": "c26767947ce28e0d29dcc23a452d405d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/TV.prefab",
+            "category": "Clutter",
+            "family": "TV",
+            "name": "TV"
+        },
+        {
+            "sig": "166ae1fc71868e2e665ed65e892e6b98",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Teddy 2.prefab",
+            "category": "Clutter",
+            "family": "Teddy",
+            "name": "Teddy 2"
+        },
+        {
+            "sig": "77ccff724c23393382c8c1c97c018879",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Teddy 3.prefab",
+            "category": "Clutter",
+            "family": "Teddy",
+            "name": "Teddy 3"
+        },
+        {
+            "sig": "f7f268482c8bf7302daef26c083bf417",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Teddy.prefab",
+            "category": "Clutter",
+            "family": "Teddy",
+            "name": "Teddy"
+        },
+        {
+            "sig": "7843f4cb3a5cb824c0b9e8657be7581d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Tennis ball.prefab",
+            "category": "Clutter",
+            "family": "Tennis ball",
+            "name": "Tennis ball"
+        },
+        {
+            "sig": "5d7e5003603144ee488390619832a5b2",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Toaster.prefab",
+            "category": "Clutter",
+            "family": "Toaster",
+            "name": "Toaster"
+        },
+        {
+            "sig": "7b89838ba71a3417f7f36c41d19763e6",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Toy block 2.prefab",
+            "category": "Clutter",
+            "family": "Toy block",
+            "name": "Toy block 2"
+        },
+        {
+            "sig": "4a3b0a9c5066e15873f82d7e502a30a4",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Toy block 3.prefab",
+            "category": "Clutter",
+            "family": "Toy block",
+            "name": "Toy block 3"
+        },
+        {
+            "sig": "4876103283213581d3f6bb63ccda7cc9",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Toy block 4.prefab",
+            "category": "Clutter",
+            "family": "Toy block",
+            "name": "Toy block 4"
+        },
+        {
+            "sig": "106329a9baf6af9136392e10e22c69ea",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Toy block 5.prefab",
+            "category": "Clutter",
+            "family": "Toy block",
+            "name": "Toy block 5"
+        },
+        {
+            "sig": "75472c18512588baf34cb361656f6e81",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Toy block 6.prefab",
+            "category": "Clutter",
+            "family": "Toy block",
+            "name": "Toy block 6"
+        },
+        {
+            "sig": "fc5b4126135b67763c74eca5e1f86bfa",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Toy block 7.prefab",
+            "category": "Clutter",
+            "family": "Toy block",
+            "name": "Toy block 7"
+        },
+        {
+            "sig": "78d3e24931d630e1fe9367df7dc375a1",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Toy block 8.prefab",
+            "category": "Clutter",
+            "family": "Toy block",
+            "name": "Toy block 8"
+        },
+        {
+            "sig": "dd8288a5ab5399cdcc44dee875483ee6",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Toy block.prefab",
+            "category": "Clutter",
+            "family": "Toy block",
+            "name": "Toy block"
+        },
+        {
+            "sig": "53762768f71cdb67064e7f8e113a91bb",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Toy car 2.prefab",
+            "category": "Clutter",
+            "family": "Toy car",
+            "name": "Toy car 2"
+        },
+        {
+            "sig": "c741a4f02879c415709bc5310bf5e29d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Toy car 3.prefab",
+            "category": "Clutter",
+            "family": "Toy car",
+            "name": "Toy car 3"
+        },
+        {
+            "sig": "fb60eb6f8364ca3cea5ba5156c07cdc3",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Toy car 4.prefab",
+            "category": "Clutter",
+            "family": "Toy car",
+            "name": "Toy car 4"
+        },
+        {
+            "sig": "9db8b1a23684911d43b811ba4f57f3e0",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Toy car 5.prefab",
+            "category": "Clutter",
+            "family": "Toy car",
+            "name": "Toy car 5"
+        },
+        {
+            "sig": "3b95235bdfe0cb4325a6668f1ad8ac66",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Toy car.prefab",
+            "category": "Clutter",
+            "family": "Toy car",
+            "name": "Toy car"
+        },
+        {
+            "sig": "7ad8662132dd311cb9ddd9c7a572a4f0",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Train coach.prefab",
+            "category": "Clutter",
+            "family": "Train coach",
+            "name": "Train coach"
+        },
+        {
+            "sig": "6e4faa425737836c17b6eacb86c749b4",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Train engine.prefab",
+            "category": "Clutter",
+            "family": "Train engine",
+            "name": "Train engine"
+        },
+        {
+            "sig": "97aea7176927eec1c94eb2fdfd4877bc",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Train track.prefab",
+            "category": "Clutter",
+            "family": "Train track",
+            "name": "Train track"
+        },
+        {
+            "sig": "56bf50f5d4a88ca109cb87039840e8ef",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Train wagon.prefab",
+            "category": "Clutter",
+            "family": "Train wagon",
+            "name": "Train wagon"
+        },
+        {
+            "sig": "1b21917a05851bdfb146e73d861cf849",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Vase 2.prefab",
+            "category": "Clutter",
+            "family": "Vase",
+            "name": "Vase 2"
+        },
+        {
+            "sig": "8ba93a5a618bb6586e84de5ef39c346c",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Vase.prefab",
+            "category": "Clutter",
+            "family": "Vase",
+            "name": "Vase"
+        },
+        {
+            "sig": "cb24d9aabe70ae7412f5120d477b4ebe",
+            "prefab": "Assets/MicroduckVR/Prefabs/Clutter/Watering can.prefab",
+            "category": "Clutter",
+            "family": "Watering can",
+            "name": "Watering can"
+        },
+        {
+            "sig": "434da7181e97cce769ee167090ad5398",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Armchair.prefab",
+            "category": "Furniture",
+            "family": "Armchair",
+            "name": "Armchair"
+        },
+        {
+            "sig": "7563449d35651f7e3104cd2cc146f16a",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Beanbag.prefab",
+            "category": "Furniture",
+            "family": "Beanbag",
+            "name": "Beanbag"
+        },
+        {
+            "sig": "dcd0822bfb056269b64381aba00ca95e",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Bed.prefab",
+            "category": "Furniture",
+            "family": "Bed",
+            "name": "Bed"
+        },
+        {
+            "sig": "920e835f39e901fc1c26ad20b90542ec",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Bench.prefab",
+            "category": "Furniture",
+            "family": "Bench",
+            "name": "Bench"
+        },
+        {
+            "sig": "2df1066347a35573c09f1cf6663f15cf",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Bookcase 2.prefab",
+            "category": "Furniture",
+            "family": "Bookcase",
+            "name": "Bookcase 2"
+        },
+        {
+            "sig": "ec7577e1ecc3629e5ac448cb5449c6fa",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Bookcase.prefab",
+            "category": "Furniture",
+            "family": "Bookcase",
+            "name": "Bookcase"
+        },
+        {
+            "sig": "425c59d505dfd5a7d524bbac663272c9",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Coffee table.prefab",
+            "category": "Furniture",
+            "family": "Coffee table",
+            "name": "Coffee table"
+        },
+        {
+            "sig": "f1bd3f54a7d00110f8156dd774d7b173",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Console table.prefab",
+            "category": "Furniture",
+            "family": "Console table",
+            "name": "Console table"
+        },
+        {
+            "sig": "ba88cf300e5bb89ed86984144802da9a",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Desk chair.prefab",
+            "category": "Furniture",
+            "family": "Desk chair",
+            "name": "Desk chair"
+        },
+        {
+            "sig": "b57af989bf55ccef53f54be7c30530c0",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Desk.prefab",
+            "category": "Furniture",
+            "family": "Desk",
+            "name": "Desk"
+        },
+        {
+            "sig": "1de5f7e7db28656e2d79ad3699fc6377",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Floor lamp.prefab",
+            "category": "Furniture",
+            "family": "Floor lamp",
+            "name": "Floor lamp"
+        },
+        {
+            "sig": "c5d2e355d04e0dac2d1d41fdf3af5d9e",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Floor plant.prefab",
+            "category": "Furniture",
+            "family": "Floor plant",
+            "name": "Floor plant"
+        },
+        {
+            "sig": "f01ab3d9cb8c5e381d1dfb0c61353d4e",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Fridge.prefab",
+            "category": "Furniture",
+            "family": "Fridge",
+            "name": "Fridge"
+        },
+        {
+            "sig": "2ec712c644d999290bc20ef589db090c",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Hose reel.prefab",
+            "category": "Furniture",
+            "family": "Hose reel",
+            "name": "Hose reel"
+        },
+        {
+            "sig": "4465abf31267dae6f723f3d58a36d20d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Kitchen chair 2.prefab",
+            "category": "Furniture",
+            "family": "Kitchen chair",
+            "name": "Kitchen chair 2"
+        },
+        {
+            "sig": "95c05be79b37121d7bbd51fbac3e92fa",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Kitchen chair 3.prefab",
+            "category": "Furniture",
+            "family": "Kitchen chair",
+            "name": "Kitchen chair 3"
+        },
+        {
+            "sig": "07aec63c7c5e528e2f3a664adf8ab505",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Kitchen chair 4.prefab",
+            "category": "Furniture",
+            "family": "Kitchen chair",
+            "name": "Kitchen chair 4"
+        },
+        {
+            "sig": "569477fadfc329cf78c4845b4f1e824d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Kitchen chair.prefab",
+            "category": "Furniture",
+            "family": "Kitchen chair",
+            "name": "Kitchen chair"
+        },
+        {
+            "sig": "b5a8ae1b76cf8ad395c2f2f048cfb9ec",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Kitchen table.prefab",
+            "category": "Furniture",
+            "family": "Kitchen table",
+            "name": "Kitchen table"
+        },
+        {
+            "sig": "eac69d3dea928aeffd2b85a8fa3604bd",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Kitchen units.prefab",
+            "category": "Furniture",
+            "family": "Kitchen units",
+            "name": "Kitchen units"
+        },
+        {
+            "sig": "9d69a35d0fe78621372e599d9e34e256",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Laundry basket.prefab",
+            "category": "Furniture",
+            "family": "Laundry basket",
+            "name": "Laundry basket"
+        },
+        {
+            "sig": "a90133f542cc995ef315e56599456583",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Pet bed.prefab",
+            "category": "Furniture",
+            "family": "Pet bed",
+            "name": "Pet bed"
+        },
+        {
+            "sig": "cdea8cf7f65289bf7f2f946ab82dfab6",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Pouf.prefab",
+            "category": "Furniture",
+            "family": "Pouf",
+            "name": "Pouf"
+        },
+        {
+            "sig": "14af5e7faf896829e2cdd83fa2c7c3cc",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Raised bed 2.prefab",
+            "category": "Furniture",
+            "family": "Raised bed",
+            "name": "Raised bed 2"
+        },
+        {
+            "sig": "6577161204a1f8cce4737b64ebd2de4a",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Raised bed.prefab",
+            "category": "Furniture",
+            "family": "Raised bed",
+            "name": "Raised bed"
+        },
+        {
+            "sig": "da4fe898d1dd6f5507a902830ecefb7d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Shelf.prefab",
+            "category": "Furniture",
+            "family": "Shelf",
+            "name": "Shelf"
+        },
+        {
+            "sig": "f456dfead1c2ed95a2fe4e3acbc13c07",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Shoe rack.prefab",
+            "category": "Furniture",
+            "family": "Shoe rack",
+            "name": "Shoe rack"
+        },
+        {
+            "sig": "d27f1cd54f76130cc8e361504ed07e4f",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Side table.prefab",
+            "category": "Furniture",
+            "family": "Side table",
+            "name": "Side table"
+        },
+        {
+            "sig": "e8c3c44361f272bbc4ac5f81ee1e99de",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Sofa.prefab",
+            "category": "Furniture",
+            "family": "Sofa",
+            "name": "Sofa"
+        },
+        {
+            "sig": "0b060631fb870f95748fc1dfe8407f8f",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Step stool.prefab",
+            "category": "Furniture",
+            "family": "Step stool",
+            "name": "Step stool"
+        },
+        {
+            "sig": "35b653a6ebb128ba6295c48ebe40b011",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/TV console.prefab",
+            "category": "Furniture",
+            "family": "TV console",
+            "name": "TV console"
+        },
+        {
+            "sig": "7cb1ce8cc18260021cec62106ebff32c",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Table.prefab",
+            "category": "Furniture",
+            "family": "Table",
+            "name": "Table"
+        },
+        {
+            "sig": "dfc822c6555e5fd67fe4f9ae27d5872d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Toy box.prefab",
+            "category": "Furniture",
+            "family": "Toy box",
+            "name": "Toy box"
+        },
+        {
+            "sig": "2ead442003befdd64790f21a86d30dfd",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Trash bin.prefab",
+            "category": "Furniture",
+            "family": "Trash bin",
+            "name": "Trash bin"
+        },
+        {
+            "sig": "dcd9406f5657157b8ed07efbadf8f0e0",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Umbrella stand.prefab",
+            "category": "Furniture",
+            "family": "Umbrella stand",
+            "name": "Umbrella stand"
+        },
+        {
+            "sig": "403283ccd758230b87d43c4400c2841d",
+            "prefab": "Assets/MicroduckVR/Prefabs/Furniture/Wardrobe.prefab",
+            "category": "Furniture",
+            "family": "Wardrobe",
+            "name": "Wardrobe"
+        }
+    ]
+}
