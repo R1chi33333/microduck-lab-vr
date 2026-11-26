@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using MicroduckVR.Comic;
 using MicroduckVR.Core;
-using MicroduckVR.Duck;
-using MicroduckVR.Flock;
 using UnityEngine;
 
 namespace MicroduckVR.World
@@ -16,9 +14,14 @@ namespace MicroduckVR.World
         const int Max = 12;
         static readonly int PushersId = Shader.PropertyToID("_GrassPushers"), CountId = Shader.PropertyToID("_GrassPusherCount");
         readonly Vector4[] pushers = new Vector4[Max];
+        readonly List<Vector3> walkers = new List<Vector3>();
         readonly List<Rigidbody> props = new List<Rigidbody>();
         readonly List<(Transform t, Vector3 v, float age, float life, float spin)> bits = new List<(Transform, Vector3, float, float, float)>();
         float scanT, bitT; Vector3 lastPos; bool hasLast; Material leafA, leafB; static Mesh leaf;
+
+        /// <summary>Adds where the ducks that part the grass are, in order: the player's own, the flock, the other players
+        /// (the game fills it in).</summary>
+        public static System.Action<List<Vector3>> CollectWalkers;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Boot() { if (FindAnyObjectByType<GrassField>() == null) new GameObject("Grass field").AddComponent<GrassField>(); }
@@ -44,9 +47,9 @@ namespace MicroduckVR.World
             }
             int n = 0;
             var pd = LocalPlayer.Current;
-            if (pd != null && pd.HasBody && OnLawn(pd.BodyPos)) pushers[n++] = Pack(pd.BodyPos, 0.085f);
-            foreach (var d in DuckBrain.All) if (n < Max && d != null && OnLawn(d.Pos)) pushers[n++] = Pack(d.Pos, 0.085f);
-            foreach (var r in MicroduckVR.Player.PlayerTargets.Remote) if (n < Max && r != null && r.Body != null && OnLawn(r.Body.Pos)) pushers[n++] = Pack(r.Body.Pos, 0.085f);
+            walkers.Clear();
+            if (CollectWalkers != null) CollectWalkers(walkers);
+            foreach (var w in walkers) if (n < Max && OnLawn(w)) pushers[n++] = Pack(w, 0.085f);
             foreach (var rb in props)
             {
                 if (n >= Max) break;

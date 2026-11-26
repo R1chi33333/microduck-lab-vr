@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using MicroduckVR.Duck;
+using MicroduckVR.Flock;
 using MicroduckVR.Games;
+using MicroduckVR.World;
 using UnityEngine;
 
 namespace MicroduckVR.Player
@@ -22,6 +24,22 @@ namespace MicroduckVR.Player
 
         /// <summary>The null test the entries had as RemotePlayer: a destroyed component counts as null.</summary>
         static bool Live(IPlayerTarget r) => r is Object o ? o != null : r != null;
+
+        /// <summary>Tells the lawn who parts the grass, in play mode and in edit mode.</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+#endif
+        static void RegisterWalkers() { GrassField.CollectWalkers = CollectWalkers; }
+
+        /// <summary>Your own duck, then the flock, then the other players' ducks.</summary>
+        static void CollectWalkers(List<Vector3> into)
+        {
+            var pd = PlayerDuck.Instance;
+            if (pd != null && pd.Body != null) into.Add(pd.Body.Pos);
+            foreach (var d in DuckBrain.All) if (d != null) into.Add(d.Pos);
+            foreach (var r in Remote) if (Live(r) && r.Body != null) into.Add(r.Body.Pos);
+        }
 
         public static int Count
         {
