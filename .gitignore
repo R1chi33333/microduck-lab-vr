@@ -35,3 +35,6 @@ Thumbs.db
 *.slnx
 
 /Builds/
+
+# local co-op settings (manual host address)
+microduck_net.json

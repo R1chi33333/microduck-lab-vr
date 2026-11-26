@@ -72,6 +72,9 @@ namespace MicroduckVR.Duck
         public Func<float, float, float> Ground = (x, z) => 0f;
         public Action<string, object> OnSound;
         public Action OnGotUp;
+        /// <summary>An emote started (kind, duration) and a tip-over started (direction): the network session passes them on.</summary>
+        public Action<string, float> OnEmote;
+        public Action<Vector3> OnFall;
 
         public Transform Tilt { get; private set; }
         public Transform Model { get; private set; }
@@ -335,6 +338,7 @@ namespace MicroduckVR.Duck
         {
             if (dur <= 0f) dur = kind switch { "nod" => 1.1f, "shake" => 1.1f, "look" => 2.6f, "dance" => 2.4f, _ => 1.2f };
             CurrentEmote = new Emote { kind = kind, t = 0f, dur = dur };
+            OnEmote?.Invoke(kind, dur);
         }
 
         // returns offsets already mirrored to Unity (x, yaw, roll negated vs the web formulas)
@@ -561,6 +565,7 @@ namespace MicroduckVR.Duck
             bool sideways = Mathf.Abs(d.x) > Mathf.Abs(d.z);
             FallState = new Fall { phase = "tip", axis = axis, pivot = d * 0.045f, angle = 0.05f, angVel = 1.2f, rest = sideways ? 1.32f : (d.z > 0f ? 1.15f : 1.25f), from = new Dictionary<string, float>(Q) };
             Stepping = false;
+            OnFall?.Invoke(dirWorld);
         }
 
         public void StartTumble(Vector3 dirWorld)

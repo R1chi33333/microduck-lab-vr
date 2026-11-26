@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using MicroduckVR.Duck;
+using MicroduckVR.Net;
 using MicroduckVR.Player;
 using MicroduckVR.World;
 using UnityEngine;
@@ -56,7 +57,51 @@ namespace MicroduckVR.Flock
         {
             var s = GetComponent<DuckSetup>(); body = s.Body; mover = s.Mover;
             rng = new System.Random(seed); yaw = body.Yaw; lastPos = Pos;
-            Pick(null); t = R(0f, dur * 0.6f);
+            if (!Puppet) { Pick(null); t = R(0f, dur * 0.6f); }
+        }
+
+        // ------------------------------------------------------------------ playing together (joining PC)
+        /// <summary>On a PC that joined someone else's house the host's brain decides: this duck only plays back what
+        /// the host sends (MicroduckVR.Net.NetFlock poses it). Off again, it carries on with a mind of its own.</summary>
+        public bool Puppet { get; private set; }
+
+        public void SetPuppet(bool on)
+        {
+            if (body == null || mover == null) { var s = GetComponent<DuckSetup>(); body = s.Body; mover = s.Mover; }
+            if (Puppet == on) return;
+            if (on)
+            {
+                DropHeld(); pounceT = -1f; target = null; route = null;
+                body.SitTarget = false; body.CrouchTarget = false; body.LookAt.weight = 0f;
+            }
+            Puppet = on;
+            if (mover != null) mover.enabled = !on;                     // posed by hand while a puppet
+            if (!on)
+            {
+                if (rng == null) rng = new System.Random(seed);
+                yaw = body.Yaw; vel = Vector3.zero; vy = 0f; lastPos = Pos;
+                body.Hop = 0f; body.SitTarget = false; body.CrouchTarget = false; body.LookAt.target = null; body.LookAt.weight = 0f;
+                body.ReachState.target = null; body.ReachState.weight = 0f; body.JawTarget = 0f; body.JawStop = 0f;
+                Pick("idle");
+            }
+        }
+
+        /// <summary>What the host's brain says this duck is doing (the thought bubbles read it).</summary>
+        public void PuppetState(string state, string context) { State = state ?? "idle"; Context = context ?? ""; }
+        /// <summary>A toy event the host's duck had (got, drop): bubbles and chirps here too.</summary>
+        public void PuppetEvent(string kind, string context) => OnEvent?.Invoke(this, kind, context);
+
+        /// <summary>Pose the puppet: the body walks to the host's pose; the floor under it is looked up here (splashes, boings).</summary>
+        public void PuppetStep(float dt, Vector3 p, float yawRad, Vector3 v, float w)
+        {
+            if (body == null) return;
+            var surf = SurfaceTag.At(p);
+            string st = surf != null ? surf.type : "wood";
+            if (st != Surface) { Surface = st; if (st == "bed" || st == "water" || st == "tile") OnEvent?.Invoke(this, st, ""); }
+            if (mover != null) mover.transform.position = p;
+            Speed = Flat(p - lastPos).magnitude / Mathf.Max(dt, 1e-4f);
+            lastPos = p; yaw = yawRad; yawRate = w;
+            body.Step(dt, p, yawRad, Flat(v), w);
         }
 
         // ------------------------------------------------------------------ decisions
@@ -66,7 +111,7 @@ namespace MicroduckVR.Flock
             t = 0f; target = null; route = null; body.SitTarget = false;
             if (held == null) { toy = null; taskPhase = null; body.ReachState.weight = 0f; body.JawTarget = 0f; }
             State = force ?? (r < 0.3f ? "follow" : r < 0.42f ? "roam" : r < 0.66f ? "wander" : r < 0.8f ? "toy" : r < 0.9f ? "sit" : "idle");
-            if (State == "follow" && PlayerDuck.Instance == null) State = "wander";
+            if (State == "follow" && PlayerTargets.Count == 0) State = "wander";
             dur = State switch { "roam" => 40f, "follow" => R(8f, 16f), "wander" => R(7f, 13f), "toy" => 14f, "sit" => R(3f, 6f), _ => R(1.5f, 3.5f) };
             Context = "";
             if (State == "idle" && R() < 0.5f) body.PlayEmote(new[] { "nod", "look", "dance", "shake" }[rng.Next(4)]);
@@ -119,9 +164,8 @@ namespace MicroduckVR.Flock
                 if (d < 0.04f) return SteerAvoid(Flat(b) + toGoal * 0.1f, Gait.MaxSpeed, 0.01f);
                 return SteerAvoid(behind, Gait.MaxSpeed, 0.02f);
             }
-            if (MicroduckVR.Games.LaserPointer.Active)
+            if (PlayerTargets.NearestLaser(Pos, out Vector3 P))         // your dot, or the other player's
             {
-                Vector3 P = MicroduckVR.Games.LaserPointer.Point;
                 float d = Flat(P - Pos).magnitude;
                 if (d < 0.8f && Mathf.Abs(P.y - Pos.y) < 0.12f)
                 {
@@ -161,15 +205,15 @@ namespace MicroduckVR.Flock
             {
                 case "follow":
                 {
-                    var L = PlayerDuck.Instance;
+                    var L = PlayerTargets.ForDuck(index);                       // you (or, playing together, one of the two players)
                     if (L == null) { Pick("wander"); break; }
                     int slot = index % 5;
-                    Vector3 lf = GltfSpace.Forward(L.Body.Yaw);
+                    Vector3 lf = GltfSpace.Forward(L.Yaw);
                     Vector3 back = -lf * (0.22f + 0.13f * (slot / 2));
                     Vector3 side = new Vector3(lf.z, 0f, -lf.x) * ((slot % 2 == 1 ? 1f : -1f) * (0.1f + 0.02f * slot));
-                    Vector3 goal = L.Body.Pos + back + side;
+                    Vector3 goal = L.Pos + back + side;
                     float d = Flat(goal - Pos).magnitude;
-                    if (d < 0.04f && L.Speed < 0.02f) return (0f, Mathf.Clamp(Wrap(L.Body.Yaw - yaw) * 3f, -1.2f, 1.2f));
+                    if (d < 0.04f && Flat(L.Vel).magnitude < 0.02f) return (0f, Mathf.Clamp(Wrap(L.Yaw - yaw) * 3f, -1.2f, 1.2f));
                     return SteerAvoid(goal, Gait.MaxSpeed * Mathf.Clamp(d / 0.25f, 0.4f, 1f), 0.03f);
                 }
                 case "roam":
@@ -283,7 +327,7 @@ namespace MicroduckVR.Flock
             Vector3 sep = Vector3.zero;
             void Push(Vector3 other) { var d = Flat(Pos - other); float L = d.magnitude; if (L < 0.19f && L > 1e-4f) sep += d / L * ((0.19f - L) / 0.19f); }
             foreach (var o in All) if (o != this) Push(o.Pos);
-            if (PlayerDuck.Instance != null) Push(PlayerDuck.Instance.Body.Pos);
+            for (int i = 0, n = PlayerTargets.Count; i < n; i++) { var pb = PlayerTargets.Get(i); if (pb != null) Push(pb.Pos); }   // the players
             Vector3 dir = to + sep * 1.6f;
             // whisker: a step up or a drop ahead, or furniture in the way -> bend around it
             Vector3 pr = dir.normalized;
@@ -300,6 +344,7 @@ namespace MicroduckVR.Flock
         // ------------------------------------------------------------------ per frame
         void Update()
         {
+            if (Puppet) return;                                          // posed by the network session instead
             float dt = Mathf.Min(Time.deltaTime, 1f / 30f);
             var (v, w) = Think(dt);
             if (Time.time < readUntil && (readAlways || (!MicroduckVR.Games.RaceGame.Active && !MicroduckVR.Games.FootballGame.Active)))

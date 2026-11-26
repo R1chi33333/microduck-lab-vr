@@ -28,6 +28,8 @@ namespace MicroduckVR.Custom
         const float W = 0.6f, H = 1.4f;
 
         public WorldPanel Board => board;
+        /// <summary>The look as it is on the board right now (the network session shows it on the other PC).</summary>
+        public DuckCustom Current => custom;
         readonly System.Collections.Generic.List<Renderer> hidden = new System.Collections.Generic.List<Renderer>();
         Camera mirrorCam; RenderTexture rt; Transform glass; readonly System.Collections.Generic.List<GameObject> glints = new System.Collections.Generic.List<GameObject>();
         WorldPanel board; DuckCustom custom; PlayerDuck pd;
