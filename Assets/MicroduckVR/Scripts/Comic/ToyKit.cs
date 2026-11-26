@@ -7,6 +7,7 @@ namespace MicroduckVR.Comic
     public static class ToyKit
     {
         static Mesh sphere;
+        /// <summary>Unity's built-in sphere mesh.</summary>
         public static Mesh Sphere()
         {
             if (sphere != null) return sphere;
@@ -16,8 +17,10 @@ namespace MicroduckVR.Comic
             return sphere;
         }
 
+        /// <summary>A shiny plastic toon material in this colour.</summary>
         public static Material Mat(string hex) => ComicLook.ToonMaterial(ComicLook.Hex(hex), "toy_" + hex, ComicLook.DefaultRim, 0.7f);   // shiny plastic: hard spec pop
 
+        /// <summary>A child part with this mesh and colour at a local position, rotation (Euler) and scale.</summary>
         public static Transform Part(Transform p, Mesh mesh, string hex, Vector3 lp, Vector3 le, Vector3 ls)
         {
             var go = new GameObject("part");
@@ -28,18 +31,23 @@ namespace MicroduckVR.Comic
             return go.transform;
         }
         static float Q(float v) => Mathf.Max(0.0005f, Mathf.Round(v * 2000f) / 2000f);
+        /// <summary>A rounded box part; round is the corner radius as a share of the smallest half-size.</summary>
         public static Transform Box(Transform p, Vector3 c, Vector3 s, string hex, float round = 0.3f, Vector3 e = default)
         {
             var sz = new Vector3(Q(s.x), Q(s.y), Q(s.z));
             float m = Mathf.Min(sz.x, Mathf.Min(sz.y, sz.z)) * 0.5f;
             return Part(p, ComicMesh.RoundedBox(sz, new ComicMesh.Style { radius = m * round, segments = 2 }), hex, c, e, Vector3.one);
         }
+        /// <summary>A round leg or disc part (rTop for a tapered one).</summary>
         public static Transform Cyl(Transform p, Vector3 c, float r, float h, string hex, Vector3 e = default, float rTop = -1f, int sides = 16)
             => Part(p, ComicMesh.Leg(Q(h), Q(rTop < 0f ? r : rTop), Q(r), sides), hex, c, e, Vector3.one);
+        /// <summary>A ball part of this size.</summary>
         public static Transform Ball(Transform p, Vector3 c, Vector3 size, string hex, Vector3 e = default) => Part(p, Sphere(), hex, c, e, size);
+        /// <summary>A flat ring part (outer and inner radius, height).</summary>
         public static Transform Ring(Transform p, Vector3 c, float ro, float ri, float h, string hex, Vector3 e = default)
             => Part(p, ComicMesh.Ring(Q(ro), Q(ri), Q(h)), hex, c, e, Vector3.one);
 
+        /// <summary>The bounds of all renderers under root, in root's own space.</summary>
         public static Bounds LocalBounds(Transform root)
         {
             bool any = false; var b = new Bounds();

@@ -19,6 +19,7 @@ namespace MicroduckVR.Core
     /// <summary>The player's own duck for code below the player layer; the player fills Resolve when it loads.</summary>
     public static class LocalPlayer
     {
+        /// <summary>Filled by the player code when it loads; returns the local player, or null.</summary>
         public static Func<ILocalPlayer> Resolve;
 
         /// <summary>The player's duck, or null when there is none.</summary>

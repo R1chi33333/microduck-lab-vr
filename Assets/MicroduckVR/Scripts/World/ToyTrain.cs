@@ -10,15 +10,25 @@ namespace MicroduckVR.World
     /// </summary>
     public class ToyTrain : MonoBehaviour
     {
+        /// <summary>Centre of the circular track.</summary>
         public Vector3 centre;
+        /// <summary>Radius of the track (m).</summary>
         public float radius = 0.55f;
-        public float speed = 0.11f;               // m/s along the track
-        public float height;                      // y of the carriages' bottoms
-        public Transform[] cars;                  // engine first
-        public float[] behind;                    // arc distance of each car behind the engine
+        /// <summary>Speed along the track (m/s).</summary>
+        public float speed = 0.11f;
+        /// <summary>Y of the carriages' bottoms.</summary>
+        public float height;
+        /// <summary>The engine and carriages, engine first.</summary>
+        public Transform[] cars;
+        /// <summary>Arc distance of each car behind the engine.</summary>
+        public float[] behind;
+        /// <summary>Where the smoke comes out.</summary>
         public Transform chimneyTop;
+        /// <summary>Material of the smoke clouds.</summary>
         public Material smokeMaterial;
+        /// <summary>Mesh of the smoke clouds.</summary>
         public Mesh smokeMesh;
+        /// <summary>Wheel radius (m), for the wheel spin.</summary>
         public float wheelRadius = 0.024f;
 
         float s;

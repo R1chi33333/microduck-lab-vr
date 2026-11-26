@@ -8,7 +8,9 @@ namespace MicroduckVR.World
     {
         const int WorldMask = 1 << 6;        // the World layer (Layers.World)
 
+        /// <summary>The surface type name stored in scenes and prefabs (see SurfaceTypes).</summary>
         public string type = "wood";
+        /// <summary>The room id the surface belongs to.</summary>
         public string room = "living";
 
         [System.NonSerialized] string parsedType;
@@ -24,7 +26,9 @@ namespace MicroduckVR.World
             }
         }
 
+        /// <summary>Floor grip: 0.15 on tiles up to 1 on rugs.</summary>
         public float Friction => Kind switch { SurfaceType.Tile => 0.15f, SurfaceType.Water => 0.25f, SurfaceType.Table => 0.65f, SurfaceType.Wood => 0.7f, SurfaceType.Card => 0.8f, SurfaceType.Stone => 0.8f, SurfaceType.Grass => 0.9f, SurfaceType.Bed => 0.9f, SurfaceType.Rug => 1f, _ => 0.7f };
+        /// <summary>How much the surface bounces (only the bed does).</summary>
         public float Bounce => Kind == SurfaceType.Bed ? 0.65f : 0f;
 
         /// <summary>The surface under a point (raycast down from just above it), or null.</summary>

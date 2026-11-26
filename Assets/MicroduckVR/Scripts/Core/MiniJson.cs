@@ -11,6 +11,7 @@ namespace MicroduckVR.Core
     /// </summary>
     public static class MiniJson
     {
+        /// <summary>Parses JSON into dictionaries, lists, doubles, strings, bools and null.</summary>
         public static object Parse(string json)
         {
             int i = 0;
@@ -102,6 +103,7 @@ namespace MicroduckVR.Core
         }
 
         // --- helpers
+        /// <summary>A parsed JSON array of numbers as doubles (null if it is not one).</summary>
         public static double[] Doubles(object o)
         {
             if (!(o is List<object> l)) return null;

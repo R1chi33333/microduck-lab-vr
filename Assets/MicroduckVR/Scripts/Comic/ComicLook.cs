@@ -10,10 +10,14 @@ namespace MicroduckVR.Comic
     /// </summary>
     public static class ComicLook
     {
+        /// <summary>The ink colour of outlines and text.</summary>
         public static readonly Color Ink = Hex(ComicColors.Ink);
+        /// <summary>The paper colour of panels and bubbles.</summary>
         public static readonly Color Paper = Hex("#FFF7E8");
 
+        /// <summary>The colours of one duck colourway.</summary>
         public class Skin { public Color shell, accent, accent2, soft, secondary; }
+        /// <summary>The duck colourways by skin id.</summary>
         public static readonly Dictionary<string, Skin> Skins = new Dictionary<string, Skin>
         {
             { SkinIds.Cream,    new Skin { shell = Hex("#FBF4E4"), accent = Hex("#FF8A1F"), accent2 = Hex("#FFC928"), soft = Hex("#F3D9E8"), secondary = Hex("#DCE0E7") } },
@@ -64,11 +68,13 @@ namespace MicroduckVR.Comic
         static readonly Regex Internal = R(@"^electronics_(battery|battery_holder|main_board|speaker|pcb_locker|cable)");
 
         static Regex R(string p) => new Regex(p, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        /// <summary>A colour from a hex string such as "#FF5D73".</summary>
         public static Color Hex(string h) { ColorUtility.TryParseHtmlString(h, out var c); return c; }
 
         static Shader toon;
         static readonly Dictionary<string, Material> cache = new Dictionary<string, Material>();
 
+        /// <summary>The toon shader (Microduck/ToonLit), found once.</summary>
         public static Shader ToonShader => toon != null ? toon : (toon = Shader.Find("Microduck/ToonLit"));
 
         /// <summary>Web toonify() defaults for the coloured rim band (uTnRim, uTnRimT).</summary>
@@ -112,12 +118,14 @@ namespace MicroduckVR.Comic
         /// <summary>Contact darkening towards the floor (on by default); floorY = floor height in metres.</summary>
         public static void SetContact(bool on, float floorY = 0f) { Shader.SetGlobalFloat(ContactOffId, on ? 0f : 1f); Shader.SetGlobalFloat(FloorYId, floorY); }
 
+        /// <summary>The colour kind of a duck mesh, from its name (shell when no rule matches).</summary>
         public static string KindFor(string meshName)
         {
             foreach (var (re, kind) in Rules) if (re.IsMatch(meshName)) return kind;
             return "shell";
         }
 
+        /// <summary>The colour of a colour kind in a skin.</summary>
         public static Color ColorFor(string kind, Skin s) => kind switch
         {
             "shell" or "shellAlt" => s.shell,
@@ -128,8 +136,7 @@ namespace MicroduckVR.Comic
             _ => Fixed.TryGetValue(kind, out var c) ? c : s.shell,
         };
 
-        /// <summary>Recolour a duck rig with toon materials for a skin; hide small hardware and internals.</summary>
-        /// <summary>Customised duck: a base colourway, then optional colourways per part (head, body, legs, feet).</summary>
+        /// <summary>Which meshes belong to each paintable part (head, body, legs, feet) of a customised duck.</summary>
         public static readonly (string part, Regex re)[] PaintParts =
         {
             (PartIds.Head, new Regex("^(shell_head|shell_beak)", RegexOptions.IgnoreCase)),
@@ -138,6 +145,7 @@ namespace MicroduckVR.Comic
             (PartIds.Feet, new Regex("^foot_", RegexOptions.IgnoreCase)),
         };
 
+        /// <summary>Customised duck: a base colourway, then optional colourways per part (head, body, legs, feet).</summary>
         public static void ApplyCustom(Transform rig, string baseSkin, IDictionary<string, string> parts)
         {
             ApplyToDuck(rig, baseSkin);
@@ -156,6 +164,7 @@ namespace MicroduckVR.Comic
             }
         }
 
+        /// <summary>Recolour a duck rig with toon materials for a skin; hide small hardware and internals.</summary>
         public static void ApplyToDuck(Transform rig, string skinId = SkinIds.Cream)
         {
             var skin = Skins.TryGetValue(skinId, out var sk) ? sk : Skins[SkinIds.Cream];
@@ -178,6 +187,7 @@ namespace MicroduckVR.Comic
         /// <summary>Things worn on the duck (skates) keep their own colours.</summary>
         static bool IsAccessory(Renderer r) { for (var t = r.transform; t != null; t = t.parent) if (t.name.StartsWith("Skate ")) return true; return false; }
 
+        /// <summary>The name of the glTF node a renderer belongs to (skips glTFast's primitive children).</summary>
         public static string MeshName(Renderer r)
         {
             var t = r.transform;

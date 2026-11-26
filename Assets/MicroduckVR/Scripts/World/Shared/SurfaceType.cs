@@ -7,6 +7,7 @@ namespace MicroduckVR.World
     /// Needs no other game script (it travels with SurfaceTag in the asset package).</summary>
     public static class SurfaceTypes
     {
+        /// <summary>The stored names, one per SurfaceType.</summary>
         public const string Wood = "wood", Rug = "rug", Card = "card", Table = "table", Tile = "tile",
             Grass = "grass", Stone = "stone", Bed = "bed", Water = "water";
 

@@ -9,9 +9,13 @@ namespace MicroduckVR.Comic
     {
         /// <summary>Toon shader: 1 = flat colour, no light bands (bubbles, panels, signs, sparks).</summary>
         public const string Unlit = "_Unlit";
+        /// <summary>Base colour and texture.</summary>
         public const string BaseColor = "_BaseColor", BaseMap = "_BaseMap";
+        /// <summary>Toon shading: rim band, specular pop and contact darkening.</summary>
         public const string RimAmount = "_RimAmount", RimT = "_RimT", SpecAmount = "_SpecAmount", ContactAO = "_ContactAO";
+        /// <summary>Toon shading: halftone dots and hatching.</summary>
         public const string Halftone = "_Halftone", Hatch = "_Hatch";
+        /// <summary>URP alpha clipping.</summary>
         public const string AlphaClip = "_AlphaClip", Cutoff = "_Cutoff";
     }
 }

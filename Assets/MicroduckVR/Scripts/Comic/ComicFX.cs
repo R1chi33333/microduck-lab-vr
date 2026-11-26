@@ -18,7 +18,9 @@ namespace MicroduckVR.Comic
     [DefaultExecutionOrder(50)]
     public partial class ComicFX : MonoBehaviour
     {
+        /// <summary>Most particles and skid strokes alive at once.</summary>
         public const int Max = 320, MaxSkids = 360;
+        /// <summary>How long a skid mark stays on the floor (s).</summary>
         public const float SkidLife = 4f;
         /// <summary>Nothing is drawn closer than this to the player's eyes (m).</summary>
         public const float MinEyeDistance = 0.12f;
@@ -189,6 +191,7 @@ namespace MicroduckVR.Comic
             f.skidDirty = true; f.lastSkid = -99f;
         }
 
+        /// <summary>How many particles are alive now.</summary>
         public static int Count => inst != null ? inst.n : 0;
 
         // ------------------------------------------------------------------ simulation and drawing

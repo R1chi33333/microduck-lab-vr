@@ -9,6 +9,7 @@ namespace MicroduckVR.Comic
         Transform[] drops; Vector3[] vel; float[] sizes; Transform ring; float age, size;
         const float Life = 0.8f;
 
+        /// <summary>A splash at a point on the water; size scales the drops and the ring.</summary>
         public static void Spawn(Vector3 at, float size = 1f)
         {
             if (mats == null)

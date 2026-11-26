@@ -9,9 +9,11 @@ namespace MicroduckVR.Comic
     public class ComicBeam
     {
         readonly Transform tube, dot, core;
+        /// <summary>Thickness of the beam (m).</summary>
         public float radius;
         bool shown;
 
+        /// <summary>Makes the beam, dot and core objects with flat comic materials in the given colour; hidden at first.</summary>
         public ComicBeam(string name, string hex, float radius = 0.0016f, float dotRadius = 0.007f)
         {
             this.radius = radius;
@@ -33,7 +35,9 @@ namespace MicroduckVR.Comic
             return go.transform;
         }
 
+        /// <summary>Shows or hides the whole beam.</summary>
         public void Show(bool on) { shown = on; if (tube == null) return; tube.gameObject.SetActive(on); dot.gameObject.SetActive(on); core.gameObject.SetActive(on); }
+        /// <summary>Shows or hides only the dot where the beam lands.</summary>
         public void ShowDot(bool on) { dot.gameObject.SetActive(on); core.gameObject.SetActive(on); }
 
         /// <summary>From a to b; the dot lies on the surface with the given normal (or faces back up the beam).</summary>

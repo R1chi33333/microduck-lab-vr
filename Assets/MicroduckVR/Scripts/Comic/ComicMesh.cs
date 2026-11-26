@@ -10,19 +10,28 @@ namespace MicroduckVR.Comic
     /// </summary>
     public static class ComicMesh
     {
+        /// <summary>How a rounded box is shaped.</summary>
         public struct Style
         {
-            public float radius;      // corner radius (m), clamped to half the smallest side
-            public int segments;      // corner segments
-            public float puff;        // bulge of the faces as a fraction of the smallest half-size (cushions)
-            public float taperTop;    // 0 = straight; 0.2 = top 20% narrower (x and z)
-            public float wobble;      // hand-drawn warp amplitude (m)
-            public float skew;        // lean of the top along x (m)
+            /// <summary>Corner radius (m), clamped to half the smallest side.</summary>
+            public float radius;
+            /// <summary>Corner segments.</summary>
+            public int segments;
+            /// <summary>Bulge of the faces as a fraction of the smallest half-size (cushions).</summary>
+            public float puff;
+            /// <summary>0 = straight; 0.2 = top 20% narrower (x and z).</summary>
+            public float taperTop;
+            /// <summary>Hand-drawn warp amplitude (m).</summary>
+            public float wobble;
+            /// <summary>Lean of the top along x (m).</summary>
+            public float skew;
+            /// <summary>Seed of the wobble noise.</summary>
             public int seed;
         }
 
         static readonly Dictionary<string, Mesh> cache = new Dictionary<string, Mesh>();
 
+        /// <summary>A rounded box of this size (m), cached by size and style.</summary>
         public static Mesh RoundedBox(Vector3 size, Style s)
         {
             string key = $"{size.x:F3},{size.y:F3},{size.z:F3}|{s.radius:F3},{s.segments},{s.puff:F2},{s.taperTop:F2},{s.wobble:F3},{s.skew:F3},{s.seed}";
