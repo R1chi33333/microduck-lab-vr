@@ -148,7 +148,7 @@ water and bounce on the bed. They tell the bubbles and the voice what happened: 
 3. To let the player use it: add a button to `Actions` in `Scripts/Player/BagMenu.cs` (the grid is full at 4 × 4, so
    swap one out or add a row).
 4. Co-op needs nothing more: emotes go over the network by name. Both PCs need the new version.
-5. To get it as a clip and a GIF too: add it to `Moves()` in `Editor/MotionBake.cs` and run **Bake Duck Moves**.
+5. To get it as a clip and a GIF too: add it to `Moves()` in `Editor/AssetExport.MotionBake.cs` and run **Bake Duck Moves**.
 
 **A new behaviour** (for example `"nap"`):
 
