@@ -1,3 +1,4 @@
+using MicroduckVR.Comic;
 using UnityEngine;
 
 namespace MicroduckVR.World
@@ -51,7 +52,7 @@ namespace MicroduckVR.World
             ToyKit.Cyl(root, V(-(body / 2f + L * 0.12f + 0.002f), 0, 0), 0.0013f, 0.004f, "#2A2A2C", a, 0.0002f, 8);
             ToyKit.Cyl(root, V(body / 2f + L * 0.025f, 0, 0), r * 1.04f, L * 0.05f, "#C9CCD1", a, -1f, 14);
             ToyKit.Cyl(root, V(body / 2f + L * 0.075f, 0, 0), r * 0.95f, L * 0.05f, "#E98A8A", a, -1f, 14);
-            ToyKit.Box(root, V(-0.01f, r * 0.86f, 0), V(0.03f, 0.0008f, 0.003f), "#1B1430", 0.2f);  // printed lettering
+            ToyKit.Box(root, V(-0.01f, r * 0.86f, 0), V(0.03f, 0.0008f, 0.003f), ComicColors.Ink, 0.2f);  // printed lettering
         }
 
         static void Crayon(Transform t, string col)
@@ -227,14 +228,14 @@ namespace MicroduckVR.World
 
         static void Figure(Transform t)
         {
-            ToyKit.Cyl(t, V(0, 0.011f, 0), 0.009f, 0.022f, "#3A86FF", default, 0.008f, 16);
-            ToyKit.Box(t, V(0, 0.0035f, 0.002f), V(0.016f, 0.004f, 0.012f), "#1B1430", 0.4f);                 // shoes
+            ToyKit.Cyl(t, V(0, 0.011f, 0), 0.009f, 0.022f, ComicColors.Blue, default, 0.008f, 16);
+            ToyKit.Box(t, V(0, 0.0035f, 0.002f), V(0.016f, 0.004f, 0.012f), ComicColors.Ink, 0.4f);                 // shoes
             ToyKit.Ball(t, V(0, 0.03f, 0), Vector3.one * 0.015f, "#FFD23F");
             ToyKit.Ball(t, V(0, 0.0355f, -0.001f), V(0.0155f, 0.007f, 0.0155f), "#6B3E26");                    // hair
             foreach (var s in new[] { -1f, 1f })
             {
                 ToyKit.Ball(t, V(s * 0.0028f, 0.0305f, 0.0068f), Vector3.one * 0.0018f, Ink);
-                ToyKit.Ball(t, V(s * 0.0098f, 0.016f, 0), V(0.004f, 0.012f, 0.004f), "#3A86FF", V(0, 0, s * 15f));   // arms
+                ToyKit.Ball(t, V(s * 0.0098f, 0.016f, 0), V(0.004f, 0.012f, 0.004f), ComicColors.Blue, V(0, 0, s * 15f));   // arms
                 ToyKit.Ball(t, V(s * 0.011f, 0.0095f, 0), Vector3.one * 0.0045f, "#FFD23F");                         // hands
             }
             ToyKit.Box(t, V(0, 0.0275f, 0.0072f), V(0.004f, 0.0008f, 0.001f), Ink, 0.3f);                   // smile
@@ -243,9 +244,9 @@ namespace MicroduckVR.World
         static void ButtonToy(Transform t)
         {
             const float r = 0.011f, h = 0.004f;
-            ToyKit.Cyl(t, V(0, h / 2f, 0), r, h, "#FF5D73", default, -1f, 22);
+            ToyKit.Cyl(t, V(0, h / 2f, 0), r, h, ComicColors.Pink, default, -1f, 22);
             ToyKit.Ring(t, V(0, h + 0.0002f, 0), r, r * 0.78f, 0.0008f, "#FF8A9A");
-            foreach (var a in new[] { -1f, 1f }) foreach (var b in new[] { -1f, 1f }) ToyKit.Cyl(t, V(a * 0.0028f, h + 0.0002f, b * 0.0028f), 0.0012f, 0.0006f, "#1B1430", default, -1f, 8);
+            foreach (var a in new[] { -1f, 1f }) foreach (var b in new[] { -1f, 1f }) ToyKit.Cyl(t, V(a * 0.0028f, h + 0.0002f, b * 0.0028f), 0.0012f, 0.0006f, ComicColors.Ink, default, -1f, 8);
         }
 
         static void Leaf(Transform t)

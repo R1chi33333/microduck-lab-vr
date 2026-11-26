@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using MicroduckVR.Comic;
 using MicroduckVR.Games;
 using MicroduckVR.Player;
 using Unity.Netcode;
@@ -106,7 +107,7 @@ namespace MicroduckVR.Net
             hostAddress = LanDiscovery.MainAddress();
             SetMode(Mode.Hosting);
             StopGames();
-            GameHud.Get().Big("HOSTING!", "#3A86FF", 1.1f);
+            GameHud.Get().Big("HOSTING!", ComicColors.Blue, 1.1f);
             Debug.Log("[Microduck] net: hosting on port " + cfg.Port + " (" + hostAddress + ")" + (cfg.LoadedFrom != "" ? ", settings from " + cfg.LoadedFrom : ""));
         }
 

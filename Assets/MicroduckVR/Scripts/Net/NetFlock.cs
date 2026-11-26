@@ -247,15 +247,15 @@ namespace MicroduckVR.Net
         {
             var b = Puppetize(ReadEntry(ref r), out _);
             if (b == null) return;
-            ComicPop.Spawn("QUACK!", b.Pos + Vector3.up * 0.26f, "#FFC43D", 1.2f);
-            GameHud.Get().Big("NEW DUCK!", "#FFC43D", 1.0f);
+            ComicPop.Spawn("QUACK!", b.Pos + Vector3.up * 0.26f, ComicColors.Yellow, 1.2f);
+            GameHud.Get().Big("NEW DUCK!", ComicColors.Yellow, 1.0f);
         }
 
         public void OnRemove(ref FastBufferReader r)
         {
             r.ReadValueSafe(out ushort id);
             if (!TryGet(id, out var b)) return;
-            ComicPop.Spawn("BYE!", b.Pos + Vector3.up * 0.26f, "#7B61FF", 1.2f);
+            ComicPop.Spawn("BYE!", b.Pos + Vector3.up * 0.26f, ComicColors.Purple, 1.2f);
             Despawn(b);
         }
 

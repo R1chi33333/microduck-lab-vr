@@ -1,3 +1,4 @@
+using MicroduckVR.Comic;
 using MicroduckVR.World;
 using UnityEngine;
 
@@ -8,10 +9,10 @@ namespace MicroduckVR.Player
         // the bottom rows: games, emotes, swapping duck, the view
         static readonly (string kind, string label, string col)[] Actions =
         {
-            (BagActions.Football, "FOOTBALL", "#FF8A3D"), (BagActions.Race, "RACE", "#7B61FF"), (BagActions.Swap, "SWAP DUCK", "#1FA6A0"), (BagActions.View, "VIEW", "#3A86FF"),
-            (BagActions.Dance, "DANCE", "#FF5D73"), (BagActions.Nod, "NOD", "#FF5D73"), (BagActions.Shake, "SHAKE", "#FF5D73"), (BagActions.Look, "LOOK", "#FF5D73"),
-            (BagActions.AddDuck, "ADD DUCK", "#FFC43D"), (BagActions.RemoveDuck, "REMOVE DUCK", "#7B61FF"), (BagActions.Mirror, "MY LOOK", "#FF8A3D"), (BagActions.Tutorial, "TUTORIAL", "#8FD35A"),
-            (BagActions.Help, "HELP", "#FFC43D"), (BagActions.Credits, "CREDITS", "#8FD35A"), (BagActions.Host, "HOST", "#3A86FF"), (BagActions.Join, "JOIN", "#1FA6A0"),
+            (BagActions.Football, "FOOTBALL", ComicColors.Orange), (BagActions.Race, "RACE", ComicColors.Purple), (BagActions.Swap, "SWAP DUCK", "#1FA6A0"), (BagActions.View, "VIEW", ComicColors.Blue),
+            (BagActions.Dance, "DANCE", ComicColors.Pink), (BagActions.Nod, "NOD", ComicColors.Pink), (BagActions.Shake, "SHAKE", ComicColors.Pink), (BagActions.Look, "LOOK", ComicColors.Pink),
+            (BagActions.AddDuck, "ADD DUCK", ComicColors.Yellow), (BagActions.RemoveDuck, "REMOVE DUCK", ComicColors.Purple), (BagActions.Mirror, "MY LOOK", ComicColors.Orange), (BagActions.Tutorial, "TUTORIAL", ComicColors.Green),
+            (BagActions.Help, "HELP", ComicColors.Yellow), (BagActions.Credits, "CREDITS", ComicColors.Green), (BagActions.Host, "HOST", ComicColors.Blue), (BagActions.Join, "JOIN", "#1FA6A0"),
         };
 
         static bool IsAction(string k) { foreach (var a in Actions) if (a.kind == k) return true; return false; }
@@ -23,7 +24,7 @@ namespace MicroduckVR.Player
         {
             var pd = PlayerDuck.Instance;
             Close(); Play(clickClip);
-            if (CoopOnly(kind)) { MicroduckVR.Games.GameHud.Get().Big("NOT IN CO-OP YET!", "#7B61FF", 1.3f); return; }
+            if (CoopOnly(kind)) { MicroduckVR.Games.GameHud.Get().Big("NOT IN CO-OP YET!", ComicColors.Purple, 1.3f); return; }
             switch (kind)
             {
                 case BagActions.Host: MicroduckVR.Net.NetSession.HostOrStop(); break;

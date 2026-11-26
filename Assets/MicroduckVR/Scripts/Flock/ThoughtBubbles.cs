@@ -56,9 +56,9 @@ namespace MicroduckVR.Flock
             if (viewer == null) viewer = Camera.main;
             if (font != null) fontAsset = TMP_FontAsset.CreateFontAsset(font);
             slabMat = ComicLook.ToonMaterial(Color.white, "bubble_white");
-            slabMat.SetFloat("_Unlit", 1f);
+            slabMat.SetFloat(ShaderIds.Unlit, 1f);
             inkMat = ComicLook.ToonMaterial(ComicLook.Ink, "bubble_ink");
-            inkMat.SetFloat("_Unlit", 1f);
+            inkMat.SetFloat(ShaderIds.Unlit, 1f);
             for (int i = 0; i < POOL; i++) pool.Add(MakeBubble(i));
         }
 

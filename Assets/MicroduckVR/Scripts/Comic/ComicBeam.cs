@@ -15,8 +15,8 @@ namespace MicroduckVR.Comic
         public ComicBeam(string name, string hex, float radius = 0.0016f, float dotRadius = 0.007f)
         {
             this.radius = radius;
-            var mat = ComicLook.ToonMaterial(ComicLook.Hex(hex), "beam_" + hex); mat.SetFloat("_Unlit", 1f);
-            var white = ComicLook.ToonMaterial(Color.white, "beam_core"); white.SetFloat("_Unlit", 1f);
+            var mat = ComicLook.ToonMaterial(ComicLook.Hex(hex), "beam_" + hex); mat.SetFloat(ShaderIds.Unlit, 1f);
+            var white = ComicLook.ToonMaterial(Color.white, "beam_core"); white.SetFloat(ShaderIds.Unlit, 1f);
             tube = Make(name + " beam", ComicMesh.Leg(1f, 1f, 1f, 10), mat);
             dot = Make(name + " dot", ComicMesh.Leg(0.25f, 1f, 1f, 20), mat);
             core = Make(name + " core", ComicMesh.Leg(0.3f, 1f, 1f, 16), white);

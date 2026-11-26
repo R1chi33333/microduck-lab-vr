@@ -21,7 +21,7 @@ namespace MicroduckVR.Flock
         public static DuckBrain Add()
         {
             var pd = PlayerDuck.Instance; if (pd == null) return null;
-            if (DuckBrain.All.Count >= Max) { GameHud.Get().Big("FULL HOUSE!", "#FF8A3D", 1.1f); return null; }
+            if (DuckBrain.All.Count >= Max) { GameHud.Get().Big("FULL HOUSE!", ComicColors.Orange, 1.1f); return null; }
             var src = pd.GetComponent<DuckSetup>(); if (src == null || src.rigPrefab == null) return null;
             return Add(pd.Body.Pos, pd.cam.transform.forward);
         }
@@ -31,7 +31,7 @@ namespace MicroduckVR.Flock
         public static DuckBrain Add(Vector3 here, Vector3 forward)
         {
             var pd = PlayerDuck.Instance; if (pd == null) return null;
-            if (DuckBrain.All.Count >= Max) { GameHud.Get().Big("FULL HOUSE!", "#FF8A3D", 1.1f); return null; }
+            if (DuckBrain.All.Count >= Max) { GameHud.Get().Big("FULL HOUSE!", ComicColors.Orange, 1.1f); return null; }
             var src = pd.GetComponent<DuckSetup>(); if (src == null || src.rigPrefab == null) return null;
             // a free spot on the floor a little in front of you
             var f = forward; f.y = 0f; f = f.sqrMagnitude > 1e-4f ? f.normalized : Vector3.forward;
@@ -46,8 +46,8 @@ namespace MicroduckVR.Flock
             string skin = Skins[Random.Range(0, Skins.Length)];
             int seed = 1000 + serial * 13 + Random.Range(0, 1000);
             var brain = Make(src, "Duck +" + serial, at, Quaternion.LookRotation(-f, Vector3.up), skin, seed, DuckBrain.All.Count);
-            ComicPop.Spawn("QUACK!", at + Vector3.up * 0.26f, "#FFC43D", 1.2f);
-            GameHud.Get().Big("NEW DUCK!", "#FFC43D", 1.0f);
+            ComicPop.Spawn("QUACK!", at + Vector3.up * 0.26f, ComicColors.Yellow, 1.2f);
+            GameHud.Get().Big("NEW DUCK!", ComicColors.Yellow, 1.0f);
             return brain;
         }
 
@@ -71,11 +71,11 @@ namespace MicroduckVR.Flock
             added.RemoveAll(g => g == null);
             GameObject go = added.Count > 0 ? added[added.Count - 1] : null;
             if (go == null && DuckBrain.All.Count > Min) go = DuckBrain.All[DuckBrain.All.Count - 1].gameObject;
-            if (go == null || DuckBrain.All.Count <= Min) { GameHud.Get().Big("LAST DUCK STAYS!", "#FF8A3D", 1.1f); return; }
+            if (go == null || DuckBrain.All.Count <= Min) { GameHud.Get().Big("LAST DUCK STAYS!", ComicColors.Orange, 1.1f); return; }
             if (FootballGame.Active) FootballGame.Instance.StopGame();
             if (RaceGame.Active) RaceGame.Ensure().StopRace();
             var s = go.GetComponent<DuckSetup>(); var brain = go.GetComponent<DuckBrain>();
-            ComicPop.Spawn("BYE!", (brain != null ? brain.Pos : go.transform.position) + Vector3.up * 0.26f, "#7B61FF", 1.2f);
+            ComicPop.Spawn("BYE!", (brain != null ? brain.Pos : go.transform.position) + Vector3.up * 0.26f, ComicColors.Purple, 1.2f);
             if (s != null && s.Mover != null) Object.Destroy(s.Mover.gameObject);
             added.Remove(go); Object.Destroy(go);
         }

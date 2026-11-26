@@ -53,18 +53,18 @@ namespace MicroduckVR.Custom
 
         void Build(TMP_FontAsset font)
         {
-            flash = ComicLook.ToonMaterial(ComicLook.Hex("#FFF1D6"), "garage_flash"); flash.SetFloat("_Unlit", 1f);
+            flash = ComicLook.ToonMaterial(ComicLook.Hex("#FFF1D6"), "garage_flash"); flash.SetFloat(ShaderIds.Unlit, 1f);
             var go = new GameObject("Garage board"); go.transform.SetParent(transform, false);
             board = go.AddComponent<WorldPanel>(); board.font = font; board.cam = pd.cam; board.reach = 1.2f;
-            MirrorStation.Sign(font, "DUCK GARAGE", new Vector3(-2.96f, 0.5f, Turntable.z), Quaternion.LookRotation(Vector3.left, Vector3.up), 1.5f, "#FF8A3D");     // on the wall behind the turntable, facing the room
+            MirrorStation.Sign(font, "DUCK GARAGE", new Vector3(-2.96f, 0.5f, Turntable.z), Quaternion.LookRotation(Vector3.left, Vector3.up), 1.5f, ComicColors.Orange);     // on the wall behind the turntable, facing the room
             var bag = pd.GetComponent<BagMenu>(); if (bag != null) board.rightHand = bag.rightHand;
             // sized to read from where it floats beside your duck on the turntable (see WorldPanel.follow)
             const float bw = 0.44f, bh = 0.4f;
             board.follow = true; board.focus = Turntable; board.readDist = 0.42f; board.sideDeg = 42f; board.minY = bh / 2f + 0.03f;
             board.panelRect = new Rect(-bw / 2f, -bh / 2f, bw, bh);
             board.Slab(new Vector2(bw, bh), "#3D3B4F", new Vector3(0f, 0f, 0.003f), 0.1f);
-            board.Slab(new Vector2(bw, 0.04f), "#FFC43D", new Vector3(0f, bh / 2f - 0.02f, 0f), 0.4f);
-            board.Label("GARAGE", new Vector3(0f, bh / 2f - 0.021f, -0.004f), 0.22f, "#1B1430", bw);
+            board.Slab(new Vector2(bw, 0.04f), ComicColors.Yellow, new Vector3(0f, bh / 2f - 0.02f, 0f), 0.4f);
+            board.Label("GARAGE", new Vector3(0f, bh / 2f - 0.021f, -0.004f), 0.22f, ComicColors.Ink, bw);
             int k = 0;
             foreach (var t in new[] { "SHELL", "LEGS", "SERVOS" }) { var tt = t; board.Add("tab_" + t, t, new Vector2(-0.135f + k++ * 0.135f, bh / 2f - 0.064f), new Vector2(0.125f, 0.034f), "#E6E9F0", () => { tab = tt; selected = null; Layout(); }, 0.17f); }
             // up to 16 rows in two columns; each row: name + condition bar
@@ -74,12 +74,12 @@ namespace MicroduckVR.Custom
                 var c = new Vector2(-0.108f + col * 0.216f, bh / 2f - 0.108f + -r * 0.031f);
                 var row = board.Add("row_" + i, "", c, new Vector2(0.208f, 0.027f), "#FFFDF5", null, 0.05f);
                 var idx = i; row.click = () => Pick(idx);
-                row.text = board.Label("", new Vector3(c.x - 0.03f, c.y + 0.001f, -0.0135f), 0.155f, "#1B1430", 0.138f, TextAlignmentOptions.Left);
+                row.text = board.Label("", new Vector3(c.x - 0.03f, c.y + 0.001f, -0.0135f), 0.155f, ComicColors.Ink, 0.138f, TextAlignmentOptions.Left);
                 board.Slab(new Vector2(0.05f, 0.009f), "#B9C3CF", new Vector3(c.x + 0.072f, c.y, -0.0135f), 0.5f, 0.002f);
-                var fill = board.Slab(new Vector2(0.05f, 0.009f), "#8FD35A", new Vector3(c.x + 0.072f, c.y, -0.0155f), 0.5f, 0.002f);
+                var fill = board.Slab(new Vector2(0.05f, 0.009f), ComicColors.Green, new Vector3(c.x + 0.072f, c.y, -0.0155f), 0.5f, 0.002f);
                 rows.Add((row, fill, null));
             }
-            board.Add("replace", "REPLACE PART", new Vector2(0f, -bh / 2f + 0.03f), new Vector2(0.24f, 0.044f), "#FF8A3D", Replace, 0.22f);
+            board.Add("replace", "REPLACE PART", new Vector2(0f, -bh / 2f + 0.03f), new Vector2(0.24f, 0.044f), ComicColors.Orange, Replace, 0.22f);
             Layout();
             go.SetActive(false);
         }
@@ -98,7 +98,7 @@ namespace MicroduckVR.Custom
                 row.text.text = list[i].label;
                 float c = Condition(list[i]) / 100f;
                 fill.localScale = new Vector3(c, 1f, 1f); fill.localPosition = new Vector3(row.rect.center.x + 0.072f - 0.025f * (1f - c), row.rect.center.y, -0.0155f);
-                fill.GetComponent<MeshRenderer>().sharedMaterial = WorldPanel.Unlit(c > 0.6f ? "#8FD35A" : c > 0.3f ? "#FFC43D" : "#FF5D73");
+                fill.GetComponent<MeshRenderer>().sharedMaterial = WorldPanel.Unlit(c > 0.6f ? ComicColors.Green : c > 0.3f ? ComicColors.Yellow : ComicColors.Pink);
                 board.Select(row, list[i] == selected);
             }
             foreach (var b in board.buttons) if (b.id.StartsWith("tab_")) board.Select(b, b.id == "tab_" + tab);
@@ -119,7 +119,7 @@ namespace MicroduckVR.Custom
                 c.AddComponent<PopOff>().v = (Random.insideUnitSphere * 0.15f + Vector3.up * 0.35f);
             }
             flashT = 0f;
-            MicroduckVR.Games.GameHud.Get().Big("GOOD AS NEW!", "#FFC43D", 1.1f);
+            MicroduckVR.Games.GameHud.Get().Big("GOOD AS NEW!", ComicColors.Yellow, 1.1f);
             Layout();
         }
 

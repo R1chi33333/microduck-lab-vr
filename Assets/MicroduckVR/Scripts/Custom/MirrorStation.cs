@@ -63,9 +63,9 @@ namespace MicroduckVR.Custom
             frame.position = MirrorCentre;
             foreach (var (pos, size) in new[] { (new Vector3(0f, H / 2f + 0.04f, 0f), new Vector2(W + 0.16f, 0.08f)), (new Vector3(0f, -H / 2f - 0.04f, 0f), new Vector2(W + 0.16f, 0.08f)),
                                                  (new Vector3(-W / 2f - 0.04f, 0f, 0f), new Vector2(0.08f, H + 0.16f)), (new Vector3(W / 2f + 0.04f, 0f, 0f), new Vector2(0.08f, H + 0.16f)) })
-                ToyKit.Box(frame, pos + new Vector3(0f, 0f, 0.0f), new Vector3(size.x, size.y, 0.05f), "#FF8A3D", 0.4f);
+                ToyKit.Box(frame, pos + new Vector3(0f, 0f, 0.0f), new Vector3(size.x, size.y, 0.05f), ComicColors.Orange, 0.4f);
             ToyKit.Box(frame, new Vector3(0f, 0f, -0.016f), new Vector3(W + 0.1f, H + 0.1f, 0.016f), "#C9622A", 0.2f);   // back board (wall side)
-            ToyKit.Ball(frame, new Vector3(0f, H / 2f + 0.1f, 0.01f), new Vector3(0.12f, 0.12f, 0.04f), "#FFC43D");   // a star-ish knob on top
+            ToyKit.Ball(frame, new Vector3(0f, H / 2f + 0.1f, 0.01f), new Vector3(0.12f, 0.12f, 0.04f), ComicColors.Yellow);   // a star-ish knob on top
             foreach (var t in frame.GetComponentsInChildren<Transform>()) t.gameObject.layer = MicroduckVR.Duck.DuckSetup.LayerWorld;
             var col = frame.gameObject.AddComponent<BoxCollider>(); col.size = new Vector3(W + 0.16f, H + 0.16f, 0.06f);
 
@@ -79,11 +79,11 @@ namespace MicroduckVR.Custom
             mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };   // facing +z, into the room mesh.RecalculateNormals(); mesh.RecalculateBounds();
             g.AddComponent<MeshFilter>().sharedMesh = mesh;
             var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit")) { mainTexture = rt };
-            mat.SetTexture("_BaseMap", rt);
+            mat.SetTexture(ShaderIds.BaseMap, rt);
             var mr = g.AddComponent<MeshRenderer>(); mr.sharedMaterial = mat; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             glass = g.transform;
             // comic glints: two white diagonal strokes in the top corner
-            var gl = ComicLook.ToonMaterial(Color.white, "mirror_glint"); gl.SetFloat("_Unlit", 1f);
+            var gl = ComicLook.ToonMaterial(Color.white, "mirror_glint"); gl.SetFloat(ShaderIds.Unlit, 1f);
             foreach (var (dx, dy, len, wd) in new[] { (-W * 0.26f, H * 0.34f, W * 0.34f, 0.012f), (-W * 0.15f, H * 0.3f, W * 0.18f, 0.007f) })
             {
                 var st = ToyKit.Box(g.transform, new Vector3(dx, dy, 0.0135f), new Vector3(len, wd, 0.001f), "#FFFFFF", 0f, new Vector3(0f, 0f, 40f));
@@ -100,7 +100,7 @@ namespace MicroduckVR.Custom
             BuildPrompt(font);
             openA = new InputAction("MirrorOpen", InputActionType.Button);
             openA.AddBinding(InputPaths.LeftPrimary); openA.AddBinding(InputPaths.KeyX); openA.Enable();
-            Sign(font, "MAKE YOUR DUCK!", new Vector3(MirrorCentre.x - W / 2f - 0.57f, 0.82f, MirrorCentre.z + 0.03f), Quaternion.LookRotation(Vector3.back, Vector3.up), 1.5f, "#FFC43D");
+            Sign(font, "MAKE YOUR DUCK!", new Vector3(MirrorCentre.x - W / 2f - 0.57f, 0.82f, MirrorCentre.z + 0.03f), Quaternion.LookRotation(Vector3.back, Vector3.up), 1.5f, ComicColors.Yellow);
         }
 
         /// <summary>A comic name plate: a tilted colour tab with ink lettering (used over the mirror and the garage).</summary>
@@ -108,7 +108,7 @@ namespace MicroduckVR.Custom
         {
             var go = new GameObject("Sign " + text); go.transform.SetPositionAndRotation(at, facing * Quaternion.Euler(0f, 0f, 3f));
             float w = (text.Length * 0.034f + 0.06f) * size, h = 0.09f * size;
-            ToyKit.Box(go.transform, new Vector3(0f, 0f, 0.012f * size), new Vector3(w + 0.03f * size, h + 0.03f * size, 0.016f * size), "#1B1430", 0.35f);
+            ToyKit.Box(go.transform, new Vector3(0f, 0f, 0.012f * size), new Vector3(w + 0.03f * size, h + 0.03f * size, 0.016f * size), ComicColors.Ink, 0.35f);
             ToyKit.Box(go.transform, Vector3.zero, new Vector3(w, h, 0.02f * size), hex, 0.35f);
             foreach (var mr in go.GetComponentsInChildren<MeshRenderer>()) { mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.gameObject.layer = MicroduckVR.Duck.DuckSetup.LayerWorld; }
             var tg = new GameObject("text"); tg.transform.SetParent(go.transform, false); tg.transform.localPosition = new Vector3(0f, 0f, -0.012f * size);
@@ -131,25 +131,25 @@ namespace MicroduckVR.Custom
             board.follow = true; board.focus = MirrorCentre; board.readDist = 0.42f; board.sideDeg = 38f; board.minY = StandPos.y + bh / 2f + 0.03f;
             board.panelRect = new Rect(-bw / 2f, -bh / 2f, bw, bh);
             board.Slab(new Vector2(bw, bh), "#FFFDF5", new Vector3(0f, 0f, 0.003f), 0.12f);
-            board.Slab(new Vector2(bw, 0.04f), "#FF5D73", new Vector3(0f, bh / 2f - 0.02f, 0f), 0.4f);
+            board.Slab(new Vector2(bw, 0.04f), ComicColors.Pink, new Vector3(0f, bh / 2f - 0.02f, 0f), 0.4f);
             board.Label("MAKE YOUR DUCK!", new Vector3(0f, bh / 2f - 0.021f, -0.004f), 0.27f, "#FFFFFF", bw);
 
             float y = bh / 2f - 0.07f;
-            board.Label("BODY", new Vector3(lx, y, -0.004f), 0.17f, "#1B1430", 0.09f);
+            board.Label("BODY", new Vector3(lx, y, -0.004f), 0.17f, ComicColors.Ink, 0.09f);
             for (int i = 0; i < 4; i++) { var s = DuckCustom.SkinIds[i]; Swatch("skin_" + s, new Vector2(x0 + i * dx, y), s, () => { custom.skin = s; Apply(); }, new Vector2(0.066f, 0.04f)); }
             y -= 0.05f;
-            board.Label("PAINT\nA PART", new Vector3(lx, y - 0.02f, -0.004f), 0.135f, "#1B1430", 0.09f);
+            board.Label("PAINT\nA PART", new Vector3(lx, y - 0.02f, -0.004f), 0.135f, ComicColors.Ink, 0.09f);
             for (int i = 0; i < 4; i++) { var p = DuckCustom.PartIds[i]; board.Add("part_" + p, p.ToUpperInvariant(), new Vector2(x0 + i * dx, y), new Vector2(0.066f, 0.034f), "#E6E9F0", () => { paintPart = paintPart == p ? "" : p; Refresh(); }, 0.19f); }
             y -= 0.042f;
             for (int i = 0; i < 4; i++) { var s = DuckCustom.SkinIds[i]; Swatch("paint_" + s, new Vector2(x0 + i * 0.055f, y), s, () => { if (paintPart != "") { custom.SetPart(paintPart, s); Apply(); } }, new Vector2(0.05f, 0.032f)); }
             board.Add("paint_clear", "SAME", new Vector2(0.15f, y), new Vector2(0.07f, 0.032f), "#E6E9F0", () => { if (paintPart != "") { custom.SetPart(paintPart, ""); Apply(); } }, 0.17f);
             y -= 0.05f;
-            board.Label("VOICE", new Vector3(lx, y, -0.004f), 0.17f, "#1B1430", 0.09f);
+            board.Label("VOICE", new Vector3(lx, y, -0.004f), 0.17f, ComicColors.Ink, 0.09f);
             for (int i = 0; i < 4; i++) { int v = i; board.Add("voice_" + v, DuckCustom.Voices[v].name, new Vector2(x0 + v * dx, y), new Vector2(0.068f, 0.034f), "#C9F0E2", () => { custom.voice = v; Apply(); }, 0.15f); }
             y -= 0.062f;
             board.Add("random", "RANDOM!", new Vector2(-0.095f, y), new Vector2(0.17f, 0.048f), "#E5CCF5", () => { custom.Randomise(rng); Apply(); }, 0.25f);
             board.Label("POINT YOUR RIGHT HAND + TRIGGER TO PICK.  DONE! WHEN YOU LIKE IT", new Vector3(0f, -bh / 2f + 0.026f, -0.004f), 0.1f, "#6B6480", bw - 0.03f);
-            board.Add("save", "DONE!", new Vector2(0.095f, y), new Vector2(0.17f, 0.048f), "#8FD35A", () => { custom.Save(); SaveCount++; OpenBoard(false); MicroduckVR.Games.GameHud.Get().Big("LOOKING GOOD!", "#FF5D73", 1.2f); pd.Body.PlayEmote("dance"); }, 0.26f);
+            board.Add("save", "DONE!", new Vector2(0.095f, y), new Vector2(0.17f, 0.048f), ComicColors.Green, () => { custom.Save(); SaveCount++; OpenBoard(false); MicroduckVR.Games.GameHud.Get().Big("LOOKING GOOD!", ComicColors.Pink, 1.2f); pd.Body.PlayEmote("dance"); }, 0.26f);
             Refresh();
         }
 
@@ -161,10 +161,10 @@ namespace MicroduckVR.Custom
             prompt.follow = true; prompt.focus = MirrorCentre; prompt.readDist = 0.42f; prompt.sideDeg = 30f; prompt.drop = 0.04f; prompt.minY = StandPos.y + 0.08f;
             prompt.panelRect = new Rect(0f, 0f, 0f, 0f);
             prompt.Slab(new Vector2(0.27f, 0.1f), "#FFFDF5", new Vector3(0f, 0f, 0.003f), 0.3f);
-            prompt.Slab(new Vector2(0.27f, 0.018f), "#FFC43D", new Vector3(0f, 0.041f, 0.001f), 0.4f);
-            prompt.Slab(new Vector2(0.05f, 0.05f), "#1B1430", new Vector3(-0.09f, -0.008f, -0.002f), 1f);
+            prompt.Slab(new Vector2(0.27f, 0.018f), ComicColors.Yellow, new Vector3(0f, 0.041f, 0.001f), 0.4f);
+            prompt.Slab(new Vector2(0.05f, 0.05f), ComicColors.Ink, new Vector3(-0.09f, -0.008f, -0.002f), 1f);
             prompt.Label("X", new Vector3(-0.09f, -0.008f, -0.005f), 0.3f, "#FFFFFF", 0.05f);
-            prompt.Label("PRESS TO\nMAKE YOUR DUCK", new Vector3(0.03f, -0.008f, -0.004f), 0.19f, "#1B1430", 0.18f);
+            prompt.Label("PRESS TO\nMAKE YOUR DUCK", new Vector3(0.03f, -0.008f, -0.004f), 0.19f, ComicColors.Ink, 0.18f);
             go.SetActive(false);
         }
 

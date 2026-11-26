@@ -10,7 +10,7 @@ namespace MicroduckVR.Comic
     /// </summary>
     public static class ComicLook
     {
-        public static readonly Color Ink = Hex("#1B1430");
+        public static readonly Color Ink = Hex(ComicColors.Ink);
         public static readonly Color Paper = Hex("#FFF7E8");
 
         public class Skin { public Color shell, accent, accent2, soft, secondary; }
@@ -83,11 +83,11 @@ namespace MicroduckVR.Comic
             key ??= ColorUtility.ToHtmlStringRGB(c) + rim.ToString("F2") + spec.ToString("F2");
             if (cache.TryGetValue(key, out var m) && m != null) return m;
             m = new Material(ToonShader) { name = "Toon " + key, enableInstancing = true };
-            m.SetColor("_BaseColor", c);
-            m.SetFloat("_RimAmount", rim);
-            m.SetFloat("_RimT", DefaultRimT);
-            m.SetFloat("_SpecAmount", spec);
-            m.SetFloat("_ContactAO", 0f);
+            m.SetColor(ShaderIds.BaseColor, c);
+            m.SetFloat(ShaderIds.RimAmount, rim);
+            m.SetFloat(ShaderIds.RimT, DefaultRimT);
+            m.SetFloat(ShaderIds.SpecAmount, spec);
+            m.SetFloat(ShaderIds.ContactAO, 0f);
             cache[key] = m;
             return m;
         }
@@ -95,7 +95,7 @@ namespace MicroduckVR.Comic
         /// <summary>Character print (web CHAR_TOON): gentle halftone, no hatching, matte, no floor contact.</summary>
         public static Material Character(Material m)
         {
-            m.SetFloat("_Halftone", 0.4f); m.SetFloat("_Hatch", 0f); m.SetFloat("_SpecAmount", 0f); m.SetFloat("_ContactAO", 0f);
+            m.SetFloat(ShaderIds.Halftone, 0.4f); m.SetFloat(ShaderIds.Hatch, 0f); m.SetFloat(ShaderIds.SpecAmount, 0f); m.SetFloat(ShaderIds.ContactAO, 0f);
             return m;
         }
 
@@ -166,7 +166,7 @@ namespace MicroduckVR.Comic
                 if (Hide.IsMatch(n) || Internal.IsMatch(n)) { r.enabled = false; continue; }
                 string kind = KindFor(n);
                 var mat = Character(ToonMaterial(ColorFor(kind, skin), skinId + ":" + kind, kind == "shell" ? 0.35f : 0f));
-                if (kind == "eye" || kind == "highlight") mat.SetFloat("_Unlit", 1f);
+                if (kind == "eye" || kind == "highlight") mat.SetFloat(ShaderIds.Unlit, 1f);
                 var mats = r.sharedMaterials;
                 for (int i = 0; i < mats.Length; i++) mats[i] = mat;
                 r.sharedMaterials = mats;

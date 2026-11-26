@@ -32,7 +32,7 @@ namespace MicroduckVR.Games
             var slab = new GameObject("slab"); slab.transform.SetParent(card, false); slab.transform.localPosition = new Vector3(0f, 0f, 0.003f);
             slab.AddComponent<MeshFilter>().sharedMesh = ComicMesh.RoundedBox(new Vector3(0.23f, 0.04f, 0.005f), new ComicMesh.Style { radius = 0.004f, segments = 2 });
             slab.transform.localRotation = Quaternion.Euler(0f, 0f, 1.5f);          // a comic caption box, slightly askew
-            var m = ComicLook.ToonMaterial(ComicLook.Hex("#FFC43D"), "hud_caption"); m.SetFloat("_Unlit", 1f);
+            var m = ComicLook.ToonMaterial(ComicLook.Hex(ComicColors.Yellow), "hud_caption"); m.SetFloat(ShaderIds.Unlit, 1f);
             var mr = slab.AddComponent<MeshRenderer>(); mr.sharedMaterial = m; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             caption = Text(card, 0.17f, new Vector3(0f, 0f, -0.001f), ComicLook.Ink);
             // the big shout sits a little above eye level (other ducks crowd the middle of the view) on a hard ink shadow,
@@ -41,14 +41,14 @@ namespace MicroduckVR.Games
             // ... and on a white comic burst: without a solid back the ink lines of whatever is behind show through the letters
             var bg = new GameObject("burst"); bigBurst = bg.transform; bigBurst.SetParent(bigRoot, false); bigBurst.localPosition = new Vector3(0f, 0f, 0.008f);
             bg.AddComponent<MeshFilter>().sharedMesh = ComicPop.Burst();
-            var bm = ComicLook.ToonMaterial(Color.white, "hud_burst"); bm.SetFloat("_Unlit", 1f);
+            var bm = ComicLook.ToonMaterial(Color.white, "hud_burst"); bm.SetFloat(ShaderIds.Unlit, 1f);
             var bmr = bg.AddComponent<MeshRenderer>(); bmr.sharedMaterial = bm; bmr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; bmr.receiveShadows = false;
             bigInk = Text(bigRoot, 0.5f, new Vector3(0.0045f, -0.0045f, 0.001f), ComicLook.Ink);
-            big = Text(bigRoot, 0.5f, Vector3.zero, ComicLook.Hex("#FF5D73"));
+            big = Text(bigRoot, 0.5f, Vector3.zero, ComicLook.Hex(ComicColors.Pink));
             big.outlineWidth = 0.2f; big.outlineColor = ComicLook.Ink; bigInk.outlineWidth = 0.2f; bigInk.outlineColor = ComicLook.Ink;
             // "that way": arrows either side of the caption (the race points you at the next gate with them)
-            arrowL = Text(root, 0.42f, new Vector3(-0.17f, 0.1f, 0f), ComicLook.Hex("#FF5D73")); arrowL.text = "<<";
-            arrowR = Text(root, 0.42f, new Vector3(0.17f, 0.1f, 0f), ComicLook.Hex("#FF5D73")); arrowR.text = ">>";
+            arrowL = Text(root, 0.42f, new Vector3(-0.17f, 0.1f, 0f), ComicLook.Hex(ComicColors.Pink)); arrowL.text = "<<";
+            arrowR = Text(root, 0.42f, new Vector3(0.17f, 0.1f, 0f), ComicLook.Hex(ComicColors.Pink)); arrowR.text = ">>";
             arrowL.rectTransform.sizeDelta = arrowR.rectTransform.sizeDelta = new Vector2(0.08f, 0.06f);
             arrowL.gameObject.SetActive(false); arrowR.gameObject.SetActive(false);
             card.gameObject.SetActive(false); bigRoot.gameObject.SetActive(false);
@@ -69,7 +69,7 @@ namespace MicroduckVR.Games
         /// <summary>Filming: keep the HUD out of cinematic shots.</summary>
         public static bool Hidden;
         public void Caption(string s) { capText = s ?? ""; card.gameObject.SetActive(capText.Length > 0); caption.text = capText; }
-        public void Big(string s, string hex = "#FF5D73", float dur = 1.1f) 
+        public void Big(string s, string hex = ComicColors.Pink, float dur = 1.1f) 
         {
             // long shouts are set smaller so they never fill the whole view
             float size = Mathf.Min(0.5f, 4.8f / Mathf.Max(1, s.Length));

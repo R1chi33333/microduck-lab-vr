@@ -25,8 +25,8 @@ namespace MicroduckVR.World
 
         void Start()
         {
-            leafA = ComicLook.ToonMaterial(ComicLook.Hex("#8FD35A"), "grass_bit_a"); leafA.SetFloat("_Unlit", 1f);
-            leafB = ComicLook.ToonMaterial(ComicLook.Hex("#46A64A"), "grass_bit_b"); leafB.SetFloat("_Unlit", 1f);
+            leafA = ComicLook.ToonMaterial(ComicLook.Hex(ComicColors.Green), "grass_bit_a"); leafA.SetFloat(ShaderIds.Unlit, 1f);
+            leafB = ComicLook.ToonMaterial(ComicLook.Hex("#46A64A"), "grass_bit_b"); leafB.SetFloat(ShaderIds.Unlit, 1f);
         }
 
         void OnDisable() { Shader.SetGlobalFloat(CountId, 0f); }

@@ -14,8 +14,8 @@ namespace MicroduckVR.Comic
         {
             if (mats == null)
             {
-                mats = new Material[3]; string[] hex = { "#3A86FF", "#BFE3FF", "#FFFFFF" };
-                for (int i = 0; i < 3; i++) { mats[i] = ComicLook.ToonMaterial(ComicLook.Hex(hex[i]), "splash_" + i); mats[i].SetFloat("_Unlit", 1f); }
+                mats = new Material[3]; string[] hex = { ComicColors.Blue, "#BFE3FF", "#FFFFFF" };
+                for (int i = 0; i < 3; i++) { mats[i] = ComicLook.ToonMaterial(ComicLook.Hex(hex[i]), "splash_" + i); mats[i].SetFloat(ShaderIds.Unlit, 1f); }
             }
             var go = new GameObject("Splash"); go.transform.position = at;
             var s = go.AddComponent<ComicSplash>(); s.size = size;

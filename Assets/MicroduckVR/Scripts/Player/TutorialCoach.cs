@@ -182,7 +182,7 @@ namespace MicroduckVR.Player
             pq.name = "controllers"; picture = pq.transform; picture.SetParent(card, false);
             picture.localPosition = new Vector3(-0.09f, -0.016f, -0.002f); picture.localScale = new Vector3(0.15f, 0.0984f, 1f);
             picMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
-            picMat.SetFloat("_AlphaClip", 1f); picMat.SetFloat("_Cutoff", 0.4f); picMat.EnableKeyword("_ALPHATEST_ON");
+            picMat.SetFloat(ShaderIds.AlphaClip, 1f); picMat.SetFloat(ShaderIds.Cutoff, 0.4f); picMat.EnableKeyword("_ALPHATEST_ON");
             var pmr = pq.GetComponent<MeshRenderer>(); pmr.sharedMaterial = picMat; pmr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             card.gameObject.SetActive(false);
         }
@@ -195,11 +195,11 @@ namespace MicroduckVR.Player
             var g = new GameObject("back").transform; g.SetParent(card, false);
             var slab = new GameObject("slab"); slab.transform.SetParent(g, false); slab.transform.localPosition = new Vector3(0f, 0f, 0.003f);
             slab.AddComponent<MeshFilter>().sharedMesh = ComicMesh.RoundedBox(new Vector3(size.x, size.y, 0.004f), new ComicMesh.Style { radius = 0.01f, segments = 3 });
-            var m = ComicLook.ToonMaterial(ComicLook.Hex("#FFFDF5"), "tutorial_card"); m.SetFloat("_Unlit", 1f);
+            var m = ComicLook.ToonMaterial(ComicLook.Hex("#FFFDF5"), "tutorial_card"); m.SetFloat(ShaderIds.Unlit, 1f);
             var mr = slab.AddComponent<MeshRenderer>(); mr.sharedMaterial = m; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             var tab = new GameObject("tab"); tab.transform.SetParent(g, false); tab.transform.localPosition = new Vector3(0f, size.y / 2f - TabH / 2f, 0.002f);
             tab.AddComponent<MeshFilter>().sharedMesh = ComicMesh.RoundedBox(new Vector3(size.x, TabH, 0.004f), new ComicMesh.Style { radius = 0.006f, segments = 3 });
-            var tm = ComicLook.ToonMaterial(ComicLook.Hex("#FFC43D"), "tutorial_tab"); tm.SetFloat("_Unlit", 1f);
+            var tm = ComicLook.ToonMaterial(ComicLook.Hex(ComicColors.Yellow), "tutorial_tab"); tm.SetFloat(ShaderIds.Unlit, 1f);
             var tr = tab.AddComponent<MeshRenderer>(); tr.sharedMaterial = tm; tr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             return g;
         }
@@ -219,7 +219,7 @@ namespace MicroduckVR.Player
             var st = steps[index];
             string name = st.seq == null ? "pads_" + st.pic + "_0" : "pads_" + st.pic + "_" + st.seq[animI % st.seq.Length].frame;
             if (!texCache.TryGetValue(name, out var tex)) { tex = Resources.Load<Texture2D>("Tutorial/" + name); texCache[name] = tex; }
-            if (tex != null) { picMat.SetTexture("_BaseMap", tex); picMat.mainTexture = tex; }
+            if (tex != null) { picMat.SetTexture(ShaderIds.BaseMap, tex); picMat.mainTexture = tex; }
         }
 
         void Show(string t, string b, string c)

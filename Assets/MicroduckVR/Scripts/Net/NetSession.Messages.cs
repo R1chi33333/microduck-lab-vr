@@ -141,7 +141,7 @@ namespace MicroduckVR.Net
             Props.HostBegin();
             HookPlayer();
             sentCustom = CustomJson();
-            GameHud.Get().Big("PLAYER 2 JOINED!", "#FFC43D", 1.3f);
+            GameHud.Get().Big("PLAYER 2 JOINED!", ComicColors.Yellow, 1.3f);
             Debug.Log("[Microduck] net: " + Remote.DisplayName + " joined");
         }
 

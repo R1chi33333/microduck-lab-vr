@@ -265,7 +265,7 @@ namespace MicroduckVR.Player
                     for (int i = 0; i < 4; i++) ComicFX.Spark(ahead, FpScale);
                 }
                 // the web flashes the screen here; in VR a sound word instead (never a flash)
-                if (hard && skrrtCd <= 0f && pd != null && pd.cam != null) { skrrtCd = 2.5f; ComicEvents.Own(pd, "SKRRT!", "#FF8A3D", 0.9f); }
+                if (hard && skrrtCd <= 0f && pd != null && pd.cam != null) { skrrtCd = 2.5f; ComicEvents.Own(pd, "SKRRT!", ComicColors.Orange, 0.9f); }
             }
             if (sp > 0.15f * q) stopped = false;
         }
