@@ -789,7 +789,7 @@ namespace MicroduckVR.EditorTools
             int written = 0;
 
             // the duck: rows = colourways, columns = views
-            var ducks = all.Where(x => x.cat == "Ducks").ToList();
+            var ducks = all.Where(x => x.cat == "Ducks").OrderBy(x => Path.GetFileNameWithoutExtension(x.path) == "Duck" ? 0 : 1).ToList();
             var views = new[] { ("FRONT", 0f), ("3/4", 40f), ("SIDE", 90f), ("BACK", 180f) };
             var shots = new List<(string path, string label, float yaw)>();
             foreach (var d in ducks)
@@ -943,7 +943,7 @@ namespace MicroduckVR.EditorTools
         {
             var sb = new StringBuilder();
             sb.Append(DocsHeader);
-            sb.AppendLine($"The list below was written by **Microduck > Assets > Make Catalog** on {DateTime.Now:yyyy-MM-dd}: {info.Count} prefabs. The preview sheet is `Logs/assets/catalog.png` (local, not in git).");
+            sb.AppendLine($"The list below was written by **Microduck > Assets > Make Catalog** on {DateTime.Now:yyyy-MM-dd}: {info.Count} prefabs. The design sheets (one per category) are in `docs/images/` (**Make Design Sheets**); the all-in-one preview sheet is `Logs/assets/catalog.png` (local, not in git).");
             sb.AppendLine();
             foreach (var cat in Categories)
             {
@@ -997,7 +997,8 @@ carries all of this in `Assets/MicroduckVR/Prefabs/CREDITS.txt`.
 1. Open `Assets/MicroduckVR/Scenes/House.unity` and run **Export Prefabs**. One prefab per item in
    `Prefabs/{Toys,Furniture,Clutter,Ducks}`, its meshes in `Prefabs/Meshes/<category>/<item>.asset`, materials made
    at runtime in `Prefabs/Materials/`; the house's own materials stay in `Materials/House`.
-2. **Make Catalog** draws every prefab to `Logs/assets/catalog.png` and rewrites this file.
+2. **Make Catalog** draws every prefab to `Logs/assets/catalog.png` and rewrites this file; **Make Design Sheets**
+   draws the duck turnaround and one labelled sheet per category to `docs/images/`.
 3. **Export Package** writes `Builds/MicroduckLab_Assets.unitypackage`.
 4. Optional: **Link Scene To Prefabs** swaps the house's furniture and clutter for instances of the prefabs, so
    editing a prefab changes the house. **Build House** makes the house again from code and drops those links; tick

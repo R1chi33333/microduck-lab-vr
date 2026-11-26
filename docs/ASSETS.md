@@ -20,7 +20,8 @@ carries all of this in `Assets/MicroduckVR/Prefabs/CREDITS.txt`.
 1. Open `Assets/MicroduckVR/Scenes/House.unity` and run **Export Prefabs**. One prefab per item in
    `Prefabs/{Toys,Furniture,Clutter,Ducks}`, its meshes in `Prefabs/Meshes/<category>/<item>.asset`, materials made
    at runtime in `Prefabs/Materials/`; the house's own materials stay in `Materials/House`.
-2. **Make Catalog** draws every prefab to `Logs/assets/catalog.png` and rewrites this file.
+2. **Make Catalog** draws every prefab to `Logs/assets/catalog.png` and rewrites this file; **Make Design Sheets**
+   draws the duck turnaround and one labelled sheet per category to `docs/images/`.
 3. **Export Package** writes `Builds/MicroduckLab_Assets.unitypackage`.
 4. Optional: **Link Scene To Prefabs** swaps the house's furniture and clutter for instances of the prefabs, so
    editing a prefab changes the house. **Build House** makes the house again from code and drops those links; tick
@@ -37,7 +38,7 @@ Using them elsewhere: Unity 6 with URP. The prefabs keep the game's layers by nu
 Prop 10): name those layers in the other project or change them. For the ink outlines add a Full Screen Pass
 Renderer Feature using `Materials/ComicOutline.mat` (Depth and Normal inputs) to the URP renderer.
 
-The list below was written by **Microduck > Assets > Make Catalog** on 2026-11-26: 241 prefabs. The preview sheet is `Logs/assets/catalog.png` (local, not in git).
+The list below was written by **Microduck > Assets > Make Catalog** on 2026-11-26: 241 prefabs. The design sheets (one per category) are in `docs/images/` (**Make Design Sheets**); the all-in-one preview sheet is `Logs/assets/catalog.png` (local, not in git).
 
 ## Toys (29)
 
