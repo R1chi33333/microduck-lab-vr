@@ -191,6 +191,7 @@ namespace MicroduckVR.EditorTools
             m.shader = shader;
             m.SetColor("_BaseColor", c);
             m.enableInstancing = true;
+            HouseBuilder.ApplyToonDefaults(m, 0f);
             EditorUtility.SetDirty(m);
             return m;
         }

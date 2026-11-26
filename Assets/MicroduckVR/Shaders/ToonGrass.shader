@@ -22,6 +22,9 @@ Shader "Microduck/ToonGrass"
         _Sway ("Idle sway", Range(0, 1)) = 0.1
         _WaveLean ("Wave lean", Range(0, 1.5)) = 0.55
         _Ground ("Ground (0 blades, 1 soil)", Range(0, 1)) = 0
+        _GrassHatch ("Hatching in cast shadow", Range(0, 1)) = 1
+        _GrassHatchDark ("Hatch darkness", Range(0, 1)) = 0.74
+        _GrassHatchCell ("Soil hatch spacing (m)", Float) = 0.009
     }
     SubShader
     {
@@ -37,7 +40,11 @@ Shader "Microduck/ToonGrass"
             float _PatchScale;
             float4 _WindDir;
             float _Sway, _WaveLean, _Ground, _InkTufts;
+            float _GrassHatch, _GrassHatchDark, _GrassHatchCell;
         CBUFFER_END
+
+        // comic print globals shared with ToonLit (unset = on, scale 1)
+        float _ComicPatternsOff, _ComicPatternScale;
 
         // set by GrassField: xyz = position, w = radius
         float4 _GrassPushers[12];
@@ -138,7 +145,21 @@ Shader "Microduck/ToonGrass"
                 if (i.tuft.x > 0.5) col *= _ClumpShade.rgb;
                 float4 sc = TransformWorldToShadowCoord(i.positionWS);
                 float sh = MainLightRealtimeShadow(sc);
-                col = lerp(col * _ShadowMul.rgb, col, step(0.5, sh));
+                float inShadow = 1.0 - step(0.5, sh);
+                // cast-shadow hatching. Soil: cross-hatch lines fixed to the ground (world xz), antialiased and
+                // faded to their mean tone once the spacing drops under ~2 px. Blades move in the wind, so a
+                // world pattern would crawl over them: in shadow their root band takes the hatch tone instead.
+                float gScale = _ComicPatternScale > 0.0 ? _ComicPatternScale : 1.0;
+                float2 q = i.positionWS.xz / max(_GrassHatchCell * gScale, 1e-4);
+                float px = max(fwidth(q.x), fwidth(q.y));
+                float a = abs(frac(q.x + q.y) - 0.5), bb = abs(frac((q.x - q.y) * 0.8696) - 0.5);
+                float aaH = px + 0.01;
+                float hat = max(1.0 - smoothstep(0.14 - aaH, 0.14 + aaH, a), 0.75 * (1.0 - smoothstep(0.115 - aaH, 0.115 + aaH, bb)));
+                hat = lerp(0.4, hat, 1.0 - smoothstep(0.3, 0.55, px));
+                float bladeHatch = 1.0 - step(0.34 + j, t);                  // the root band of a blade
+                float hatchM = (_Ground > 0.5 ? hat : bladeHatch * 0.8) * inShadow * _GrassHatch * (1.0 - saturate(_ComicPatternsOff));
+                col = lerp(col, col * _ShadowMul.rgb, inShadow);
+                col *= lerp(1.0, _GrassHatchDark, hatchM);
                 return half4(col, 1);
             }
             ENDHLSL

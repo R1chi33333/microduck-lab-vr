@@ -31,9 +31,10 @@ Material:
     m_Floats:
     - _Cutoff: 0.5
     - _DeepMul: 0.48
+    - _Hatch: 0.55
     - _MidMul: 0.86
-    - _RimAmount: 0
-    - _RimT: 0.62
+    - _RimAmount: 0.55
+    - _RimT: 0.55
     - _ShadowMul: 0.62
     - _T1: 0.62
     - _T2: 0.22

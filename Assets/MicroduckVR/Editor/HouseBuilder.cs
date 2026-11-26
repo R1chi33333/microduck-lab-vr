@@ -54,8 +54,25 @@ namespace MicroduckVR.EditorTools
             var m = AssetDatabase.LoadAssetAtPath<Material>(p);
             if (m == null) { m = new Material(shader); AssetDatabase.CreateAsset(m, p); }
             m.shader = shader; m.SetColor("_BaseColor", ComicLook.Hex(hex)); m.enableInstancing = true;
+            ApplyToonDefaults(m, Glossy.Contains(name) ? 0.8f : 0f);
             EditorUtility.SetDirty(m);
             return m;
+        }
+
+        // glossy things get the web's hard specular pop (toonify spec for roughness < 0.5); the rest stay matte
+        static readonly HashSet<string> Glossy = new HashSet<string> { "bowl", "fridge", "knob", "sink", "pot", "puddle", "puddle_rim", "toy_box", "toy_lid", "turntable", "finish_blue", "block0", "block1", "block2", "block3", "block_ramp", "shoe" };
+
+        /// <summary>
+        /// The comic print defaults on a saved toon material (rim band, spec pop, halftone / hatching, fill,
+        /// floor contact). Saved materials keep old values for properties they already had, so the builders set
+        /// them explicitly.
+        /// </summary>
+        internal static void ApplyToonDefaults(Material m, float spec)
+        {
+            m.SetFloat("_RimAmount", ComicLook.DefaultRim); m.SetFloat("_RimT", ComicLook.DefaultRimT);
+            m.SetFloat("_SpecAmount", spec); m.SetFloat("_SpecT", 0.55f);
+            m.SetFloat("_Halftone", 1f); m.SetFloat("_Hatch", 1f);
+            m.SetFloat("_FillAmount", 0.6f); m.SetFloat("_ContactAO", 0.45f); m.SetFloat("_ContactHeight", 0.1f);
         }
 
         // ================================================================ primitives
@@ -181,6 +198,8 @@ namespace MicroduckVR.EditorTools
             wall = M("wall", "#FFF0D2"); trim = M("trim", "#FFFFFF"); plank = M("floor_planks", "#E9A85A");
             // walls: keep the shade side a pale lavender cream instead of a muddy grey
             wall.SetFloat("_MidMul", 0.95f); wall.SetFloat("_ShadowMul", 0.86f); wall.SetFloat("_DeepMul", 0.8f); wall.SetFloat("_TintAmount", 0.3f);
+            // big plaster planes: lighter hatching, so a wall turned away from the sun reads as shade, not texture
+            wall.SetFloat("_Hatch", 0.55f); trim.SetFloat("_Hatch", 0.55f);
             // floors per room (2 cm slabs, top at y = 0)
             Textured(plank, "floor_planks.png", new Vector2(6.0f, 5.0f), 0.6f);
             var hallM = Textured(M("floor_hall", "#E19B4C"), "floor_planks_narrow.png", new Vector2(14.24f, 1.44f), 0.6f);

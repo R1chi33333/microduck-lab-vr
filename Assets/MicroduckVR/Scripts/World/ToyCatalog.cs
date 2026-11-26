@@ -23,7 +23,7 @@ namespace MicroduckVR.World
             return sphere;
         }
 
-        public static Material Mat(string hex) => ComicLook.ToonMaterial(ComicLook.Hex(hex), "toy_" + hex);
+        public static Material Mat(string hex) => ComicLook.ToonMaterial(ComicLook.Hex(hex), "toy_" + hex, ComicLook.DefaultRim, 0.7f);   // shiny plastic: hard spec pop
 
         public static Transform Part(Transform p, Mesh mesh, string hex, Vector3 lp, Vector3 le, Vector3 ls)
         {

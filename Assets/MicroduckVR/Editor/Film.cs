@@ -340,7 +340,7 @@ namespace MicroduckVR.EditorTools
             int mask = (1 << DuckSetup.LayerDuck) | (1 << DuckSetup.LayerPlayerHead);
             var c = Pos + Vector3.up * 0.15f; float yaw = P.Body.Yaw;
             var views = new (string n, float ang, float h)[] { ("front", 28f, 0.03f), ("side", 95f, 0.0f), ("back", 205f, 0.04f) };
-            Material Flat(string hex, bool unlit) { var m = new Material(Shader.Find("Microduck/ToonLit")); m.SetColor("_BaseColor", ComicLook.Hex(hex)); m.SetFloat("_Unlit", unlit ? 1f : 0f); return m; }
+            Material Flat(string hex, bool unlit) { var m = new Material(Shader.Find("Microduck/ToonLit")); m.SetColor("_BaseColor", ComicLook.Hex(hex)); m.SetFloat("_Unlit", unlit ? 1f : 0f); ComicLook.Character(m); return m; }
             void Paint(Material m) { foreach (var r in renderers) { var a = new Material[r.sharedMaterials.Length]; for (int i = 0; i < a.Length; i++) a[i] = m; r.sharedMaterials = a; } }
             void Restore() { for (int i = 0; i < renderers.Count; i++) renderers[i].sharedMaterials = saved[i]; }
             void Shoot(string name, bool wire, bool ink, string bg)

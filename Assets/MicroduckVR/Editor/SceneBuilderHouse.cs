@@ -26,6 +26,16 @@ namespace MicroduckVR.EditorTools
             sun.color = new Color(1f, 0.96f, 0.88f);
             sun.transform.rotation = Quaternion.Euler(64f, 205f, 0f);   // sunlight comes in from the garden side
 
+            // soft fill without extra lights: a three-colour ambient (cool sky above, neutral walls, warm floor
+            // bounce from below). ToonLit reads its hue and up/down gradient (normalised, so the bands stay hard)
+            // and leans the shadow sides of things towards it, so shaded walls, floors and undersides differ.
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = new Color(0.74f, 0.80f, 0.98f);
+            RenderSettings.ambientEquatorColor = new Color(0.80f, 0.78f, 0.76f);
+            RenderSettings.ambientGroundColor = new Color(0.82f, 0.64f, 0.48f);
+            RenderSettings.ambientIntensity = 1f;
+            DynamicGI.UpdateEnvironment();
+
             HouseBuilder.Build();
 
             var rigPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(RigImporter.GlbPath);

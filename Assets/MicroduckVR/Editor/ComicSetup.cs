@@ -68,5 +68,20 @@ namespace MicroduckVR.EditorTools
             AssetDatabase.SaveAssets();
             Debug.Log("[Microduck] Comic look installed (outline feature, hard 4K shadows).");
         }
+
+        // A/B switches for the surface print and the fill terms (shader globals, editor session and play mode)
+        [MenuItem("Microduck/Debug/Comic Look/Toggle Halftone + Hatching")]
+        static void TogglePrint() => Toggle("_ComicPatternsOff", "halftone + hatching");
+        [MenuItem("Microduck/Debug/Comic Look/Toggle Hemisphere Fill")]
+        static void ToggleFill() => Toggle("_ComicFillOff", "hemisphere fill");
+        [MenuItem("Microduck/Debug/Comic Look/Toggle Floor Contact")]
+        static void ToggleContact() => Toggle("_ComicContactOff", "floor contact darkening");
+        static void Toggle(string id, string what)
+        {
+            bool off = Shader.GetGlobalFloat(id) < 0.5f;
+            Shader.SetGlobalFloat(id, off ? 1f : 0f);
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            Debug.Log($"[Microduck] {what}: {(off ? "off" : "on")}");
+        }
     }
 }

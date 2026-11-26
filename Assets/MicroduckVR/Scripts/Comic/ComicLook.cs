@@ -71,16 +71,46 @@ namespace MicroduckVR.Comic
 
         public static Shader ToonShader => toon != null ? toon : (toon = Shader.Find("Microduck/ToonLit"));
 
-        public static Material ToonMaterial(Color c, string key = null, float rim = 0f)
+        /// <summary>Web toonify() defaults for the coloured rim band (uTnRim, uTnRimT).</summary>
+        public const float DefaultRim = 0.55f, DefaultRimT = 0.55f;
+
+        /// <summary>
+        /// A runtime toon material (cached by key). rim: coloured edge light; spec: hard specular pop (0 = matte).
+        /// Runtime things (toys, props, gates) stand on or move over the floor, so the floor contact term is off.
+        /// </summary>
+        public static Material ToonMaterial(Color c, string key = null, float rim = DefaultRim, float spec = 0f)
         {
-            key ??= ColorUtility.ToHtmlStringRGB(c) + rim.ToString("F2");
+            key ??= ColorUtility.ToHtmlStringRGB(c) + rim.ToString("F2") + spec.ToString("F2");
             if (cache.TryGetValue(key, out var m) && m != null) return m;
             m = new Material(ToonShader) { name = "Toon " + key, enableInstancing = true };
             m.SetColor("_BaseColor", c);
             m.SetFloat("_RimAmount", rim);
+            m.SetFloat("_RimT", DefaultRimT);
+            m.SetFloat("_SpecAmount", spec);
+            m.SetFloat("_ContactAO", 0f);
             cache[key] = m;
             return m;
         }
+
+        /// <summary>Character print (web CHAR_TOON): gentle halftone, no hatching, matte, no floor contact.</summary>
+        public static Material Character(Material m)
+        {
+            m.SetFloat("_Halftone", 0.4f); m.SetFloat("_Hatch", 0f); m.SetFloat("_SpecAmount", 0f); m.SetFloat("_ContactAO", 0f);
+            return m;
+        }
+
+        // ---------------------------------------------------------------- global switches (ToonLit, ToonGrass)
+        static readonly int PatternsOffId = Shader.PropertyToID("_ComicPatternsOff"), FillOffId = Shader.PropertyToID("_ComicFillOff"),
+            ContactOffId = Shader.PropertyToID("_ComicContactOff"), PatternScaleId = Shader.PropertyToID("_ComicPatternScale"),
+            FloorYId = Shader.PropertyToID("_ComicFloorY");
+        /// <summary>Halftone dots and cross-hatching printed on surfaces (on by default).</summary>
+        public static void SetPrintPatterns(bool on) => Shader.SetGlobalFloat(PatternsOffId, on ? 0f : 1f);
+        /// <summary>Cell size multiplier for the dots and hatching (1 = 8 mm dots, 6 mm hatching).</summary>
+        public static void SetPatternScale(float scale) => Shader.SetGlobalFloat(PatternScaleId, Mathf.Max(0.05f, scale));
+        /// <summary>Hemisphere fill from the scene ambient (on by default).</summary>
+        public static void SetFill(bool on) => Shader.SetGlobalFloat(FillOffId, on ? 0f : 1f);
+        /// <summary>Contact darkening towards the floor (on by default); floorY = floor height in metres.</summary>
+        public static void SetContact(bool on, float floorY = 0f) { Shader.SetGlobalFloat(ContactOffId, on ? 0f : 1f); Shader.SetGlobalFloat(FloorYId, floorY); }
 
         public static string KindFor(string meshName)
         {
@@ -120,7 +150,7 @@ namespace MicroduckVR.Comic
                 {
                     if (!re.IsMatch(n) || !parts.TryGetValue(part, out var sid) || string.IsNullOrEmpty(sid) || !Skins.TryGetValue(sid, out var skin)) continue;
                     string kind = KindFor(n);
-                    var mat = ToonMaterial(ColorFor(kind, skin), sid + ":" + kind, kind == "shell" ? 0.35f : 0f);
+                    var mat = Character(ToonMaterial(ColorFor(kind, skin), sid + ":" + kind, kind == "shell" ? 0.35f : 0f));
                     var mats = r.sharedMaterials; for (int i = 0; i < mats.Length; i++) mats[i] = mat; r.sharedMaterials = mats;
                 }
             }
@@ -135,7 +165,7 @@ namespace MicroduckVR.Comic
                 string n = MeshName(r);
                 if (Hide.IsMatch(n) || Internal.IsMatch(n)) { r.enabled = false; continue; }
                 string kind = KindFor(n);
-                var mat = ToonMaterial(ColorFor(kind, skin), skinId + ":" + kind, kind == "shell" ? 0.35f : 0f);
+                var mat = Character(ToonMaterial(ColorFor(kind, skin), skinId + ":" + kind, kind == "shell" ? 0.35f : 0f));
                 if (kind == "eye" || kind == "highlight") mat.SetFloat("_Unlit", 1f);
                 var mats = r.sharedMaterials;
                 for (int i = 0; i < mats.Length; i++) mats[i] = mat;
