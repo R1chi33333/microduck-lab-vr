@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MicroduckVR.Core;
 using UnityEngine;
 
 namespace MicroduckVR.Duck
