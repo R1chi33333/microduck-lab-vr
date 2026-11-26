@@ -1,4 +1,5 @@
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using TMPro;
 using UnityEngine;
 
@@ -99,7 +100,7 @@ namespace MicroduckVR.Games
             var eye = cam.transform.position;
             float dist = 0.24f, k = 0.7f;      // close and small (the same size in the eye as 0.34 m at full scale): in front of the tutorial card and of ducks that crowd round
             // never inside a wall: come closer to the eyes instead, and shrink to look the same size
-            if (Physics.SphereCast(eye, 0.03f, dir, out var hit, dist + 0.02f, MicroduckVR.Duck.WorldQueries.WorldMask, QueryTriggerInteraction.Ignore)) { float near = Mathf.Max(0.12f, hit.distance - 0.02f); k *= near / dist; dist = near; }
+            if (Physics.SphereCast(eye, 0.03f, dir, out var hit, dist + 0.02f, WorldQueries.WorldMask, QueryTriggerInteraction.Ignore)) { float near = Mathf.Max(0.12f, hit.distance - 0.02f); k *= near / dist; dist = near; }
             root.position = eye + dir * dist + Vector3.down * 0.02f * k;
             root.localScale = Vector3.one * k;
             root.rotation = Quaternion.LookRotation(root.position - eye, Vector3.up);

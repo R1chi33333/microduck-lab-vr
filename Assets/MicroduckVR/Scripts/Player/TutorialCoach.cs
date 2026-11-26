@@ -274,7 +274,7 @@ namespace MicroduckVR.Player
             if (st != null) { var o = st.offset; want += Vector3.Cross(Vector3.up, dir) * o.x + Vector3.up * o.y; }
             // never inside a wall or a piece of furniture: come closer to the eyes instead, and shrink to look the same size
             var to = want - eye; float dist = to.magnitude; fit = 1f;
-            if (Physics.SphereCast(eye, 0.03f, to / dist, out var hit, dist, MicroduckVR.Duck.WorldQueries.WorldMask, QueryTriggerInteraction.Ignore))
+            if (Physics.SphereCast(eye, 0.03f, to / dist, out var hit, dist, WorldQueries.WorldMask, QueryTriggerInteraction.Ignore))
             { float near = Mathf.Max(0.14f, hit.distance - 0.02f); want = eye + to / dist * near; fit = near / dist; }
             root.position = want;
             root.rotation = Quaternion.LookRotation(want - eye, Vector3.up);

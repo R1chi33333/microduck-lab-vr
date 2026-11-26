@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using MicroduckVR.Games;
 using MicroduckVR.Player;
@@ -121,7 +122,7 @@ namespace MicroduckVR.Comic
             if (waterT <= 0f)
             {
                 waterT = 0.1f;
-                bool w = Physics.Raycast(pd.Body.Pos + Vector3.up * 0.05f, Vector3.down, out var hit, 0.3f, 1 << DuckSetup.LayerWorld, QueryTriggerInteraction.Ignore)
+                bool w = Physics.Raycast(pd.Body.Pos + Vector3.up * 0.05f, Vector3.down, out var hit, 0.3f, 1 << Layers.World, QueryTriggerInteraction.Ignore)
                          && hit.collider.GetComponent<SurfaceTag>() is SurfaceTag st && st.Kind == SurfaceType.Water;
                 if (w && !inWater) { Own(pd, "SPLASH!", ComicColors.Blue, 1.1f); ComicSplash.Spawn(pd.Body.Pos, 1.2f); MicroduckVR.Net.NetSession.SendSplash(pd.Body.Pos, 1.2f); }
                 else if (w && pd.Speed > 0.03f && (paddle = !paddle)) { ComicSplash.Spawn(pd.Body.Pos, 0.7f); MicroduckVR.Net.NetSession.SendSplash(pd.Body.Pos, 0.7f); }     // paddling about: a small one every other look
@@ -142,7 +143,7 @@ namespace MicroduckVR.Comic
             {
                 scanT = 1.5f; props.Clear(); speeds.Clear();
                 foreach (var rb in FindObjectsByType<Rigidbody>())
-                    if (rb.gameObject.layer == DuckSetup.LayerProp && !rb.isKinematic && ((rb.position - pd.Body.Pos).sqrMagnitude < 9f || MicroduckVR.Net.PlayerTargets.NearRemote(rb.position, 3f))) { props.Add(rb); speeds[rb] = rb.linearVelocity.magnitude; }
+                    if (rb.gameObject.layer == Layers.Prop && !rb.isKinematic && ((rb.position - pd.Body.Pos).sqrMagnitude < 9f || MicroduckVR.Net.PlayerTargets.NearRemote(rb.position, 3f))) { props.Add(rb); speeds[rb] = rb.linearVelocity.magnitude; }
             }
             foreach (var rb in props)
             {

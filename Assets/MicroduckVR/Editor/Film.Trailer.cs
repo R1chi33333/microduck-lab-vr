@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Custom;
 using MicroduckVR.Duck;
 using MicroduckVR.Flock;
@@ -180,7 +181,7 @@ namespace MicroduckVR.EditorTools
             {
                 if (rb == keep || rb.isKinematic || filmToys.Contains(rb.gameObject)) continue;
                 int layer = rb.gameObject.layer;
-                if (layer != DuckSetup.LayerToy && layer != DuckSetup.LayerProp) continue;
+                if (layer != Layers.Toy && layer != Layers.Prop) continue;
                 if (rb.position.y > 0.35f || !area.Contains(new Vector2(rb.position.x, rb.position.z))) continue;
                 var col = rb.GetComponentInChildren<Collider>();
                 if (col != null && col.bounds.extents.magnitude > 0.12f) continue;

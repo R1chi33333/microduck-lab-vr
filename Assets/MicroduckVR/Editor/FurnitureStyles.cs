@@ -1,4 +1,5 @@
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -80,7 +81,7 @@ namespace MicroduckVR.EditorTools
             go.transform.localRotation = Quaternion.Euler(tiltDeg, yawDeg, 0f);
             go.AddComponent<MeshFilter>().sharedMesh = MeshSaver(mesh);
             go.AddComponent<MeshRenderer>().sharedMaterial = mat;
-            go.layer = MicroduckVR.Duck.DuckSetup.LayerWorld; go.isStatic = true;
+            go.layer = Layers.World; go.isStatic = true;
             return go;
         }
 

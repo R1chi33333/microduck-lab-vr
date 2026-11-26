@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using MicroduckVR.Flock;
 using MicroduckVR.Player;
@@ -40,7 +41,7 @@ namespace MicroduckVR.World
             {
                 scanT = 1f; props.Clear();
                 foreach (var rb in FindObjectsByType<Rigidbody>())
-                    if (rb.gameObject.layer == DuckSetup.LayerProp && OnLawn(rb.position)) props.Add(rb);
+                    if (rb.gameObject.layer == Layers.Prop && OnLawn(rb.position)) props.Add(rb);
             }
             int n = 0;
             var pd = PlayerDuck.Instance;
@@ -95,7 +96,7 @@ namespace MicroduckVR.World
         static bool OnGrass(Vector3 p)
         {
             if (!OnLawn(p)) return false;
-            if (!Physics.Raycast(p + Vector3.up * 0.05f, Vector3.down, out var hit, 0.3f, 1 << DuckSetup.LayerWorld, QueryTriggerInteraction.Ignore)) return false;
+            if (!Physics.Raycast(p + Vector3.up * 0.05f, Vector3.down, out var hit, 0.3f, 1 << Layers.World, QueryTriggerInteraction.Ignore)) return false;
             var tag = hit.collider.GetComponent<SurfaceTag>();
             return tag != null && tag.Kind == SurfaceType.Grass;
         }

@@ -17,15 +17,13 @@ namespace MicroduckVR.Duck
         public DuckBody Body { get; private set; }
         public CharacterController Mover { get; private set; }
 
-        public const int LayerWorld = Layers.World, LayerDuck = Layers.Duck, LayerToy = Layers.Toy, LayerPlayerHead = Layers.PlayerHead, LayerProp = Layers.Prop, LayerCeiling = Layers.Ceiling;
-
         void Awake()
         {
             Body = GetComponent<DuckBody>();
             var start = transform.position; var yaw = transform.eulerAngles.y * Mathf.Deg2Rad;
             var rig = Instantiate(rigPrefab);
             rig.name = "rig";
-            SetLayer(rig.transform, LayerDuck);
+            SetLayer(rig.transform, Layers.Duck);
             float probeY = start.y;
             Body.Ground = (x, z) => WorldQueries.GroundNear(x, z, probeY);   // surface near the duck's height (not the table above it)
             Body.Init(rig, jointMap);
@@ -33,7 +31,7 @@ namespace MicroduckVR.Duck
 
             // the capsule that actually moves through the world; the body follows it
             var m = new GameObject(name + " mover");
-            m.layer = LayerDuck;
+            m.layer = Layers.Duck;
             m.transform.position = start;
             Mover = m.AddComponent<CharacterController>();
             Mover.radius = 0.05f; Mover.height = 0.2f; Mover.center = new Vector3(0f, 0.105f, 0f);
@@ -48,9 +46,9 @@ namespace MicroduckVR.Duck
             if (hideHeadFromPlayer)
             {
                 // the player sees out of this duck: hide its shell, electronics and head, keep the legs and feet
-                SetLayer(rig.transform, LayerPlayerHead);
+                SetLayer(rig.transform, Layers.PlayerHead);
                 foreach (var legRoot in new[] { JointNames.LeftLegRoot, JointNames.RightLegRoot })
-                    if (Body.Nodes.TryGetValue(legRoot, out var lr)) SetLayer(lr, LayerDuck);
+                    if (Body.Nodes.TryGetValue(legRoot, out var lr)) SetLayer(lr, Layers.Duck);
             }
         }
 

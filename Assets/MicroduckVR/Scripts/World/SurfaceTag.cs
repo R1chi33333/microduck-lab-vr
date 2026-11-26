@@ -6,7 +6,7 @@ namespace MicroduckVR.World
     /// Needs no other game script, so props carrying it can be shared on their own (Microduck/Assets/Export Package).</summary>
     public class SurfaceTag : MonoBehaviour
     {
-        const int WorldMask = 1 << 6;        // the World layer (DuckSetup.LayerWorld)
+        const int WorldMask = 1 << 6;        // the World layer (Layers.World)
 
         public string type = "wood";
         public string room = "living";

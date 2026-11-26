@@ -96,7 +96,7 @@ namespace MicroduckVR.Player
             eyeY = body.transform.position.y + eyeHeight;
             originYaw = yaw * Mathf.Rad2Deg;
             if (xrOrigin != null) xrOrigin.localScale = Vector3.one * worldScale;
-            if (cam != null) cam.cullingMask &= ~(1 << DuckSetup.LayerPlayerHead);
+            if (cam != null) cam.cullingMask &= ~(1 << Layers.PlayerHead);
             TrySetDeviceOrigin();
         }
 
@@ -139,7 +139,7 @@ namespace MicroduckVR.Player
         public void SetThirdPerson(bool on)
         {
             thirdPerson = on; thirdSnap = true; ViewToggles++; headAim = Vector2.zero;
-            if (cam != null) { if (on) cam.cullingMask |= 1 << DuckSetup.LayerPlayerHead; else cam.cullingMask &= ~(1 << DuckSetup.LayerPlayerHead); }
+            if (cam != null) { if (on) cam.cullingMask |= 1 << Layers.PlayerHead; else cam.cullingMask &= ~(1 << Layers.PlayerHead); }
             if (vignette != null) vignette.Pulse(0.6f);
         }
 

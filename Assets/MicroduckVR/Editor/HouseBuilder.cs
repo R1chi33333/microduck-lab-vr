@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using MicroduckVR.World;
 using UnityEditor;
@@ -111,7 +112,7 @@ namespace MicroduckVR.EditorTools
                 go.GetComponent<Renderer>().sharedMaterial = mat;
                 if (!collide) Object.DestroyImmediate(go.GetComponent<Collider>());
             }
-            go.layer = DuckSetup.LayerWorld; go.isStatic = true;
+            go.layer = Layers.World; go.isStatic = true;
             if (collide && surface != null) Tag(go, surface, room);
             return go;
         }
@@ -134,7 +135,7 @@ namespace MicroduckVR.EditorTools
 
         static GameObject Cyl(string room, string name, float r, float h, Material mat, float x, float y, float z, string surface = null, bool collide = true)
         {
-            var go = new GameObject(name) { layer = DuckSetup.LayerWorld, isStatic = true };
+            var go = new GameObject(name) { layer = Layers.World, isStatic = true };
             go.transform.SetParent(rooms[room], false);
             go.transform.position = P(x, y, z);
             bool flat = h < r * 0.3f;                                    // rugs, stones, puddles: straight disc
@@ -148,7 +149,7 @@ namespace MicroduckVR.EditorTools
         /// <summary>Sloped block along web X: from xa (top height ha) to xb (top height hb), centred on z, width w, floor at y0.</summary>
         static GameObject Wedge(string room, string name, float xa, float ha, float xb, float hb, float zc, float w, Material mat, float y0 = 0f, string surface = "card")
         {
-            var go = new GameObject(name) { layer = DuckSetup.LayerWorld, isStatic = true };
+            var go = new GameObject(name) { layer = Layers.World, isStatic = true };
             go.transform.SetParent(rooms[room], false);
             var v = new List<Vector3>();
             foreach (var z in new[] { zc - w / 2f, zc + w / 2f })

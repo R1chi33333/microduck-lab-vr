@@ -1,4 +1,5 @@
 using System.IO;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using MicroduckVR.Flock;
 using MicroduckVR.Player;
@@ -109,7 +110,7 @@ namespace MicroduckVR.EditorTools
         internal static void MakeToy(string name, PrimitiveType type, Vector3 pos, Vector3 size, Color col)
         {
             var go = GameObject.CreatePrimitive(type);
-            go.name = name; go.layer = DuckSetup.LayerToy;
+            go.name = name; go.layer = Layers.Toy;
             go.transform.position = pos; go.transform.localScale = size;
             go.GetComponent<Renderer>().sharedMaterial = Mat(name, col);
             var rb = go.AddComponent<Rigidbody>(); rb.mass = 0.01f; rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -175,7 +176,7 @@ namespace MicroduckVR.EditorTools
         static GameObject Box(Transform parent, string name, Vector3 center, Vector3 size, Material m)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = name; go.layer = DuckSetup.LayerWorld; go.isStatic = true;
+            go.name = name; go.layer = Layers.World; go.isStatic = true;
             go.transform.SetParent(parent, false);
             go.transform.localPosition = center; go.transform.localScale = size;
             go.GetComponent<Renderer>().sharedMaterial = m;
@@ -202,7 +203,7 @@ namespace MicroduckVR.EditorTools
             var tm = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
             var layers = tm.FindProperty("layers");
             void Set(int i, string n) { var p = layers.GetArrayElementAtIndex(i); if (p.stringValue != n) p.stringValue = n; }
-            Set(DuckSetup.LayerWorld, "World"); Set(DuckSetup.LayerDuck, "Duck"); Set(DuckSetup.LayerToy, "Toy"); Set(DuckSetup.LayerPlayerHead, "PlayerHead"); Set(DuckSetup.LayerProp, "Prop"); Set(DuckSetup.LayerCeiling, "Ceiling");
+            Set(Layers.World, "World"); Set(Layers.Duck, "Duck"); Set(Layers.Toy, "Toy"); Set(Layers.PlayerHead, "PlayerHead"); Set(Layers.Prop, "Prop"); Set(Layers.Ceiling, "Ceiling");
             tm.ApplyModifiedProperties();
         }
     }
