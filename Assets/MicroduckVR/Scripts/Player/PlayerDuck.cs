@@ -19,7 +19,7 @@ namespace MicroduckVR.Player
     /// </summary>
     [DefaultExecutionOrder(10)]
     [RequireComponent(typeof(DuckSetup))]
-    public class PlayerDuck : MonoBehaviour
+    public class PlayerDuck : MonoBehaviour, ILocalPlayer
     {
         [Header("Rig")]
         public Transform xrOrigin;
@@ -65,6 +65,16 @@ namespace MicroduckVR.Player
         public static PlayerDuck Instance { get; private set; }
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { Instance = null; }
+        /// <summary>Lets the layers below the player (comic effects, the lawn) find this duck, in play mode and in edit mode.</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+#endif
+        static void RegisterLocalPlayer() { LocalPlayer.Resolve = () => Instance != null ? Instance : null; }
+        bool ILocalPlayer.HasBody => Body != null;
+        Vector3 ILocalPlayer.BodyPos => Body.Pos;
+        Camera ILocalPlayer.Cam => cam;
+        bool ILocalPlayer.ThirdPerson => thirdPerson;
         /// <summary>Debug only: when set, the duck walks this world direction at full speed (used by editor tests).</summary>
         public static Vector3? DebugWalk;
         public static float? DebugBeak;                    // editor tests and filming: the beak trigger

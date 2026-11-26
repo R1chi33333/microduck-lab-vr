@@ -3,7 +3,6 @@ using MicroduckVR.Comic;
 using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using MicroduckVR.Flock;
-using MicroduckVR.Player;
 using UnityEngine;
 
 namespace MicroduckVR.World
@@ -44,8 +43,8 @@ namespace MicroduckVR.World
                     if (rb.gameObject.layer == Layers.Prop && OnLawn(rb.position)) props.Add(rb);
             }
             int n = 0;
-            var pd = PlayerDuck.Instance;
-            if (pd != null && pd.Body != null && OnLawn(pd.Body.Pos)) pushers[n++] = Pack(pd.Body.Pos, 0.085f);
+            var pd = LocalPlayer.Current;
+            if (pd != null && pd.HasBody && OnLawn(pd.BodyPos)) pushers[n++] = Pack(pd.BodyPos, 0.085f);
             foreach (var d in DuckBrain.All) if (n < Max && d != null && OnLawn(d.Pos)) pushers[n++] = Pack(d.Pos, 0.085f);
             foreach (var r in MicroduckVR.Net.PlayerTargets.Remote) if (n < Max && r != null && r.Body != null && OnLawn(r.Body.Pos)) pushers[n++] = Pack(r.Body.Pos, 0.085f);
             foreach (var rb in props)
@@ -64,12 +63,12 @@ namespace MicroduckVR.World
         static Vector4 Pack(Vector3 p, float r) => new Vector4(p.x, p.y, p.z, r);
 
         // ------------------------------------------------------------------ clippings
-        void Clippings(PlayerDuck pd)
+        void Clippings(ILocalPlayer pd)
         {
             float dt = Time.deltaTime;
-            if (pd != null && pd.Body != null)
+            if (pd != null && pd.HasBody)
             {
-                var p = pd.Body.Pos;
+                var p = pd.BodyPos;
                 float speed = hasLast && dt > 1e-5f ? Vector3.ProjectOnPlane(p - lastPos, Vector3.up).magnitude / dt : 0f;
                 lastPos = p; hasLast = true; bitT -= dt;
                 if (speed > 0.06f && speed < 3f && bitT <= 0f && bits.Count < 40 && OnGrass(p))
