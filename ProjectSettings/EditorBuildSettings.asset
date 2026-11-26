@@ -8,12 +8,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/MicroduckVR/Scenes/House.unity
     guid: 7f089d68563f08c459996d061a5325c3
-  - enabled: 1
-    path: Assets/MicroduckVR/Scenes/M1_BeTheDuck.unity
-    guid: f64b96341d5d33745ba817923f15b6bd
-  - enabled: 1
-    path: Assets/MicroduckVR/Scenes/M0_LinkTest.unity
-    guid: f5907088986c72b49b45b86dbdbe7379
   m_configObjects:
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 0fd77dfba9535a041aaa94540362394a, type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 7a1e8acf6a319434393d654b620aa2a9, type: 2}

@@ -15,10 +15,15 @@ namespace MicroduckVR.Net
     /// </summary>
     public class RemotePlayer : MonoBehaviour, IPlayerTarget
     {
+        /// <summary>The other player's duck body.</summary>
         public DuckBody Body { get; private set; }
+        /// <summary>The other player's duck.</summary>
         public DuckSetup Setup { get; private set; }
+        /// <summary>The other player's name.</summary>
         public string DisplayName { get; private set; } = "DUCK";
+        /// <summary>The other player's laser dot is on.</summary>
         public bool LaserOn { get; private set; }
+        /// <summary>Where the other player's laser dot is.</summary>
         public Vector3 LaserPoint { get; private set; }
 
         readonly Track<PlayerSample> track = new Track<PlayerSample>(PlayerSample.Lerp);
@@ -47,6 +52,7 @@ namespace MicroduckVR.Net
             return rp;
         }
 
+        /// <summary>Paints the duck in the other player's look (DuckCustom JSON).</summary>
         public void ApplyCustom(string json)
         {
             if (string.IsNullOrEmpty(json) || json == customJson) return;
@@ -60,10 +66,14 @@ namespace MicroduckVR.Net
             if (wasSkating) SetSkates(true);
         }
 
+        /// <summary>A snapshot from the other PC.</summary>
         public void AddSample(double t, PlayerSample s) => track.Add(t, s);
 
+        /// <summary>The other player quacked.</summary>
         public void Quack() { if (au != null) au.Chirp(); }
+        /// <summary>The other player's duck emotes.</summary>
         public void Emote(EmoteKind kind, float dur) { if (Body != null) Body.PlayEmote(kind, dur); }
+        /// <summary>The other player's duck tips over.</summary>
         public void Tip(Vector3 dir) { if (Body != null && !Body.Fallen) Body.StartTip(dir); }
         /// <summary>A word about the other player's duck pops up big over its head.</summary>
         public void Word(string word, string hex, float size) { if (Body != null) ComicPop.Spawn(word, Body.Pos + Vector3.up * 0.36f, hex, size); }

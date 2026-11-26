@@ -19,6 +19,7 @@ namespace MicroduckVR.Net
             if (p.g == null || !p.g.IsHeld) p.rb.isKinematic = true;
         }
 
+        /// <summary>Joining PC: the host's ids for the scene props (in parts).</summary>
         public void OnMap(ref FastBufferReader r)
         {
             r.ReadValueSafe(out bool first); r.ReadValueSafe(out ushort n);
@@ -51,6 +52,7 @@ namespace MicroduckVR.Net
             lastHeldKnown = false;
         }
 
+        /// <summary>Joining PC: the host made a toy.</summary>
         public void OnSpawn(ref FastBufferReader r)
         {
             r.ReadValueSafe(out ushort id); r.ReadValueSafe(out string kind); r.ReadValueSafe(out Vector3 pos); r.ReadValueSafe(out Quaternion rot);
@@ -63,6 +65,7 @@ namespace MicroduckVR.Net
             PuppetOn(Add(id, rb, kind));
         }
 
+        /// <summary>Joining PC: the host removed a toy.</summary>
         public void OnGone(ref FastBufferReader r)
         {
             r.ReadValueSafe(out ushort id);
@@ -75,6 +78,7 @@ namespace MicroduckVR.Net
             Object.Destroy(p.rb.gameObject);
         }
 
+        /// <summary>Joining PC: the host refused a grab, so the duck drops the toy.</summary>
         public void OnDenied(ref FastBufferReader r)
         {
             r.ReadValueSafe(out ushort id);
@@ -82,6 +86,7 @@ namespace MicroduckVR.Net
             if (pd != null && byId.TryGetValue(id, out var p) && p.g != null && pd.Held == p.g) pd.DropHeld();   // the next frame tells the host it is dropped
         }
 
+        /// <summary>Joining PC: a batch of toy poses and holders.</summary>
         public void OnState(ref FastBufferReader r)
         {
             r.ReadValueSafe(out double t);
@@ -152,6 +157,7 @@ namespace MicroduckVR.Net
         }
 
         // ------------------------------------------------------------------ pushing things on the joining PC
+        /// <summary>Joining PC: asks the host to push a toy my duck walked into.</summary>
         public void QueuePush(Rigidbody rb, Vector3 dir, float want, float dv, Vector3 at)
         {
             if (rb == null || !byBody.TryGetValue(rb, out var p)) return;
@@ -180,6 +186,7 @@ namespace MicroduckVR.Net
             var w = net.Begin(NetMsg.ToyRequest); w.WriteValueSafe(kind ?? ""); w.WriteValueSafe(pos); w.WriteValueSafe(yawDeg); net.Send(w, true);
         }
 
+        /// <summary>Joining PC: asks the host to bin a toy. False when the toy is not shared.</summary>
         public bool RequestTrash(GameObject go)
         {
             if (!TryGetId(go, out ushort id)) return false;

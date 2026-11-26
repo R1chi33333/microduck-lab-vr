@@ -5,10 +5,14 @@ namespace MicroduckVR.Net
     /// <summary>One snapshot of a player's duck, as the other PC sees it.</summary>
     public struct PlayerSample
     {
+        /// <summary>Where the duck is, where it looks and reaches, and its laser.</summary>
         public Vector3 pos, gaze, reachTarget, laserFrom, laserPoint;
+        /// <summary>Heading, velocity, turn rate, jaw, hop, skate lean, stroke and wobble, and the reach weight.</summary>
         public float yaw, vx, vz, yawRate, jaw, hop, lean, stroke, strokeSide, wobble, reachWeight;
+        /// <summary>On skates, reaching, laser on.</summary>
         public bool skating, reach, laser;
 
+        /// <summary>A blend of two snapshots (u = 0 gives a, 1 gives b).</summary>
         public static PlayerSample Lerp(PlayerSample a, PlayerSample b, float u)
         {
             var r = u < 0.5f ? a : b;                     // flags and on/off things from the nearer one

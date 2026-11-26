@@ -23,6 +23,7 @@ namespace MicroduckVR.Net
             var w = s.Begin(NetMsg.Pow); w.WriteValueSafe(word ?? ""); w.WriteValueSafe(at); w.WriteValueSafe(hex ?? ComicColors.Orange); s.Send(w, true);
         }
 
+        /// <summary>A splash in the water: it shows on the other PC too.</summary>
         public static void SendSplash(Vector3 at, float size)
         {
             var s = Instance; if (s == null || !s.PeerReady) return;
@@ -43,12 +44,14 @@ namespace MicroduckVR.Net
             return s.Props.RequestTrash(toy);
         }
 
+        /// <summary>Joining PC: ask the host for one more duck. False when this PC adds it itself.</summary>
         public static bool RequestAddDuck()
         {
             var s = Instance; if (s == null || s.mode != Mode.Joined) return false;
             var w = s.Begin(NetMsg.AddDuckRequest); s.Send(w, true); return true;
         }
 
+        /// <summary>Joining PC: ask the host to take a duck away. False when this PC removes it itself.</summary>
         public static bool RequestRemoveDuck()
         {
             var s = Instance; if (s == null || s.mode != Mode.Joined) return false;

@@ -18,6 +18,7 @@ namespace MicroduckVR.Flock
     [RequireComponent(typeof(DuckSetup))]
     public class DuckBrain : MonoBehaviour, IDuckEventSource
     {
+        /// <summary>Every enabled AI duck.</summary>
         public static readonly List<DuckBrain> All = new List<DuckBrain>();
 
         // ---- a card or board the player is reading: ducks do not stand between it and the player's eyes
@@ -26,25 +27,42 @@ namespace MicroduckVR.Flock
         static void ResetStatics() { All.Clear(); readZone = Vector3.zero; readRadius = 0f; readUntil = 0f; readAlways = false; }
         static readonly EmoteKind[] IdleEmotes = { EmoteKind.Nod, EmoteKind.Look, EmoteKind.Dance, EmoteKind.Shake };
         static readonly EmoteKind[] PauseEmotes = { EmoteKind.Look, EmoteKind.Nod, EmoteKind.Dance };
+
+        // ---- brain numbers (agent.js): Pick's cumulative chances, the state lengths in seconds, spacing and whisker in metres
+        const float PFollow = 0.3f, PRoam = 0.42f, PWander = 0.66f, PToy = 0.8f, PSit = 0.9f;     // the rest is idle
+        const float RoamTime = 40f, ToyTime = 14f, FollowMin = 8f, FollowMax = 16f, WanderMin = 7f, WanderMax = 13f;
+        const float SitMin = 3f, SitMax = 6f, IdleMin = 1.5f, IdleMax = 3.5f;
+        const float SepRadius = 0.19f, SepWeight = 1.6f;                     // keep this far from other ducks and the players
+        const float WhiskerAhead = 0.12f, WhiskerRay = 0.14f, WhiskerStep = 0.03f;   // probe distance, ray length, step or drop
+        const float SteerGain = 4f, SlowTurn = 1.1f;                         // turn rate per radian of error; slow down while turning
         /// <summary>Call every frame while something is being read: keeps the flock out of the way between eyes and panel.
         /// 'always' also during a match or a race (filming).</summary>
         public static void ClearView(Vector3 eye, Vector3 panel, bool always = false)
         {
             readZone = Vector3.Lerp(eye, panel, 0.6f); readRadius = Mathf.Max(0.2f, Vector3.Distance(eye, panel) * 0.55f); readUntil = Time.time + 0.25f; readAlways = always;
         }
+        /// <summary>Seeds the duck's choices.</summary>
         public int seed = 1;
+        /// <summary>The duck's place in the flock (follow slot, race pace, which way it bends round things).</summary>
         public int index;
 
+        /// <summary>What the duck is doing now.</summary>
         public AiState State { get; private set; } = AiState.Idle;
-        public string Context { get; private set; } = "";        // room name, toy label...
-        public event Action<DuckBrain, DuckEventKind, string> OnEvent;  // (duck, kind, context)
+        /// <summary>Detail for the thought bubbles: room name, toy label...</summary>
+        public string Context { get; private set; } = "";
+        /// <summary>Toy and floor events for bubbles and the network: (duck, kind, context).</summary>
+        public event Action<DuckBrain, DuckEventKind, string> OnEvent;
         /// <summary>The same events for the duck's own sounds (IDuckEventSource), raised right after OnEvent.</summary>
         public event Action<DuckEventKind, string> DuckEvent;
         bool IDuckEventSource.IsBrain => true;
         void RaiseEvent(DuckEventKind kind, string context) { OnEvent?.Invoke(this, kind, context); DuckEvent?.Invoke(kind, context); }
+        /// <summary>The duck's body.</summary>
         public DuckBody Body => body;
+        /// <summary>Where the duck stands.</summary>
         public Vector3 Pos => mover != null ? mover.transform.position : transform.position;
+        /// <summary>Measured walking speed (m/s).</summary>
         public float Speed { get; private set; }
+        /// <summary>The surface under the duck.</summary>
         public SurfaceType Surface { get; private set; } = SurfaceType.Wood;
 
         DuckBody body; CharacterController mover;
@@ -74,6 +92,7 @@ namespace MicroduckVR.Flock
         /// the host sends (MicroduckVR.Net.NetFlock poses it). Off again, it carries on with a mind of its own.</summary>
         public bool Puppet { get; private set; }
 
+        /// <summary>Turns the duck into a puppet of the host's brain, or back into a duck with a mind of its own.</summary>
         public void SetPuppet(bool on)
         {
             if (body == null || mover == null) { var s = GetComponent<DuckSetup>(); body = s.Body; mover = s.Mover; }
@@ -119,9 +138,9 @@ namespace MicroduckVR.Flock
             float r = R();
             t = 0f; target = null; route = null; body.SitTarget = false;
             if (held == null) { toy = null; taskPhase = TaskPhase.None; body.ReachState.weight = 0f; body.JawTarget = 0f; }
-            State = force ?? (r < 0.3f ? AiState.Follow : r < 0.42f ? AiState.Roam : r < 0.66f ? AiState.Wander : r < 0.8f ? AiState.Toy : r < 0.9f ? AiState.Sit : AiState.Idle);
+            State = force ?? (r < PFollow ? AiState.Follow : r < PRoam ? AiState.Roam : r < PWander ? AiState.Wander : r < PToy ? AiState.Toy : r < PSit ? AiState.Sit : AiState.Idle);
             if (State == AiState.Follow && PlayerTargets.Count == 0) State = AiState.Wander;
-            dur = State switch { AiState.Roam => 40f, AiState.Follow => R(8f, 16f), AiState.Wander => R(7f, 13f), AiState.Toy => 14f, AiState.Sit => R(3f, 6f), _ => R(1.5f, 3.5f) };
+            dur = State switch { AiState.Roam => RoamTime, AiState.Follow => R(FollowMin, FollowMax), AiState.Wander => R(WanderMin, WanderMax), AiState.Toy => ToyTime, AiState.Sit => R(SitMin, SitMax), _ => R(IdleMin, IdleMax) };
             Context = "";
             if (State == AiState.Idle && R() < 0.5f) body.PlayEmote(IdleEmotes[rng.Next(4)]);
         }
@@ -337,19 +356,19 @@ namespace MicroduckVR.Flock
             if (dist < tol) return (0f, 0f);
             to /= dist;
             Vector3 sep = Vector3.zero;
-            void Push(Vector3 other) { var d = Flat(Pos - other); float L = d.magnitude; if (L < 0.19f && L > 1e-4f) sep += d / L * ((0.19f - L) / 0.19f); }
+            void Push(Vector3 other) { var d = Flat(Pos - other); float L = d.magnitude; if (L < SepRadius && L > 1e-4f) sep += d / L * ((SepRadius - L) / SepRadius); }
             foreach (var o in All) if (o != this) Push(o.Pos);
             for (int i = 0, n = PlayerTargets.Count; i < n; i++) { var pb = PlayerTargets.Get(i); if (pb != null) Push(pb.Pos); }   // the players
-            Vector3 dir = to + sep * 1.6f;
+            Vector3 dir = to + sep * SepWeight;
             // whisker: a step up or a drop ahead, or furniture in the way -> bend around it
             Vector3 pr = dir.normalized;
-            Vector3 probe = Pos + pr * 0.12f;
+            Vector3 probe = Pos + pr * WhiskerAhead;
             float gy = WorldQueries.GroundNear(probe.x, probe.z, Pos.y + 0.06f);
-            bool blocked = Physics.Raycast(Pos + Vector3.up * 0.08f, pr, 0.14f, WorldQueries.WorldMask, QueryTriggerInteraction.Ignore);
-            if (gy > Pos.y + 0.03f || gy < Pos.y - 0.03f || blocked) dir = Quaternion.AngleAxis((index % 2 == 1 ? 0.9f : -0.9f) * Mathf.Rad2Deg, Vector3.up) * dir;
+            bool blocked = Physics.Raycast(Pos + Vector3.up * 0.08f, pr, WhiskerRay, WorldQueries.WorldMask, QueryTriggerInteraction.Ignore);
+            if (gy > Pos.y + WhiskerStep || gy < Pos.y - WhiskerStep || blocked) dir = Quaternion.AngleAxis((index % 2 == 1 ? 0.9f : -0.9f) * Mathf.Rad2Deg, Vector3.up) * dir;
             float desired = Mathf.Atan2(dir.x, dir.z), err = Wrap(desired - yaw);
-            float w = Mathf.Clamp(err * 4f, -Gait.MaxYawRate, Gait.MaxYawRate);
-            float v = speed * Mathf.Clamp01(1f - Mathf.Abs(err) / 1.1f) * Mathf.Clamp(dist / 0.1f, 0.3f, 1f);
+            float w = Mathf.Clamp(err * SteerGain, -Gait.MaxYawRate, Gait.MaxYawRate);
+            float v = speed * Mathf.Clamp01(1f - Mathf.Abs(err) / SlowTurn) * Mathf.Clamp(dist / 0.1f, 0.3f, 1f);
             return (v, w);
         }
 

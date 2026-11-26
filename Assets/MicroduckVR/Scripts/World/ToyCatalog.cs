@@ -13,18 +13,27 @@ namespace MicroduckVR.World
     /// </summary>
     public static partial class ToyCatalog
     {
+        /// <summary>One toy in the catalogue.</summary>
         public class Entry
         {
+            /// <summary>Id, bag label and main colour for the bag tile.</summary>
             public string kind, label, icon;          // icon: main colour for the bag tile
+            /// <summary>Whether a duck can carry it; ball: sphere collider, rolls.</summary>
             public bool graspable = true, ball;       // ball: sphere collider, rolls
+            /// <summary>Beak opening needed (m), mass (kg) and bounciness.</summary>
             public float grip = 0.02f, mass = 0.005f, bounce = 0.1f;
+            /// <summary>How many of this toy the bag lets you put out.</summary>
             public int cap = 6;
+            /// <summary>Builds the comic model under the given root.</summary>
             public Action<Transform> build;
         }
 
+        /// <summary>Every toy, in bag order.</summary>
         public static readonly List<Entry> Entries = new List<Entry>();
         static readonly Dictionary<string, Entry> byKind = new Dictionary<string, Entry>();
+        /// <summary>The entry for a toy kind, or null.</summary>
         public static Entry Get(string kind) { Init(); return byKind.TryGetValue(kind, out var e) ? e : null; }
+        /// <summary>Every toy, in bag order (fills the catalogue on first use).</summary>
         public static IReadOnlyList<Entry> All { get { Init(); return Entries; } }
 
         const string Ink = ComicColors.Ink;

@@ -12,9 +12,12 @@ namespace MicroduckVR.World
     /// </summary>
     public static class HouseLayout
     {
+        /// <summary>A room: its id, its floor rectangle (x = X, y = Z) and whether it is outdoors.</summary>
         public struct Room { public string id; public Rect rect; public bool outdoor; }   // rect: x = X, y = Z
+        /// <summary>A doorway between rooms a and b.</summary>
         public struct Door { public string id; public Vector3 centre; public bool alongX; public string a, b; }
 
+        /// <summary>The rooms of the house.</summary>
         public static readonly Room[] Rooms =
         {
             new Room { id = RoomIds.Living,  rect = Rect.MinMaxRect(-3f, -2.5f, 3f, 2.5f) },
@@ -25,6 +28,7 @@ namespace MicroduckVR.World
         };
 
         // alongX: the wall runs along X, so you cross it in Z
+        /// <summary>The doorways the flock walks through.</summary>
         public static readonly Door[] Doors =
         {
             new Door { id = "living_hall",    centre = new Vector3(0f, 0f, 2.56f),    alongX = true,  a = RoomIds.Living,  b = RoomIds.Hallway },
@@ -35,6 +39,7 @@ namespace MicroduckVR.World
             new Door { id = "patio",          centre = new Vector3(0f, 0f, 3.88f),    alongX = true,  a = RoomIds.Hallway, b = RoomIds.Garden },
         };
 
+        /// <summary>Spawn and roam points per room.</summary>
         public static readonly Dictionary<string, Vector3[]> Spawns = new Dictionary<string, Vector3[]>
         {
             { RoomIds.Living,  new[] { new Vector3(0.9f, 0f, 0.6f), new Vector3(1.6f, 0f, -1.4f), new Vector3(-0.4f, 0f, 1.8f), new Vector3(0.3f, 0f, -1.6f) } },
@@ -44,15 +49,18 @@ namespace MicroduckVR.World
             { RoomIds.Garden,  new[] { new Vector3(0.6f, 0f, 5.2f), new Vector3(-0.8f, 0f, 6.4f), new Vector3(2.2f, 0f, 6.6f), new Vector3(2.4f, 0f, 4.6f) } },
         };
 
+        /// <summary>The room names shown in thought bubbles.</summary>
         public static readonly Dictionary<string, string> RoomName = new Dictionary<string, string>
         { { RoomIds.Living, "living room" }, { RoomIds.Kitchen, "kitchen" }, { RoomIds.Bedroom, "bedroom" }, { RoomIds.Hallway, "hallway" }, { RoomIds.Garden, "garden" } };
 
+        /// <summary>The id of the room a point is in, or null outside every room.</summary>
         public static string RoomAt(Vector3 p)
         {
             foreach (var r in Rooms) if (r.rect.Contains(new Vector2(p.x, p.z))) return r.id;
             return null;
         }
 
+        /// <summary>The centre of a room on the floor.</summary>
         public static Vector3 Centre(string room)
         {
             foreach (var r in Rooms) if (r.id == room) return new Vector3(r.rect.center.x, 0f, r.rect.center.y);

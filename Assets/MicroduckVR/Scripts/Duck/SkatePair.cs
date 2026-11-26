@@ -12,13 +12,17 @@ namespace MicroduckVR.Duck
     /// </summary>
     public class SkatePair
     {
+        /// <summary>Deck length, width and thickness, wheel radius and width (m).</summary>
         public const float L = 0.056f, Wd = 0.034f, T = 0.006f, Wr = 0.0075f, Ww = 0.007f;
+        /// <summary>Deck top to floor: how much the duck rises on skates.</summary>
         public const float Height = T + 0.004f + Wr * 0.6f + Wr;
 
+        /// <summary>The left and right skate.</summary>
         public readonly Transform Left, Right;
         readonly List<(Transform t, Quaternion r)> wheels = new List<(Transform, Quaternion)>();
         float roll;
 
+        /// <summary>Builds both skates in these colours, hidden until attached.</summary>
         public SkatePair(string deck = "#E6513D", string wheel = "#F5E6B8")
         {
             Left = One("Skate left", deck, wheel); Right = One("Skate right", deck, wheel);
@@ -62,6 +66,7 @@ namespace MicroduckVR.Duck
             }
         }
 
+        /// <summary>Takes the skates off and hides them.</summary>
         public void Detach()
         {
             foreach (var sk in new[] { Left, Right }) { sk.SetParent(null, false); sk.gameObject.SetActive(false); }
@@ -74,6 +79,7 @@ namespace MicroduckVR.Duck
             foreach (var (t, r) in wheels) t.localRotation = Quaternion.AngleAxis(roll, Vector3.right) * r;
         }
 
+        /// <summary>Puts both skates on a layer.</summary>
         public void SetLayer(int layer)
         {
             foreach (var sk in new[] { Left, Right }) foreach (var t in sk.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = layer;

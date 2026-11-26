@@ -5,10 +5,14 @@ namespace MicroduckVR.Net
     /// <summary>One snapshot of an AI duck.</summary>
     public struct DuckSample
     {
+        /// <summary>Where the duck is, and where its head and beak aim.</summary>
         public Vector3 pos, lookTarget, reachTarget;
+        /// <summary>Heading, velocity, turn rate, jaw, hop, happy wiggle and the look and reach weights.</summary>
         public float yaw, vx, vz, yawRate, jaw, hop, happy, lookWeight, reachWeight;
+        /// <summary>Sitting, crouching, looking at something, reaching for something.</summary>
         public bool sit, crouch, look, reach;
 
+        /// <summary>A blend of two snapshots (u = 0 gives a, 1 gives b).</summary>
         public static DuckSample Lerp(DuckSample a, DuckSample b, float u)
         {
             var r = u < 0.5f ? a : b;

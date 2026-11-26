@@ -8,10 +8,12 @@ namespace MicroduckVR.Net
     /// <summary>The joining PC's ear for beacons.</summary>
     public sealed class LanListener : IDisposable
     {
+        /// <summary>A host heard on the network.</summary>
         public struct Found { public string address, version, name; public ushort port; }
 
         readonly UdpClient udp;
 
+        /// <summary>Starts listening for beacons on the discovery port.</summary>
         public LanListener(int discoveryPort)
         {
             udp = new UdpClient();
@@ -42,6 +44,7 @@ namespace MicroduckVR.Net
             return false;
         }
 
+        /// <summary>Closes the socket.</summary>
         public void Dispose() { try { udp.Close(); } catch (Exception) { } }
     }
 }

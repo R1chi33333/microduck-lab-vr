@@ -6,6 +6,7 @@ namespace MicroduckVR.Flock
     /// <summary>The state names as the web version and the logs write them.</summary>
     public static class AiStates
     {
+        /// <summary>The state's name ("idle", "follow", ...).</summary>
         public static string Name(AiState state)
         {
             switch (state)

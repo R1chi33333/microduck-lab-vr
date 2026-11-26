@@ -5,6 +5,7 @@ namespace MicroduckVR.Duck
     public partial class DuckBody
     {
         // ------------------------------------------------------------------ leg IK
+        /// <summary>Leg IK: poses a leg so its sole reaches the target with the given foot yaw and pitch.</summary>
         public void SolveLeg(Leg leg, Vector3 target, float footYaw, float footPitch = 0f)
         {
             Vector3 fdesired = new Vector3(Mathf.Sin(footYaw) * Mathf.Cos(footPitch), -Mathf.Sin(footPitch), Mathf.Cos(footYaw) * Mathf.Cos(footPitch));

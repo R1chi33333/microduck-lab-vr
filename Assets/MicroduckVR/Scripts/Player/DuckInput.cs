@@ -9,8 +9,10 @@ namespace MicroduckVR.Player
     /// </summary>
     public class DuckInput
     {
+        /// <summary>The player's actions: walk, turn, beak, chirp, skates, bag, emote, view and recentre.</summary>
         public readonly InputAction Move, Turn, Beak, Chirp, Skates, Menu, Emote, View, Recenter;
 
+        /// <summary>Makes the actions with their controller and keyboard bindings.</summary>
         public DuckInput()
         {
             Move = new InputAction("Move", InputActionType.Value, expectedControlType: "Vector2");
@@ -50,7 +52,9 @@ namespace MicroduckVR.Player
             Menu.AddBinding(InputPaths.KeyTab);
         }
 
+        /// <summary>Turns every action on.</summary>
         public void Enable() { foreach (var a in All) a.Enable(); }
+        /// <summary>Turns every action off.</summary>
         public void Disable() { foreach (var a in All) a.Disable(); }
         InputAction[] All => new[] { Move, Turn, Beak, Chirp, Skates, Menu, Emote, View, Recenter };
     }

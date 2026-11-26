@@ -6,6 +6,7 @@ namespace MicroduckVR.Duck
     public partial class DuckBody
     {
         // ------------------------------------------------------------------ falls
+        /// <summary>Tips the duck over towards a world direction (ignored while it is already down).</summary>
         public void StartTip(Vector3 dirWorld)
         {
             if (FallState != null) return;
@@ -17,6 +18,7 @@ namespace MicroduckVR.Duck
             OnFall?.Invoke(dirWorld);
         }
 
+        /// <summary>Throws the duck into a tumble towards a world direction.</summary>
         public void StartTumble(Vector3 dirWorld)
         {
             Vector3 d = Quaternion.Inverse(YawRot(Yaw)) * new Vector3(dirWorld.x, 0f, dirWorld.z).normalized;
@@ -25,6 +27,7 @@ namespace MicroduckVR.Duck
             Stepping = false;
         }
 
+        /// <summary>A tumbling duck has hit the floor: it lies, then gets up.</summary>
         public void LandTumble()
         {
             var f = FallState; if (f == null) return;

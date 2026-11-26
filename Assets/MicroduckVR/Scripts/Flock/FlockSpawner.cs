@@ -12,6 +12,7 @@ namespace MicroduckVR.Flock
     /// <summary>Adds ducks to the flock while you play (ADD DUCK in the toy bag) and sends the newest one home again.</summary>
     public static class FlockSpawner
     {
+        /// <summary>Most and fewest AI ducks in the house.</summary>
         public const int Max = 12, Min = 1;
         static readonly string[] Skins = { SkinIds.Cream, SkinIds.Lavender, SkinIds.Sky, SkinIds.Graphite };
         static readonly List<GameObject> added = new List<GameObject>();
@@ -19,6 +20,7 @@ namespace MicroduckVR.Flock
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { added.Clear(); serial = 0; }
 
+        /// <summary>A new duck in front of the player's duck; null when the house is full or there is no player.</summary>
         public static DuckBrain Add()
         {
             var pd = PlayerDuck.Instance; if (pd == null) return null;
@@ -67,6 +69,7 @@ namespace MicroduckVR.Flock
             return brain;
         }
 
+        /// <summary>Sends the newest added duck home (or the last duck of the flock); one duck always stays.</summary>
         public static void Remove()
         {
             added.RemoveAll(g => g == null);

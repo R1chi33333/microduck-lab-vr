@@ -33,12 +33,15 @@ namespace MicroduckVR.Net
         const string Channel = "microduck";
         const float PlayerRate = 1f / 30f, WorldRate = 1f / 20f, PeerTimeout = 6f, ConnectTimeout = 10f;
 
+        /// <summary>The session object, once the game has started.</summary>
         public static NetSession Instance { get; private set; }
+        /// <summary>Where the session is.</summary>
         public static Mode State => Instance != null ? Instance.mode : Mode.Off;
         /// <summary>Hosting, or joined to a host: the games (football, race) and duck swapping wait for phase 2.</summary>
         public static bool InSession => State == Mode.Hosting || State == Mode.Joined;
         /// <summary>This PC joined a host: the host decides about the flock and the toys.</summary>
         public static bool Joined => State == Mode.Joined;
+        /// <summary>This PC is hosting.</summary>
         public static bool IsHost => State == Mode.Hosting;
         /// <summary>The line on the toy bag.</summary>
         public static string Status => Instance != null ? Instance.StatusText() : "";
@@ -72,8 +75,11 @@ namespace MicroduckVR.Net
         void OnDestroy() { if (Instance == this) { tearingDown = true; EndSession(""); Instance = null; } }      // quitting / leaving the scene
 
         // ================================================================== public controls (toy bag, keys)
+        /// <summary>HOST: start hosting, or stop the session.</summary>
         public static void HostOrStop() { if (Instance == null) return; if (Instance.mode == Mode.Hosting) Instance.Leave(); else if (Instance.mode == Mode.Off) Instance.StartHosting(); }
+        /// <summary>JOIN: look for a host, or leave the session.</summary>
         public static void JoinOrLeave() { if (Instance == null) return; if (Instance.mode == Mode.Off) Instance.StartJoining(); else if (Instance.mode != Mode.Hosting && Instance.mode != Mode.Leaving) Instance.Leave(); }
+        /// <summary>Leaves whatever session is on.</summary>
         public static void LeaveSession() { if (Instance != null && Instance.mode != Mode.Off && Instance.mode != Mode.Leaving) Instance.Leave(); }
 
         string StatusText()

@@ -12,6 +12,7 @@ namespace MicroduckVR.Net
     public partial class NetProps
     {
         // ================================================================== hosting PC
+        /// <summary>Hosting PC: gives every prop an id and sends the map.</summary>
         public void HostBegin()
         {
             HostEnd();
@@ -38,6 +39,7 @@ namespace MicroduckVR.Net
             fullSends = 3;                                  // everything's pose, a few times, so the joining PC starts in step
         }
 
+        /// <summary>Hosting PC: forgets the props.</summary>
         public void HostEnd() { byId.Clear(); byBody.Clear(); pushes.Clear(); }
 
         void SendSpawn(Prop p)
@@ -60,6 +62,7 @@ namespace MicroduckVR.Net
             return HeldOther;
         }
 
+        /// <summary>Hosting PC: sends new, removed and moving toys.</summary>
         public void HostTick()
         {
             float now = Time.unscaledTime;
@@ -133,6 +136,7 @@ namespace MicroduckVR.Net
             else { t.position = body.BeakGap(); t.rotation = Quaternion.LookRotation(body.HeadDir(), Vector3.up); }
         }
 
+        /// <summary>Hosting PC: the joining player bit a toy.</summary>
         public void OnGrab(ref FastBufferReader r)
         {
             r.ReadValueSafe(out ushort id);
@@ -141,6 +145,7 @@ namespace MicroduckVR.Net
             var w = net.Begin(NetMsg.GrabDenied); w.WriteValueSafe(id); net.Send(w, true);   // someone got there first
         }
 
+        /// <summary>Hosting PC: the joining player let go of a toy.</summary>
         public void OnDrop(ref FastBufferReader r)
         {
             r.ReadValueSafe(out ushort id); r.ReadValueSafe(out Vector3 pos); r.ReadValueSafe(out Quaternion rot); r.ReadValueSafe(out Vector3 vel);
@@ -157,6 +162,7 @@ namespace MicroduckVR.Net
             foreach (var p in byId.Values) if (p.g != null && p.rb != null && rp != null && p.g.Holder == (Object)rp) p.g.Release(Vector3.zero);
         }
 
+        /// <summary>Hosting PC: the joining player walked into some toys.</summary>
         public void OnPush(ref FastBufferReader r)
         {
             r.ReadValueSafe(out byte n);
@@ -172,6 +178,7 @@ namespace MicroduckVR.Net
             }
         }
 
+        /// <summary>Hosting PC: the joining player wants a toy from the bag.</summary>
         public void OnToyRequest(ref FastBufferReader r)
         {
             r.ReadValueSafe(out string kind); r.ReadValueSafe(out Vector3 pos); r.ReadValueSafe(out float yaw);
@@ -181,6 +188,7 @@ namespace MicroduckVR.Net
             if (rb != null && !byBody.ContainsKey(rb)) SendSpawn(Add(nextId++, rb, kind));
         }
 
+        /// <summary>Hosting PC: the joining player binned a toy.</summary>
         public void OnTrashRequest(ref FastBufferReader r)
         {
             r.ReadValueSafe(out ushort id);

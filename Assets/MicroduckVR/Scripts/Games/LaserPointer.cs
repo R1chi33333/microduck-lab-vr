@@ -13,11 +13,16 @@ namespace MicroduckVR.Games
     /// </summary>
     public class LaserPointer : MonoBehaviour
     {
+        /// <summary>The player's camera.</summary>
         public Camera cam;
+        /// <summary>The right controller.</summary>
         public Transform rightHand;
+        /// <summary>The dot is showing.</summary>
         public static bool Active { get; private set; }
+        /// <summary>Where the dot is.</summary>
         public static Vector3 Point { get; private set; }
-        public static Vector3? DebugPoint;                 // editor tests
+        /// <summary>Editor tests: a dot here instead of the controller's.</summary>
+        public static Vector3? DebugPoint;
 
         InputAction holdA;
         ComicBeam beam;

@@ -12,8 +12,11 @@ namespace MicroduckVR.Audio
     [RequireComponent(typeof(DuckSetup))]
     public class DuckAudio : MonoBehaviour
     {
+        /// <summary>Seeds this duck's voice and footstep variation.</summary>
         public int seed = 1;
+        /// <summary>Loudness of the chirps (footsteps play at a share of it).</summary>
         public float volume = 0.6f;
+        /// <summary>The duck chirps now and then on its own (AI ducks only).</summary>
         public bool idleChirps = true;
 
         AudioSource voice, steps;
@@ -89,7 +92,9 @@ namespace MicroduckVR.Audio
             steps.PlayOneShot(clip, volume * 0.45f);
         }
 
+        /// <summary>One of the duck's chirps.</summary>
         public void Chirp() => voice.PlayOneShot(chirps[rng.Next(chirps.Length)], volume);
+        /// <summary>The duck's hello call.</summary>
         public void Hello() => voice.PlayOneShot(hello, volume);
 
         void Update()

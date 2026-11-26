@@ -48,9 +48,28 @@ build is needed for day-to-day testing. Make a Windows build (`Builds/`) only at
 
 - Unity project lives at the repo root (`Assets/`, `Packages/`, `ProjectSettings/`).
   `Reference/` and `docs/` sit outside `Assets/` so Unity does not import them.
-- Code goes in `Assets/MicroduckVR/Scripts/<Area>/`, one namespace per area
-  (`MicroduckVR.Duck`, `MicroduckVR.Flock`, `MicroduckVR.World`, `MicroduckVR.Comic`, ...).
-  Add an assembly definition per area once there are a few files.
+- Code goes in `Assets/MicroduckVR/Scripts/<Area>/`, one namespace per area, named after the top
+  folder (`MicroduckVR.Duck`, `MicroduckVR.Flock`, `MicroduckVR.World`, `MicroduckVR.Comic`, ...).
+  Editor code is in `Assets/MicroduckVR/Editor/<Builders|Assets|Film|Checks|Setup|Tooling>/`, namespace
+  `MicroduckVR.EditorTools`.
+- Assemblies, bottom to top (each may use only the ones above it):
+
+  | Assembly | Folders | Uses |
+  |---|---|---|
+  | `MicroduckVR.Core` | Scripts/Core | nothing |
+  | `MicroduckVR.World.Shared` | Scripts/World/Shared | nothing (ships in the export package) |
+  | `MicroduckVR.Comic` | Scripts/Comic | Core, World.Shared |
+  | `MicroduckVR.Duck` | Scripts/Duck | Core, World.Shared, Comic |
+  | `MicroduckVR.World` | Scripts/World | Core, World.Shared, Comic, Duck |
+  | `MicroduckVR.Audio` | Scripts/Audio | Core, World.Shared, Comic, Duck |
+  | `MicroduckVR.Gameplay` | Scripts/Player (+ `.asmref` in Flock, Games, Custom) | all of the above |
+  | `MicroduckVR.Net` | Scripts/Net | all of the above |
+  | `MicroduckVR.Dev` | Scripts/Dev | Core, World.Shared, Comic, Duck |
+  | `MicroduckVR.Editor` | Editor (all subfolders, Editor only) | everything |
+
+- Adding a type: put it in the folder whose job it is. If it needs a type from a higher assembly, do not
+  add an upward reference: move the shared piece down (to Core or Duck) or use the resolver pattern
+  (`Coop`, `LocalPlayer`, `ComicPop.FontProvider`). See `docs/CODE_STYLE.md`.
 - Shaders: HLSL in `Assets/MicroduckVR/Shaders/`, URP-compatible, XR-safe
   (`TEXTURE2D_X`, `SAMPLE_TEXTURE2D_X`, `UNITY_VERTEX_INPUT_INSTANCE_ID`,
   `UNITY_VERTEX_OUTPUT_STEREO`, `UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX`).

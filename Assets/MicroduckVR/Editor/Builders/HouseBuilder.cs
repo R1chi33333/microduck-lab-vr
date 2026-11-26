@@ -20,7 +20,7 @@ namespace MicroduckVR.EditorTools
     {
         const string MatDir = "Assets/MicroduckVR/Materials/House";
         const string MeshDir = "Assets/MicroduckVR/Meshes/House";
-        const float WH = 2.5f, WT = 0.12f, DOOR_H = 2.0f, T_H = 0.75f;
+        const float WH = 2.5f, WT = 0.12f, DoorH = 2.0f, TableH = 0.75f;
 
         static Transform root;
         static readonly Dictionary<string, Transform> rooms = new Dictionary<string, Transform>();

@@ -6,6 +6,7 @@ namespace MicroduckVR.Duck
     public partial class DuckBody
     {
         // ------------------------------------------------------------------ head
+        /// <summary>Where the duck's eyes are (the camera marker, else the head).</summary>
         public Vector3 EyePosition => MarkerCam != null ? MarkerCam.position : HeadNode.position;
 
         void Head(float dt, float walkSpeed)
@@ -47,8 +48,11 @@ namespace MicroduckVR.Duck
             }
         }
 
+        /// <summary>The point between the two beak halves, where a held toy sits.</summary>
         public Vector3 BeakGap() => MarkerUpper != null && MarkerLower != null ? (MarkerUpper.position + MarkerLower.position) * 0.5f : HeadNode.position;
+        /// <summary>How far the beak is open (m).</summary>
         public float BeakOpening() => MarkerUpper != null && MarkerLower != null ? Vector3.Distance(MarkerUpper.position, MarkerLower.position) : 0f;
+        /// <summary>The direction the head faces.</summary>
         public Vector3 HeadDir() => (HeadNode.rotation * headF).normalized;
 
         void ReachCCD()

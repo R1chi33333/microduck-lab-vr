@@ -9,12 +9,18 @@ namespace MicroduckVR.Duck
     [RequireComponent(typeof(DuckBody))]
     public class DuckSetup : MonoBehaviour
     {
+        /// <summary>The imported duck rig (Models/microduck_rig.glb).</summary>
         public GameObject rigPrefab;
+        /// <summary>The rig's hinge data.</summary>
         public DuckJointMap jointMap;
-        public string skin = SkinIds.Cream;             // cream | graphite | lavender | sky
-        public bool hideHeadFromPlayer;            // the player's own duck: everything but the legs goes to the PlayerHead layer
+        /// <summary>Colourway: cream, graphite, lavender or sky (SkinIds).</summary>
+        public string skin = SkinIds.Cream;
+        /// <summary>The player's own duck: everything but the legs goes to the PlayerHead layer.</summary>
+        public bool hideHeadFromPlayer;
 
+        /// <summary>The duck's body, made in Awake.</summary>
         public DuckBody Body { get; private set; }
+        /// <summary>The capsule that moves the duck.</summary>
         public CharacterController Mover { get; private set; }
 
         void Awake()

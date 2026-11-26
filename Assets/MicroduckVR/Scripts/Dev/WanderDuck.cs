@@ -4,22 +4,26 @@ using MicroduckVR.Duck;
 using MicroduckVR.World;
 using UnityEngine;
 
-namespace MicroduckVR.Flock
+namespace MicroduckVR.Dev
 {
     /// <summary>
-    /// Placeholder AI for M1: wander to random spots inside a box, pause, sometimes emote, keep apart
-    /// from other ducks. Replaced by the full brain (port of agent.js) in M4.
+    /// Simple standalone wander AI used by the M1 test scene and the exported `Duck (live)` prefab: wander to random
+    /// spots inside a box, pause, sometimes emote, keep apart from other ducks. The game's flock uses DuckBrain.
     /// </summary>
     [DefaultExecutionOrder(10)]
     [RequireComponent(typeof(DuckSetup))]
     public class WanderDuck : MonoBehaviour
     {
+        /// <summary>Every enabled wander duck (for keeping them apart).</summary>
         public static readonly List<WanderDuck> All = new List<WanderDuck>();
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { All.Clear(); }
         static readonly EmoteKind[] Emotes = { EmoteKind.Look, EmoteKind.Nod, EmoteKind.Dance, EmoteKind.Shake };
+        /// <summary>The box (x, z) the duck wanders inside.</summary>
         public Vector2 boundsMin = new Vector2(-2.6f, -2.1f), boundsMax = new Vector2(2.6f, 2.1f);
+        /// <summary>Walking speed (m/s).</summary>
         public float speed = 0.1f;
+        /// <summary>Seeds the duck's choices.</summary>
         public int seed = 1;
 
         DuckBody body; CharacterController mover;

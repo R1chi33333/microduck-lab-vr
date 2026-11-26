@@ -15,6 +15,7 @@ namespace MicroduckVR.Net
         List<IPEndPoint> targets;
         float next, refresh;
 
+        /// <summary>Starts the beacon: it announces the game port and host name on the discovery port.</summary>
         public LanBeacon(int discoveryPort, int gamePort, string hostName)
         {
             port = discoveryPort;
@@ -23,6 +24,7 @@ namespace MicroduckVR.Net
             udp.EnableBroadcast = true;
         }
 
+        /// <summary>Sends the beacon when it is due (about once a second).</summary>
         public void Tick(float now)
         {
             if (now < next) return;
@@ -42,6 +44,7 @@ namespace MicroduckVR.Net
             }
         }
 
+        /// <summary>Closes the socket.</summary>
         public void Dispose() { try { udp.Close(); } catch (Exception) { } }
     }
 }

@@ -7,6 +7,7 @@ namespace MicroduckVR.Dev
     [DefaultExecutionOrder(32000)]
     public class FilmRig : MonoBehaviour
     {
+        /// <summary>Called once per frame, after every other LateUpdate.</summary>
         public Action OnFrame;
         void LateUpdate() { OnFrame?.Invoke(); }
     }

@@ -20,22 +20,36 @@ namespace MicroduckVR.Player
     /// </summary>
     public class PlayerSkates : MonoBehaviour
     {
-        // web SKATE constants (duck-scale metres and seconds)
-        const float Accel = 0.42f, MaxSpeed = 0.42f, Friction = 0.32f, Brake = 0.9f, Grip = 2.4f, Turn = 2.0f, StrokeHz = 1.25f;
-        const float BoostMult = 1.5f, BoostTime = 1.2f, BoostCooldown = 2.0f, BoostKick = 0.22f, BoostAccel = 1.1f;
-        const float DriftGrip = 0.45f, DriftTurnMult = 1.7f, DriftFlick = 0.22f, DriftMinSpeed = 0.1f, SlingAfter = 0.6f, SlingKick = 0.16f, SlingTime = 0.5f;
-        const float CrashSpeed = 0.5f;
+        // web SKATE constants (duck-scale metres and seconds), read from the tuning; its defaults are the web numbers
+        /// <summary>Optional feel settings. Left empty, Init looks for Resources/SkateTuning, then uses SkateTuning.Defaults.</summary>
+        public SkateTuning tuning;
+        SkateTuning Tuning => tuning != null ? tuning : SkateTuning.Defaults;
+        float Accel => Tuning.accel; float MaxSpeed => Tuning.maxSpeed; float Friction => Tuning.friction; float Brake => Tuning.brake;
+        float Grip => Tuning.grip; float Turn => Tuning.turn; float StrokeHz => Tuning.strokeHz;
+        float BoostMult => Tuning.boostMult; float BoostTime => Tuning.boostTime; float BoostCooldown => Tuning.boostCooldown;
+        float BoostKick => Tuning.boostKick; float BoostAccel => Tuning.boostAccel;
+        float DriftGrip => Tuning.driftGrip; float DriftTurnMult => Tuning.driftTurnMult; float DriftFlick => Tuning.driftFlick;
+        float DriftMinSpeed => Tuning.driftMinSpeed; float SlingAfter => Tuning.slingAfter; float SlingKick => Tuning.slingKick;
+        float SlingTime => Tuning.slingTime;
+        float CrashSpeed => Tuning.crashSpeed;
 
         [Range(0.5f, 1f)] public float comfortScale = 0.85f;      // caps top speed and boost in VR
 
+        /// <summary>The skates are on.</summary>
         public bool On { get; private set; }
-        public static float? DebugDrift, DebugBoost;          // editor tests
+        /// <summary>Editor tests: the drift and boost inputs.</summary>
+        public static float? DebugDrift, DebugBoost;
         float DriftIn => DebugDrift ?? driftA.ReadValue<float>();
         float BoostIn => DebugBoost ?? boostA.ReadValue<float>();
+        /// <summary>Speed on the floor (m/s).</summary>
         public float Speed => sv.magnitude;
+        /// <summary>Top speed after the comfort cap.</summary>
         public float TopSpeed => MaxSpeed * comfortScale;
+        /// <summary>The drift button is held while turning.</summary>
         public bool Drifting => drifting;
+        /// <summary>A boost or slingshot is running.</summary>
         public bool Boosting => boostT > 0f;
+        /// <summary>Skating velocity.</summary>
         public Vector3 Velocity => sv;
 
         DuckBody body;
@@ -52,9 +66,11 @@ namespace MicroduckVR.Player
         readonly Vector3?[] lastSkid = new Vector3?[2];
         AudioSource rollSrc, sfxSrc; AudioClip boostClip, pushClip, clackClip;
 
+        /// <summary>Sets the skates up for a body: the pair, the drift and boost inputs and the sounds.</summary>
         public void Init(DuckBody b)
         {
             body = b;
+            if (tuning == null) tuning = Resources.Load<SkateTuning>(SkateTuning.ResourceName);
             pair = new SkatePair();
             driftA = new InputAction("Drift", InputActionType.Value, expectedControlType: "Axis");
             driftA.AddBinding(InputPaths.LeftGrip); driftA.AddBinding(InputPaths.KeyLeftShift);
@@ -71,6 +87,7 @@ namespace MicroduckVR.Player
         void OnDestroy() { driftA?.Disable(); boostA?.Disable(); }
 
         // ------------------------------------------------------------------ equip
+        /// <summary>Puts the skates on or takes them off (not while fallen); going on keeps the walking velocity.</summary>
         public void Toggle(float yaw, Vector3 walkVel)
         {
             if (body.Fallen) return;

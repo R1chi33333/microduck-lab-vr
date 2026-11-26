@@ -13,30 +13,42 @@ namespace MicroduckVR.Games
     /// </summary>
     public class FootballGame : MonoBehaviour
     {
+        /// <summary>The football game, once made.</summary>
         public static FootballGame Instance { get; private set; }
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { Instance = null; }
+        /// <summary>A match is on.</summary>
         public static bool Active => Instance != null && Instance.active;
 
         // pitch (Unity space): centre, half length along z, goal mouth
+        /// <summary>Centre spot of the rug pitch (Unity space).</summary>
         public static readonly Vector3 Centre = new Vector3(1.93f, 0f, 0.73f);
+        /// <summary>Half the pitch length along z, and the goal mouth size (m).</summary>
         public const float Half = 1.245f, GoalWidth = 0.34f, GoalHeight = 0.16f, GoalDepth = 0.12f;
 
         bool active; float cool; Rigidbody ball;
+        /// <summary>The match ball.</summary>
         public Rigidbody Ball => ball;
+        /// <summary>Goals per team.</summary>
         public readonly int[] Score = new int[2];
+        /// <summary>Each AI duck's team (0 = yours, 1 = blue).</summary>
         public readonly Dictionary<DuckBrain, int> Team = new Dictionary<DuckBrain, int>();
+        /// <summary>The player's team.</summary>
         public int PlayerTeam => 0;
 
+        /// <summary>The football game, made on first use.</summary>
         public static FootballGame Ensure()
         {
             if (Instance == null) Instance = new GameObject("Football game").AddComponent<FootballGame>();
             return Instance;
         }
 
+        /// <summary>Centre of a team's goal mouth on the floor.</summary>
         public Vector3 GoalCentre(int team) => Centre + new Vector3(0f, 0f, team == 0 ? -Half : Half);
+        /// <summary>Where the ball is (the centre spot when there is none).</summary>
         public Vector3 BallPos => ball != null ? ball.position : Centre;
 
+        /// <summary>Kicks off a match (stops a race first).</summary>
         public void StartGame()
         {
             if (RaceGame.Active) RaceGame.Instance.StopRace();
@@ -59,6 +71,7 @@ namespace MicroduckVR.Games
             GameHud.Get().Big("KICK OFF!", "#FF9F0A", 1.2f); Caption();
         }
 
+        /// <summary>Ends the match and clears the HUD.</summary>
         public void StopGame() { active = false; GameHud.Get().Clear(); }
 
         void Caption() => GameHud.Get().Caption($"ORANGE {Score[0]}  :  {Score[1]} BLUE");
@@ -78,6 +91,7 @@ namespace MicroduckVR.Games
             return closer < 2;
         }
 
+        /// <summary>Where a duck that is not chasing stands.</summary>
         public Vector3 HomeSpot(DuckBrain d)
         {
             int team = Team.TryGetValue(d, out var t) ? t : 0;
