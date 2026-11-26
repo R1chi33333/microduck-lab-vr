@@ -24,6 +24,9 @@ The browser version is [here](https://r1chi33333.github.io/microduck-lab-preview
 
 ## Playing
 
+To install the game on another PC (no Unity needed), follow [docs/INSTALL.md](docs/INSTALL.md)
+([中文](docs/INSTALL.zh-CN.md)).
+
 1. Connect the Quest Pro with Quest Link and set Meta Horizon Link as the active OpenXR runtime.
 2. Run `Builds/Windows/MicroduckLabVR.exe` (make it with **Microduck > Build Windows**), or open the project
    in Unity 6000.6.7f1 and press Play in `Assets/MicroduckVR/Scenes/House.unity`.
@@ -35,7 +38,7 @@ The browser version is [here](https://r1chi33333.github.io/microduck-lab-preview
 | Right trigger | Open the beak; let go next to a toy to grab it, squeeze again to drop |
 | A | Chirp |
 | B | Roller skates on / off (left grip: drift, left trigger: boost) |
-| X | Dance |
+| X | Dance (at the mirror: bring out the board to make your duck) |
 | Y | Toy bag: toys, bin, help, credits, football, race, swap duck, view, emotes |
 | Right grip | Laser dot for the ducks to chase |
 | Left stick click | First / third person |
