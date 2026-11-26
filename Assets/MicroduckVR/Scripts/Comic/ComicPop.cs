@@ -141,7 +141,7 @@ namespace MicroduckVR.Comic
             if (scanT <= 0f)
             {
                 scanT = 1.5f; props.Clear(); speeds.Clear();
-                foreach (var rb in FindObjectsByType<Rigidbody>(FindObjectsSortMode.None))
+                foreach (var rb in FindObjectsByType<Rigidbody>())
                     if (rb.gameObject.layer == DuckSetup.LayerProp && !rb.isKinematic && ((rb.position - pd.Body.Pos).sqrMagnitude < 9f || MicroduckVR.Net.PlayerTargets.NearRemote(rb.position, 3f))) { props.Add(rb); speeds[rb] = rb.linearVelocity.magnitude; }
             }
             foreach (var rb in props)

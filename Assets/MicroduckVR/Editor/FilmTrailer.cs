@@ -85,7 +85,7 @@ namespace MicroduckVR.EditorTools
         static void Fresh(string lk)
         {
             Clean(); Unpark(); HideDot(); GameHud.Hidden = true; biteToy = null; BagMenu.HideBeam = false;
-            foreach (var pop in Object.FindObjectsByType<ComicPop>(FindObjectsSortMode.None)) Object.Destroy(pop.gameObject);   // no sound word from the last shot hanging in this one
+            foreach (var pop in Object.FindObjectsByType<ComicPop>()) Object.Destroy(pop.gameObject);   // no sound word from the last shot hanging in this one
             if (words == null) words = Object.FindAnyObjectByType<ComicEvents>();
             if (words != null) words.enabled = false;
             Wear(lk);
@@ -161,13 +161,13 @@ namespace MicroduckVR.EditorTools
             return go;
         }
         /// <summary>Remember the toys that are out now; whatever the bag adds after this is cleared with the film's own toys.</summary>
-        static void MarkToys() { toysBefore = new HashSet<ToyTag>(Object.FindObjectsByType<ToyTag>(FindObjectsSortMode.None)); }
+        static void MarkToys() { toysBefore = new HashSet<ToyTag>(Object.FindObjectsByType<ToyTag>()); }
         static void Clean()
         {
             foreach (var g in filmToys) if (g != null) { g.SetActive(false); Object.Destroy(g); }
             filmToys.Clear(); tower.Clear();
             if (toysBefore == null) return;
-            foreach (var tt in Object.FindObjectsByType<ToyTag>(FindObjectsSortMode.None)) if (!toysBefore.Contains(tt)) { tt.gameObject.SetActive(false); Object.Destroy(tt.gameObject); }
+            foreach (var tt in Object.FindObjectsByType<ToyTag>()) if (!toysBefore.Contains(tt)) { tt.gameObject.SetActive(false); Object.Destroy(tt.gameObject); }
             toysBefore = null;
         }
 
@@ -176,7 +176,7 @@ namespace MicroduckVR.EditorTools
         /// furniture stay where they are, and so does 'keep', e.g. the match ball.</summary>
         static void Sweep(Rect area, Rigidbody keep = null)
         {
-            foreach (var rb in Object.FindObjectsByType<Rigidbody>(FindObjectsSortMode.None))
+            foreach (var rb in Object.FindObjectsByType<Rigidbody>())
             {
                 if (rb == keep || rb.isKinematic || filmToys.Contains(rb.gameObject)) continue;
                 int layer = rb.gameObject.layer;
@@ -191,7 +191,7 @@ namespace MicroduckVR.EditorTools
         /// <summary>Flowers stand taller than a duck: take the ones near a lawn stage out for one shot, so none blocks the lens.</summary>
         static void Weed(Vector3 centre, float radius)
         {
-            foreach (var tr in Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))
+            foreach (var tr in Object.FindObjectsByType<Transform>())
             {
                 if (!tr.name.StartsWith("Flower") || !tr.gameObject.activeSelf) continue;
                 var d = tr.position - centre; d.y = 0f;

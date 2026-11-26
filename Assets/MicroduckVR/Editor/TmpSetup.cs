@@ -17,7 +17,9 @@ namespace MicroduckVR.EditorTools
                 .Select(d => Path.Combine(d, "Package Resources", "TMP Essential Resources.unitypackage"))
                 .FirstOrDefault(File.Exists);
             if (pkg == null) { Debug.LogError("[Microduck] TMP Essential Resources package not found"); return; }
+#pragma warning disable CS0618
             AssetDatabase.ImportPackage(pkg, false);
+#pragma warning restore CS0618
             Debug.Log("[Microduck] TMP essentials imported from " + pkg);
         }
     }

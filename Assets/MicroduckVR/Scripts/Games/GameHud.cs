@@ -25,7 +25,7 @@ namespace MicroduckVR.Games
         {
             cam = Camera.main;
             var f = Resources.Load<Font>("Bangers-Regular");
-            foreach (var tb in FindObjectsByType<MicroduckVR.Flock.ThoughtBubbles>(FindObjectsSortMode.None)) if (tb.font != null) f = tb.font;
+            foreach (var tb in FindObjectsByType<MicroduckVR.Flock.ThoughtBubbles>()) if (tb.font != null) f = tb.font;
             if (f != null) font = TMP_FontAsset.CreateFontAsset(f);
             root = new GameObject("hud root").transform; root.SetParent(transform, false);
             card = new GameObject("card").transform; card.SetParent(root, false); card.localPosition = new Vector3(0f, 0.1f, 0f);

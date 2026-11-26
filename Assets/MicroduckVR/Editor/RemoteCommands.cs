@@ -77,9 +77,12 @@ namespace MicroduckVR.EditorTools
                 int dot = full.LastIndexOf('.');
                 string typeName = full.Substring(0, dot), method = full.Substring(dot + 1);
                 Type t = null;
+#pragma warning disable UAC0005
                 foreach (var a in AppDomain.CurrentDomain.GetAssemblies()) { t = a.GetType(typeName); if (t != null) break; }
+#pragma warning restore UAC0005
                 if (t == null) { Log("type not found: " + typeName); return; }
-                var mi = t.GetMethod(method, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                // the overload with no parameters (a plain GetMethod throws when there are several)
+                var mi = t.GetMethod(method, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static, null, Type.EmptyTypes, null);
                 if (mi == null) { Log("method not found: " + full); return; }
                 mi.Invoke(null, null);
                 Log("ok");

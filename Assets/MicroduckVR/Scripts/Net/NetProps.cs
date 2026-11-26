@@ -99,7 +99,7 @@ namespace MicroduckVR.Net
             return false;
         }
 
-        static Rigidbody[] AllBodies() => Object.FindObjectsByType<Rigidbody>(FindObjectsSortMode.None);
+        static Rigidbody[] AllBodies() => Object.FindObjectsByType<Rigidbody>();
 
         // ================================================================== hosting PC
         public void HostBegin()
@@ -162,7 +162,7 @@ namespace MicroduckVR.Net
             if (scanT <= 0f)
             {
                 scanT = 0.25f;
-                foreach (var tag in Object.FindObjectsByType<ToyTag>(FindObjectsSortMode.None))
+                foreach (var tag in Object.FindObjectsByType<ToyTag>())
                 {
                     var rb = tag.GetComponent<Rigidbody>();
                     if (rb == null || byBody.ContainsKey(rb) || !RuntimeToy(rb) || !Candidate(rb)) continue;

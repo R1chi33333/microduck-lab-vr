@@ -226,7 +226,7 @@ namespace MicroduckVR.Custom
             foreach (var gg in glints) gg.SetActive(false);          // the reflection must not see its own glints
             // ... nor the comfort vignette that rides on your head: in the mirror it showed up as a dark box round the head
             hidden.Clear();
-            foreach (var v in FindObjectsByType<ComfortVignette>(FindObjectsSortMode.None)) { var vr = v.GetComponent<Renderer>(); if (vr != null && vr.enabled) { vr.enabled = false; hidden.Add(vr); } }
+            foreach (var v in FindObjectsByType<ComfortVignette>()) { var vr = v.GetComponent<Renderer>(); if (vr != null && vr.enabled) { vr.enabled = false; hidden.Add(vr); } }
             // ... nor the boards, cards and captions floating in front of your eyes: the glass showed their backs
             foreach (var root in UiRoots()) if (root != null && root.gameObject.activeInHierarchy)
                 foreach (var ur in root.GetComponentsInChildren<Renderer>()) if (ur.enabled) { ur.enabled = false; hidden.Add(ur); }

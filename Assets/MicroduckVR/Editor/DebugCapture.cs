@@ -69,7 +69,7 @@ namespace MicroduckVR.EditorTools
         public static void PlayViews()
         {
             if (!Application.isPlaying) { Debug.Log("[Microduck] PlayViews needs Play mode"); return; }
-            var pd = Object.FindFirstObjectByType<MicroduckVR.Player.PlayerDuck>();
+            var pd = Object.FindAnyObjectByType<MicroduckVR.Player.PlayerDuck>();
             if (pd == null || pd.cam == null) { Debug.Log("[Microduck] no PlayerDuck"); return; }
             var t = pd.cam.transform;
             string stamp = System.DateTime.Now.ToString("HHmmss");
@@ -112,7 +112,7 @@ namespace MicroduckVR.EditorTools
             cam.targetTexture = rt;
             // the comfort vignette is a quad in front of the player's eyes: keep it out of debug shots
             var vig = new System.Collections.Generic.List<Renderer>();
-            foreach (var v in Object.FindObjectsByType<MicroduckVR.Player.ComfortVignette>(FindObjectsSortMode.None)) { var r = v.GetComponent<Renderer>(); if (r != null && r.enabled) { r.enabled = false; vig.Add(r); } }
+            foreach (var v in Object.FindObjectsByType<MicroduckVR.Player.ComfortVignette>()) { var r = v.GetComponent<Renderer>(); if (r != null && r.enabled) { r.enabled = false; vig.Add(r); } }
             cam.Render();
             foreach (var r in vig) r.enabled = true;
             RenderTexture.active = rt;
@@ -143,7 +143,7 @@ namespace MicroduckVR.EditorTools
             System.Action<UnityEngine.Rendering.ScriptableRenderContext, Camera> on = (c, k) => { if (k == cam) GL.wireframe = true; }, off = (c, k) => { if (k == cam) GL.wireframe = false; };
             if (wire) { UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering += on; UnityEngine.Rendering.RenderPipelineManager.endCameraRendering += off; }
             var vig = new System.Collections.Generic.List<Renderer>();
-            foreach (var v in Object.FindObjectsByType<MicroduckVR.Player.ComfortVignette>(FindObjectsSortMode.None)) { var r = v.GetComponent<Renderer>(); if (r != null && r.enabled) { r.enabled = false; vig.Add(r); } }
+            foreach (var v in Object.FindObjectsByType<MicroduckVR.Player.ComfortVignette>()) { var r = v.GetComponent<Renderer>(); if (r != null && r.enabled) { r.enabled = false; vig.Add(r); } }
             cam.Render();
             foreach (var r in vig) r.enabled = true;
             if (wire) { UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering -= on; UnityEngine.Rendering.RenderPipelineManager.endCameraRendering -= off; GL.wireframe = false; }

@@ -39,7 +39,7 @@ namespace MicroduckVR.World
             if (scanT <= 0f)
             {
                 scanT = 1f; props.Clear();
-                foreach (var rb in FindObjectsByType<Rigidbody>(FindObjectsSortMode.None))
+                foreach (var rb in FindObjectsByType<Rigidbody>())
                     if (rb.gameObject.layer == DuckSetup.LayerProp && OnLawn(rb.position)) props.Add(rb);
             }
             int n = 0;

@@ -94,7 +94,7 @@ namespace MicroduckVR.EditorTools
             savedCapture = Time.captureFramerate; Time.captureFramerate = Q.fps * Q.sub;
             audioOn = !prev && AudioRenderer.Start();
             ComicPop.Viewer = cam;
-            foreach (var tb in UnityEngine.Object.FindObjectsByType<ThoughtBubbles>(FindObjectsSortMode.None)) { tb.viewer = cam; if (Q.post) tb.showThoughts = false; }
+            foreach (var tb in UnityEngine.Object.FindObjectsByType<ThoughtBubbles>()) { tb.viewer = cam; if (Q.post) tb.showThoughts = false; }
             // the film look: a real lens (depth of field), a touch of grade; and the engine's quality dials turned up
             if (Q.post)
             {
@@ -133,7 +133,7 @@ namespace MicroduckVR.EditorTools
             CloseEncoder();
             if (audioOn) AudioRenderer.Stop();
             Time.captureFramerate = savedCapture; ComicPop.Viewer = null;
-            foreach (var tb in UnityEngine.Object.FindObjectsByType<ThoughtBubbles>(FindObjectsSortMode.None)) { tb.viewer = P != null ? P.cam : null; tb.showThoughts = true; }
+            foreach (var tb in UnityEngine.Object.FindObjectsByType<ThoughtBubbles>()) { tb.viewer = P != null ? P.cam : null; tb.showThoughts = true; }
             Reset(); GameHud.Hidden = false;
             manifest.Dispose();
             var pipe = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
@@ -200,7 +200,7 @@ namespace MicroduckVR.EditorTools
                 if (shoot && sub >= Q.sub - Q.acc)
                 {
                     hidden.Clear();
-                    foreach (var v in UnityEngine.Object.FindObjectsByType<ComfortVignette>(FindObjectsSortMode.None)) { var r = v.GetComponent<Renderer>(); if (r != null && r.enabled) { r.enabled = false; hidden.Add(r); } }
+                    foreach (var v in UnityEngine.Object.FindObjectsByType<ComfortVignette>()) { var r = v.GetComponent<Renderer>(); if (r != null && r.enabled) { r.enabled = false; hidden.Add(r); } }
                     cam.Render();
                     foreach (var r in hidden) r.enabled = true;
                     var prevRt = RenderTexture.active;

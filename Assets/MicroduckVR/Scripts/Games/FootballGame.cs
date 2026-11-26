@@ -38,7 +38,7 @@ namespace MicroduckVR.Games
         {
             if (RaceGame.Active) RaceGame.Instance.StopRace();
             ball = null; float bd = 99f;
-            foreach (var rb in FindObjectsByType<Rigidbody>(FindObjectsSortMode.None))
+            foreach (var rb in FindObjectsByType<Rigidbody>())
                 if (rb.name == "Football" || rb.name == "Sock ball") { float d = Vector3.Distance(rb.position, Centre); if (d < bd) { bd = d; ball = rb; } }
             if (ball == null) return;
             active = true; Score[0] = Score[1] = 0; cool = 0f; Team.Clear();

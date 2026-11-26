@@ -81,6 +81,7 @@ namespace MicroduckVR.EditorTools
             PlayerSettings.runInBackground = true;
         }
 
+#pragma warning disable CS0618   // the XR settings calls this one-off setup was written against; still work in XR Management 4.7
         static void ConfigureXr()
         {
             const BuildTargetGroup group = BuildTargetGroup.Standalone;
@@ -115,5 +116,6 @@ namespace MicroduckVR.EditorTools
             }
             EditorUtility.SetDirty(openxr);
         }
+#pragma warning restore CS0618
     }
 }

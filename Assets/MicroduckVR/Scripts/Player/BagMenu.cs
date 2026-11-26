@@ -379,7 +379,7 @@ namespace MicroduckVR.Player
         static int Count(string kind)
         {
             int n = 0;
-            foreach (var t in FindObjectsByType<ToyTag>(FindObjectsSortMode.None)) if (kind == null || t.kind == kind) n++;
+            foreach (var t in FindObjectsByType<ToyTag>()) if (kind == null || t.kind == kind) n++;
             return n;
         }
 

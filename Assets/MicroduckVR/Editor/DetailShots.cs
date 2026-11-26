@@ -28,7 +28,7 @@ namespace MicroduckVR.EditorTools
             S("kitchen", new Vector3(-4.3f, 1.2f, -1.2f), new Vector3(-4.5f, 0.9f, -2.3f), 70f);
             S("hall", new Vector3(0.8f, 0.3f, 3.2f), new Vector3(3.0f, 0.1f, 3.4f), 70f);
             S("garden", new Vector3(0.0f, 0.5f, 4.4f), new Vector3(1.0f, 0.1f, 6.8f), 70f);
-            foreach (var g in Object.FindObjectsByType<Rigidbody>(FindObjectsSortMode.None))
+            foreach (var g in Object.FindObjectsByType<Rigidbody>())
                 if (g.name == "Football" && Vector3.Distance(g.position, new Vector3(1.93f, 0.04f, 0.73f)) < 0.1f) ball = g.transform;
             ball0 = ball != null ? ball.position : Vector3.zero;
             PlayerDuck.Instance.Teleport(new Vector3(1.93f, 0.05f, 0.42f), 0f);

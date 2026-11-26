@@ -21,7 +21,7 @@ namespace MicroduckVR.EditorTools
             EditorApplication.update -= Tick; EditorApplication.update += Tick;
         }
 
-        static int Toys() => Object.FindObjectsByType<ToyTag>(FindObjectsSortMode.None).Length;
+        static int Toys() => Object.FindObjectsByType<ToyTag>().Length;
 
         static void Tick()
         {

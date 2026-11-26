@@ -105,7 +105,7 @@ namespace MicroduckVR.Duck
         public readonly Look LookAt = new Look();
         public readonly Reach ReachState = new Reach();
         public float CrouchExtra, PitchExtra;
-        public Fall FallState;
+        [System.NonSerialized] public Fall FallState;
         public bool EnabledIK = true;
         public int Iters = 3;
         public bool SitTarget, CrouchTarget;
@@ -113,7 +113,7 @@ namespace MicroduckVR.Duck
         public bool Skating;
         public float SkateLift = 0.022f, SkateW, Stroke, StrokeSide = 1f, Wobble;
         public float SkateLean, LeanW;                 // body roll on skates (Unity roll convention)
-        public Emote CurrentEmote;
+        [System.NonSerialized] public Emote CurrentEmote;
         public float Hop, GazeYawOff, GazePitchOff, HappyWiggle;
         public bool Fallen => FallState != null;
 
