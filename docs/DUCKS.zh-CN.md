@@ -91,7 +91,7 @@
 2. 想让 AI 鸭子也做：在 `DuckBrain.cs` 的表情列表里加上 `"bow"`。一处在 `Pick` 里（发呆时），一处在 `wander` 分支里（走到目的地时）。
 3. 想让玩家也能做：在 `Scripts/Player/BagMenu.cs` 的 `Actions` 里加一个按钮。现在 4 × 4 已经满了，要替换一个或加一行。
 4. 联机不用另外改：表情是按名字通过网络发送的。两台电脑都要用新版本。
-5. 想把它也做成动画片段和 GIF：加到 `Editor/MotionBake.cs` 的 `Moves()` 里，再运行 **Bake Duck Moves**。
+5. 想把它也做成动画片段和 GIF：加到 `Editor/AssetExport.MotionBake.cs` 的 `Moves()` 里，再运行 **Bake Duck Moves**。
 
 ### 加一个新行为（比如 `"nap"` 睡觉）
 
