@@ -34,6 +34,7 @@ namespace MicroduckVR.EditorTools
             public bool loop, keepTurn;      // keepTurn: the clip turns the duck round (Turn); otherwise it stays in place
             public float camAngle = 35f;     // degrees round from the duck's front
             public Action<float, DuckBody, Ctl> drive;
+            public bool skates;              // wear the roller skates (they are drawn, not put in the clip)
         }
 
         class Ctl { public float v, w; public Vector3 dir; }
@@ -61,6 +62,16 @@ namespace MicroduckVR.EditorTools
                 } },
             Emote("Nod", "NOD", 1.6f), Emote("Shake", "SHAKE", 1.6f), Emote("Look", "LOOK AROUND", 3.1f), Emote("Dance", "DANCE", 2.9f),
             new Move { id = "Wiggle", title = "HAPPY WIGGLE", warm = 0.3f, len = 1.8f, drive = (t, b, c) => { if (t < 0.05f) b.HappyWiggle = 1f; } },
+            new Move { id = "Skate", title = "ROLLER SKATES", warm = 1.5f, len = 3.2f, skates = true, camAngle = 75f, drive = (t, b, c) =>
+                {
+                    // push strokes as the skates code does (1.25 a second, sides alternate), with a gentle weave
+                    const float hz = 1.25f, dtS = 1f / Fps;
+                    b.Stroke = (b.Stroke + hz * dtS) % 1f;
+                    if (b.Stroke < hz * dtS) b.StrokeSide *= -1f;
+                    c.v = 0.24f;
+                    c.w = Mathf.Sin(t * Mathf.PI * 2f / 3.2f) * 0.9f;
+                    b.SkateLean = Mathf.Clamp(-c.w * 0.11f * (c.v / 0.35f), -0.3f, 0.3f);
+                } },
             new Move { id = "FallGetUp", title = "FALL AND GET UP", warm = 0.3f, len = 4.2f, camAngle = 50f, drive = (t, b, c) =>
                 { if (t >= 0.2f && t < 0.2f + 1f / Fps && !b.Fallen) b.StartTip(new Vector3(0.64f, 0f, -0.77f)); } },
         };
@@ -180,8 +191,15 @@ namespace MicroduckVR.EditorTools
 
             Vector3 pos = Vector3.zero; float yaw = 0f;
             for (int i = 0; i < 30; i++) body.Step(1f / 60f, pos, yaw, Vector3.zero, 0f);   // settle into the stand pose, as the prefab was
+            var nodesBeforeSkates = new HashSet<Transform>(root.GetComponentsInChildren<Transform>(true));
+            SkatePair skates = null;
+            if (m.skates)
+            {
+                skates = new SkatePair(); skates.Attach(body); skates.SetLayer(CatalogLayer);
+                body.Skating = true; body.SkateLift = SkatePair.Height;
+            }
 
-            var nodes = root.GetComponentsInChildren<Transform>(true).Where(t => t != root.transform).ToList();
+            var nodes = root.GetComponentsInChildren<Transform>(true).Where(t => t != root.transform && nodesBeforeSkates.Contains(t)).ToList();   // the skates are not part of the duck prefab
             var paths = nodes.Select(t => AnimationUtility.CalculateTransformPath(t, root.transform)).ToList();
             int missing = paths.Count(p => !prefabPaths.Contains(p));
             if (missing > 0) { Debug.LogWarning($"[Microduck] {m.id}: {missing} node(s) are not in Duck.prefab; their curves will do nothing"); warnings++; }
@@ -208,6 +226,7 @@ namespace MicroduckVR.EditorTools
                 Vector3 vel = GltfSpace.Forward(yaw) * c.v;
                 pos += vel * dt;
                 body.Step(dt, pos, yaw, vel, c.w);
+                skates?.Spin(c.v * dt);
 
                 if (!recording && time >= 0f)
                 {
@@ -263,6 +282,7 @@ namespace MicroduckVR.EditorTools
                 }
                 time += dt;
             }
+            if (skates != null) { Object.DestroyImmediate(skates.Left.gameObject); Object.DestroyImmediate(skates.Right.gameObject); }
             Object.DestroyImmediate(root);
             if (frame < 2) { Debug.LogWarning($"[Microduck] {m.id}: nothing recorded"); return (null, 0, warnings + 1); }
 
