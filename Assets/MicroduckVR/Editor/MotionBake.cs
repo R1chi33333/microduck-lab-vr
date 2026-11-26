@@ -228,9 +228,10 @@ namespace MicroduckVR.EditorTools
                         lp[i].Add(p); lr[i].Add(r);
                     }
                     // the picture: the camera follows the duck
-                    Vector3 at = new Vector3(pos.x, m.id == "FallGetUp" ? 0.09f : 0.125f, pos.z);
+                    bool fall = m.id == "FallGetUp";
+                    Vector3 at = new Vector3(pos.x, fall ? 0.08f : 0.125f, pos.z) + (fall ? new Vector3(0.64f, 0f, -0.77f) * 0.11f : Vector3.zero);
                     float ang = (startYaw * Mathf.Rad2Deg + m.camAngle) * Mathf.Deg2Rad;
-                    cam.transform.position = at + new Vector3(Mathf.Sin(ang), 0.42f, Mathf.Cos(ang)).normalized * 1.0f;
+                    cam.transform.position = at + new Vector3(Mathf.Sin(ang), 0.42f, Mathf.Cos(ang)).normalized * (fall ? 1.15f : 1.0f);
                     cam.transform.LookAt(at);
                     cam.Render();
                     RenderTexture.active = rt;
