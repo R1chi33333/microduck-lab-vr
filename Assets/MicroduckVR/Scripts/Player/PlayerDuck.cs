@@ -284,8 +284,12 @@ namespace MicroduckVR.Player
                 held.transform.position = body.BeakGap() + body.HeadDir() * Mathf.Min(held.Radius * 0.6f, 0.02f) - hr * Vector3.Scale(held.CentreLocal, held.transform.lossyScale);
             }
 
+            // comic speed lines when skating fast (web: from 0.22 m/s, 2.5 per m/s, at most 0.8; full while boosting),
+            // with the web's threshold scaled to the VR skates' lower top speed
             if (vignette != null)
-                vignette.Target = vignetteStrength * Mathf.Clamp01(realVel.magnitude / (skates.On ? skates.TopSpeed : Gait.MaxSpeed) * (skates.On ? 0.9f : 0.8f) + (skates.Drifting ? 0.25f : 0f) + (skates.On ? 0f : Mathf.Abs(yawRate) * 0.25f) + Mathf.Abs(turnVel) / smoothTurnDegPerSec * 0.6f);
+                vignette.SpeedLines = skates.On ? Mathf.Max(Mathf.Clamp((realVel.magnitude - 0.18f * skates.comfortScale) * 2.5f, 0f, 0.8f), skates.Boosting ? 1f : 0f) : 0f;
+            if (vignette != null)
+                vignette.Target =vignetteStrength * Mathf.Clamp01(realVel.magnitude / (skates.On ? skates.TopSpeed : Gait.MaxSpeed) * (skates.On ? 0.9f : 0.8f) + (skates.Drifting ? 0.25f : 0f) + (skates.On ? 0f : Mathf.Abs(yawRate) * 0.25f) + Mathf.Abs(turnVel) / smoothTurnDegPerSec * 0.6f);
         }
 
         void LateUpdate()

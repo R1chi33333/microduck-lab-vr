@@ -2,17 +2,22 @@ using UnityEngine;
 
 namespace MicroduckVR.Player
 {
-    /// <summary>Drives the vignette quad in front of the XR camera: eases towards Target, with short pulses on snap turns.</summary>
+    /// <summary>Drives the vignette quad in front of the XR camera: eases towards Target, with short pulses on snap turns.
+    /// It also carries the comic speed lines (static ink wedges round the edge of the view, fading in with SpeedLines).</summary>
     [RequireComponent(typeof(MeshRenderer))]
     public class ComfortVignette : MonoBehaviour
     {
-        public float Target;
-        public float riseRate = 4f, fallRate = 2f;
-        float current, pulse;
-        Material mat;
-        static readonly int StrengthId = Shader.PropertyToID("_Strength");
+        /// <summary>Comic speed lines round the edge of the view when skating fast (a comfort option: off shows none).</summary>
+        public static bool SpeedLinesOn = true;
 
-        void Awake() { mat = GetComponent<MeshRenderer>().material; }
+        public float Target;
+        public float SpeedLines;                   // 0..1, set by the player each frame
+        public float riseRate = 4f, fallRate = 2f;
+        float current, pulse, lines;
+        Material mat; MeshRenderer mr;
+        static readonly int StrengthId = Shader.PropertyToID("_Strength"), LinesId = Shader.PropertyToID("_SpeedLines");
+
+        void Awake() { mr = GetComponent<MeshRenderer>(); mat = mr.material; }
 
         public void Pulse(float amount) { pulse = Mathf.Max(pulse, amount); }
 
@@ -22,8 +27,11 @@ namespace MicroduckVR.Player
             float rate = goal > current ? riseRate : fallRate;
             current = Mathf.MoveTowards(current, goal, rate * Time.deltaTime);
             pulse = Mathf.MoveTowards(pulse, 0f, 2.5f * Time.deltaTime);
+            float lineGoal = SpeedLinesOn ? Mathf.Clamp01(SpeedLines) : 0f;
+            lines = Mathf.MoveTowards(lines, lineGoal, (lineGoal > lines ? 3f : 2f) * Time.deltaTime);
             mat.SetFloat(StrengthId, current);
-            GetComponent<MeshRenderer>().enabled = current > 0.005f;
+            mat.SetFloat(LinesId, lines);
+            mr.enabled = current > 0.005f || lines > 0.005f;
         }
     }
 }
