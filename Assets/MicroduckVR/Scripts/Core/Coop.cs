@@ -8,17 +8,29 @@ namespace MicroduckVR.Core
     /// <summary>The co-op session as the rest of the game sees it (the network code fills Coop.Session).</summary>
     public interface ICoopSession
     {
+        /// <summary>Where the session is.</summary>
         CoopMode State { get; }
+        /// <summary>The line on the toy bag.</summary>
         string Status { get; }
+        /// <summary>Start hosting, or stop the session.</summary>
         void HostOrStop();
+        /// <summary>Look for a host, or leave the session.</summary>
         void JoinOrLeave();
+        /// <summary>Joining PC: ask the host for a toy from the bag; false when this PC places it itself.</summary>
         bool RequestToy(string kind, Vector3 pos, float yawDeg);
+        /// <summary>Joining PC: ask the host to bin a toy; false when this PC removes it itself.</summary>
         bool RequestTrash(GameObject toy);
+        /// <summary>Joining PC: ask the host for one more duck; false when this PC adds it itself.</summary>
         bool RequestAddDuck();
+        /// <summary>Joining PC: ask the host to take a duck away; false when this PC removes it itself.</summary>
         bool RequestRemoveDuck();
+        /// <summary>A sound word about my own duck, for the other PC.</summary>
         void SendOwnWord(string word, string hex, float size);
+        /// <summary>Host: a toy sent flying, POW! on both PCs.</summary>
         void SendPow(string word, Vector3 at, string hex);
+        /// <summary>A splash, for the other PC.</summary>
         void SendSplash(Vector3 at, float size);
+        /// <summary>Joining PC: the host pushes a toy my duck walked into.</summary>
         void QueuePush(Rigidbody rb, Vector3 dir, float want, float dv, Vector3 at);
     }
 

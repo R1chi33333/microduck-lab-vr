@@ -19,6 +19,7 @@ namespace MicroduckVR.Net
     /// </summary>
     public partial class NetProps
     {
+        /// <summary>Who holds a toy, as sent: nobody, the host, the joining player, an AI duck, something else.</summary>
         public const byte HeldNone = 0, HeldHost = 1, HeldJoiner = 2, HeldDuck = 3, HeldOther = 4;
         const int PerMessage = 28, KeysPerMessage = 16, PushesPerMessage = 24;
 
@@ -42,6 +43,7 @@ namespace MicroduckVR.Net
         float scanT; int fullSends;
         Grabbable lastHeld; bool lastHeldKnown;
 
+        /// <summary>The toy sync for a session.</summary>
         public NetProps(NetSession session) { net = session; }
 
         // ------------------------------------------------------------------ which things take part
@@ -88,6 +90,7 @@ namespace MicroduckVR.Net
             return p;
         }
 
+        /// <summary>The network id of a shared prop.</summary>
         public bool TryGetId(GameObject go, out ushort id)
         {
             id = 0;

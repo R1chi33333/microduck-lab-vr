@@ -11,11 +11,15 @@ namespace MicroduckVR.Net
         readonly Func<T, T, float, T> lerp;
         const int Keep = 24;
 
+        /// <summary>An empty track; lerp blends two samples.</summary>
         public Track(Func<T, T, float, T> lerp) { this.lerp = lerp; }
 
+        /// <summary>Samples held.</summary>
         public int Count => times.Count;
+        /// <summary>Forgets every sample.</summary>
         public void Clear() { times.Clear(); values.Clear(); }
 
+        /// <summary>Adds a sample at time t (older samples than the newest are ignored).</summary>
         public void Add(double t, T v)
         {
             int n = times.Count;
@@ -32,6 +36,7 @@ namespace MicroduckVR.Net
             while (times.Count > Keep) { times.RemoveAt(0); values.RemoveAt(0); }
         }
 
+        /// <summary>The value at time t, blended between the samples around it; false when there is none.</summary>
         public bool Sample(double t, out T v)
         {
             int n = times.Count;
@@ -50,6 +55,7 @@ namespace MicroduckVR.Net
             v = values[0]; return true;
         }
 
+        /// <summary>The newest sample; false when there is none.</summary>
         public bool Latest(out T v)
         {
             int n = times.Count;

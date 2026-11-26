@@ -15,6 +15,7 @@ namespace MicroduckVR.Net
     /// </summary>
     public static class LanDiscovery
     {
+        /// <summary>The first field of every beacon.</summary>
         public const string Magic = "MDUCK";
 
         /// <summary>This PC's IPv4 addresses (not loopback), and the broadcast address of each network.</summary>
@@ -57,6 +58,7 @@ namespace MicroduckVR.Net
             return ips.Count > 0 ? ips[0].ToString() : "";
         }
 
+        /// <summary>A player name that is safe to put in a beacon (no separators, at most 24 characters; DUCK when empty).</summary>
         public static string CleanName(string s)
         {
             if (string.IsNullOrEmpty(s)) return "DUCK";

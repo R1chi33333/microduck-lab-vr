@@ -13,26 +13,36 @@ namespace MicroduckVR.Net
     [Serializable]
     public class NetConfig
     {
+        /// <summary>Joining PC: the host's address; empty searches the network.</summary>
         public string hostIp = "";
+        /// <summary>Game port.</summary>
         public int port = 7777;
+        /// <summary>Port of the LAN search beacons.</summary>
         public int discoveryPort = 47777;
+        /// <summary>A player name in the settings file (the game does not read it yet).</summary>
         public string playerName = "";
 
+        /// <summary>The settings file's name.</summary>
         public const string FileName = "microduck_net.json";
         [NonSerialized] public string LoadedFrom = "";
 
+        /// <summary>The game port, clamped to a valid port.</summary>
         public ushort Port => (ushort)Mathf.Clamp(port, 1, 65535);
+        /// <summary>The beacon port, clamped to a valid port.</summary>
         public int DiscoveryPort => Mathf.Clamp(discoveryPort, 1, 65535);
 
+        /// <summary>The settings file next to the game's .exe (the project folder in the editor).</summary>
         public static string NextToGame
         {
             get { try { return Path.Combine(Path.GetDirectoryName(Application.dataPath) ?? ".", FileName); } catch { return FileName; } }
         }
+        /// <summary>The settings file in Application.persistentDataPath.</summary>
         public static string InPersistentData
         {
             get { try { return Path.Combine(Application.persistentDataPath, FileName); } catch { return FileName; } }
         }
 
+        /// <summary>Reads the first settings file found; defaults when there is none.</summary>
         public static NetConfig Load()
         {
             foreach (var p in new[] { NextToGame, InPersistentData })
@@ -51,6 +61,7 @@ namespace MicroduckVR.Net
             return new NetConfig();
         }
 
+        /// <summary>The default settings as JSON, for writing an example file.</summary>
         public static string Example() => JsonUtility.ToJson(new NetConfig(), true);
     }
 }

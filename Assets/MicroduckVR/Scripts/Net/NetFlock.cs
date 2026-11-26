@@ -30,14 +30,18 @@ namespace MicroduckVR.Net
         readonly List<ushort> scratch = new List<ushort>();
         ushort nextId = 1;
 
+        /// <summary>The flock sync for a session.</summary>
         public NetFlock(NetSession session) { net = session; }
 
+        /// <summary>The duck with this network id.</summary>
         public bool TryGet(ushort id, out DuckBrain b) { if (byId.TryGetValue(id, out b) && b != null) return true; b = null; return false; }
+        /// <summary>The network id of a duck.</summary>
         public bool TryGetId(DuckBrain b, out ushort id) => idOf.TryGetValue(b, out id);
 
         static DuckSetup SetupOf(DuckBrain b) => b != null ? b.GetComponent<DuckSetup>() : null;
 
         // ================================================================== host
+        /// <summary>Hosting PC: gives every duck an id and sends the roster.</summary>
         public void HostBegin()
         {
             HostEnd();
@@ -62,6 +66,7 @@ namespace MicroduckVR.Net
             return id;
         }
 
+        /// <summary>Hosting PC: unhooks from the ducks and forgets the ids.</summary>
         public void HostEnd()
         {
             foreach (var u in unhook) { try { u(); } catch (Exception) { } }
@@ -226,6 +231,7 @@ namespace MicroduckVR.Net
             Object.Destroy(b.gameObject);
         }
 
+        /// <summary>Joining PC: the host's list of ducks (in parts).</summary>
         public void OnRoster(ref FastBufferReader r)
         {
             r.ReadValueSafe(out bool first);
@@ -243,6 +249,7 @@ namespace MicroduckVR.Net
             seen.Clear();
         }
 
+        /// <summary>Joining PC: the host added a duck.</summary>
         public void OnAdd(ref FastBufferReader r)
         {
             var b = Puppetize(ReadEntry(ref r), out _);
@@ -251,6 +258,7 @@ namespace MicroduckVR.Net
             GameHud.Get().Big("NEW DUCK!", ComicColors.Yellow, 1.0f);
         }
 
+        /// <summary>Joining PC: the host removed a duck.</summary>
         public void OnRemove(ref FastBufferReader r)
         {
             r.ReadValueSafe(out ushort id);
@@ -259,24 +267,28 @@ namespace MicroduckVR.Net
             Despawn(b);
         }
 
+        /// <summary>Joining PC: a duck's state and context (thought bubbles).</summary>
         public void OnMeta(ref FastBufferReader r)
         {
             r.ReadValueSafe(out ushort id); r.ReadValueSafe(out byte state); r.ReadValueSafe(out string ctx);
             if (TryGet(id, out var b)) b.PuppetState((AiState)state, ctx);
         }
 
+        /// <summary>Joining PC: a duck's toy event.</summary>
         public void OnEvent(ref FastBufferReader r)
         {
             r.ReadValueSafe(out ushort id); r.ReadValueSafe(out byte kind); r.ReadValueSafe(out string ctx);
             if (TryGet(id, out var b)) b.PuppetEvent((DuckEventKind)kind, ctx);
         }
 
+        /// <summary>Joining PC: a duck's emote.</summary>
         public void OnEmote(ref FastBufferReader r)
         {
             r.ReadValueSafe(out ushort id); r.ReadValueSafe(out byte kind); r.ReadValueSafe(out float dur);
             if (TryGet(id, out var b)) { var s = SetupOf(b); if (s != null && s.Body != null) s.Body.PlayEmote((EmoteKind)kind, dur); }
         }
 
+        /// <summary>Joining PC: a batch of duck snapshots.</summary>
         public void OnState(ref FastBufferReader r)
         {
             r.ReadValueSafe(out double t);
