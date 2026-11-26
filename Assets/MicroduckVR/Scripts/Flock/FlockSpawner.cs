@@ -15,6 +15,8 @@ namespace MicroduckVR.Flock
         static readonly string[] Skins = { "cream", "lavender", "sky", "graphite" };
         static readonly List<GameObject> added = new List<GameObject>();
         static int serial;
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { added.Clear(); serial = 0; }
 
         public static DuckBrain Add()
         {

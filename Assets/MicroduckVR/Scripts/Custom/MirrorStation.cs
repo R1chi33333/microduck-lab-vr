@@ -26,6 +26,8 @@ namespace MicroduckVR.Custom
         public static readonly Vector3 StandPos = new Vector3(4.42f, 0.05f, -2.05f);   // close enough to see your colours in the glass
         /// <summary>How many times DONE! has been pressed on the board (the tutorial waits for the first).</summary>
         public static int SaveCount { get; private set; }
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { Instance = null; Viewer = null; SaveCount = 0; InZone = false; }
         const float W = 0.6f, H = 1.4f;
 
         public WorldPanel Board => board;

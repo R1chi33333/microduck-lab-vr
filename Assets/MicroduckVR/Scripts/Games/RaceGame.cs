@@ -15,6 +15,8 @@ namespace MicroduckVR.Games
     public class RaceGame : MonoBehaviour
     {
         public static RaceGame Instance { get; private set; }
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { Instance = null; }
         public static bool Active => Instance != null && Instance.active;
         public static bool Frozen => Active && Instance.frozen;
 

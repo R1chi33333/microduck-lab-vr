@@ -62,6 +62,8 @@ namespace MicroduckVR.Player
         float chirpT, bedT;
 
         public static PlayerDuck Instance { get; private set; }
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { Instance = null; }
         /// <summary>Debug only: when set, the duck walks this world direction at full speed (used by editor tests).</summary>
         public static Vector3? DebugWalk;
         public static float? DebugBeak;                    // editor tests and filming: the beak trigger
