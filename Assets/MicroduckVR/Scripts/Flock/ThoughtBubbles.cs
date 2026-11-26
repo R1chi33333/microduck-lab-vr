@@ -18,8 +18,8 @@ namespace MicroduckVR.Flock
         public Camera viewer;
         public bool showThoughts = true;
 
-        const float SHOW = 3.0f, FADE = 0.35f, REPEAT = 8f, RANGE = 4.0f;
-        const int MAX_ON = 4, POOL = 6;
+        const float ShowTime = 3.0f, FadeTime = 0.35f, RepeatGap = 8f, MaxRange = 4.0f;
+        const int MaxOn = 4, PoolSize = 6;
 
         static readonly Dictionary<AiState, string[]> StateLines = new Dictionary<AiState, string[]>
         {
@@ -67,7 +67,7 @@ namespace MicroduckVR.Flock
             slabMat.SetFloat(ShaderIds.Unlit, 1f);
             inkMat = ComicLook.ToonMaterial(ComicLook.Ink, "bubble_ink");
             inkMat.SetFloat(ShaderIds.Unlit, 1f);
-            for (int i = 0; i < POOL; i++) pool.Add(MakeBubble(i));
+            for (int i = 0; i < PoolSize; i++) pool.Add(MakeBubble(i));
         }
 
         Bubble MakeBubble(int i)
@@ -106,7 +106,7 @@ namespace MicroduckVR.Flock
 
         void Say(DuckBrain d, int topic, string[] lines, string context)
         {
-            if (lastSaid.TryGetValue((d, topic), out var when) && Time.time - when < REPEAT) return;
+            if (lastSaid.TryGetValue((d, topic), out var when) && Time.time - when < RepeatGap) return;
             lastSaid[(d, topic)] = Time.time;
             string line = lines[rng.Next(lines.Length)].Replace("{room}", context).Replace("{prop}", context);
             Bubble b = null;
@@ -150,7 +150,7 @@ namespace MicroduckVR.Flock
                     Say(d, d.State, d.Context);
                 }
             }
-            // which bubbles may show: nearest MAX_ON, in front, in range, not behind walls
+            // which bubbles may show: nearest MaxOn, in front, in range, not behind walls
             Vector3 eye = viewer.transform.position;
             var live = new List<Bubble>();
             foreach (var b in pool) { if (b.live && b.duck == null) { b.live = false; b.go.SetActive(false); } if (b.live) live.Add(b); }   // a duck may have been sent home
@@ -161,16 +161,16 @@ namespace MicroduckVR.Flock
                 if (!b.live) { b.go.SetActive(false); continue; }
                 b.age += Time.deltaTime;
                 if (b.age < 0.5f) Fit(b);
-                if (b.age > SHOW + FADE || b.duck == null) { b.live = false; b.go.SetActive(false); continue; }
+                if (b.age > ShowTime + FadeTime || b.duck == null) { b.live = false; b.go.SetActive(false); continue; }
                 Vector3 p = b.duck.Pos + Vector3.up * 0.33f;
                 Vector3 toB = p - eye; float dist = toB.magnitude;
-                bool ok = live.IndexOf(b) < MAX_ON && dist < RANGE && Vector3.Dot(toB, viewer.transform.forward) > 0f
+                bool ok = live.IndexOf(b) < MaxOn && dist < MaxRange && Vector3.Dot(toB, viewer.transform.forward) > 0f
                           && !Physics.Raycast(eye, toB / dist, dist - 0.1f, WorldQueries.WorldMask, QueryTriggerInteraction.Ignore);
                 b.go.SetActive(ok);
                 if (!ok) continue;
                 shown++;
                 // pop in, hold, shrink out; always face the viewer (upright, no roll)
-                float s = b.age < 0.18f ? Mathf.SmoothStep(0.2f, 1.12f, b.age / 0.18f) : b.age < 0.3f ? Mathf.Lerp(1.12f, 1f, (b.age - 0.18f) / 0.12f) : b.age > SHOW ? Mathf.Lerp(1f, 0f, (b.age - SHOW) / FADE) : 1f;
+                float s = b.age < 0.18f ? Mathf.SmoothStep(0.2f, 1.12f, b.age / 0.18f) : b.age < 0.3f ? Mathf.Lerp(1.12f, 1f, (b.age - 0.18f) / 0.12f) : b.age > ShowTime ? Mathf.Lerp(1f, 0f, (b.age - ShowTime) / FadeTime) : 1f;
                 float distScale = Mathf.Clamp(dist / 0.55f, 0.6f, 6f);    // the same size in your eye near or far: small beside you, readable across the room
                 b.go.transform.position = p + Vector3.up * 0.037f * (distScale - 1f);
                 Vector3 look = p - eye; look.y = 0f;

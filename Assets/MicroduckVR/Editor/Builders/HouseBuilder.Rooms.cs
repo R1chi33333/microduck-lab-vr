@@ -13,23 +13,23 @@ namespace MicroduckVR.EditorTools
             const string R = "living";
             var oak = M("table_oak", "#C98A55"); var sage = M("sage", "#8FD3B6");
             // oak table: top at 0.75
-            B(R, "Tabletop", 1.6f, 0.04f, 1.0f, oak, 0f, T_H - 0.02f, 0f, 0f, "table");
+            B(R, "Tabletop", 1.6f, 0.04f, 1.0f, oak, 0f, TableH - 0.02f, 0f, 0f, "table");
             foreach (var lx in new[] { -0.73f, 0.73f }) foreach (var lz in new[] { -0.43f, 0.43f })
-                B(R, "Table leg", 0.045f, T_H - 0.04f, 0.045f, oak, lx, (T_H - 0.04f) / 2f, lz);
+                B(R, "Table leg", 0.045f, TableH - 0.04f, 0.045f, oak, lx, (TableH - 0.04f) / 2f, lz);
             // tabletop platform + ramp + notebook step
-            B(R, "Platform", 0.3f, 0.04f, 0.32f, sage, 0.48f, T_H + 0.02f, 0.12f, 0f, "table");
-            Wedge(R, "Platform ramp", 0.48f - 0.15f - 0.26f, 0f, 0.48f - 0.15f, 0.04f, 0.12f, 0.16f, sage, T_H, "table");
-            B(R, "Notebook", 0.21f, 0.016f, 0.15f, M("notebook", "#FF5D73"), -0.32f, T_H + 0.008f, 0.2f, 0.18f, "card");
+            B(R, "Platform", 0.3f, 0.04f, 0.32f, sage, 0.48f, TableH + 0.02f, 0.12f, 0f, "table");
+            Wedge(R, "Platform ramp", 0.48f - 0.15f - 0.26f, 0f, 0.48f - 0.15f, 0.04f, 0.12f, 0.16f, sage, TableH, "table");
+            B(R, "Notebook", 0.21f, 0.016f, 0.15f, M("notebook", "#FF5D73"), -0.32f, TableH + 0.008f, 0.2f, 0.18f, "card");
             // cardboard switchback: floor -> landing box -> tabletop's right edge
             var card = M("cardboard", "#E3A866");
             const float z1 = -0.3f, z2 = 0.12f, w = 0.22f, xLand0 = 2.2f, xLand1 = 2.55f, xFoot = 0.95f, hLand = 0.375f;
             Wedge(R, "Ramp flight 1", xFoot, 0f, xLand0, hLand, z2, w, card);
-            Wedge(R, "Ramp flight 2", xLand0, hLand, 0.8f, T_H, z1, w, card);
+            Wedge(R, "Ramp flight 2", xLand0, hLand, 0.8f, TableH, z1, w, card);
             float LZ0 = z1 - w / 2f - 0.012f, LZ1 = z2 + w / 2f + 0.012f;
             B(R, "Ramp landing", xLand1 - xLand0, hLand, LZ1 - LZ0, card, (xLand0 + xLand1) / 2f, hLand / 2f, (LZ0 + LZ1) / 2f, 0f, "card");
             B(R, "Ramp landing rail", 0.012f, 0.025f, LZ1 - LZ0, card, xLand1 - 0.006f, hLand + 0.0125f, (LZ0 + LZ1) / 2f);
             // side rails along both flights
-            foreach (var (xa, ha, xb, hb, zc) in new[] { (xFoot, 0f, xLand0, hLand, z2), (xLand0, hLand, 0.8f, T_H, z1) })
+            foreach (var (xa, ha, xb, hb, zc) in new[] { (xFoot, 0f, xLand0, hLand, z2), (xLand0, hLand, 0.8f, TableH, z1) })
                 foreach (var s in new[] { -1f, 1f })
                     Wedge(R, "Ramp rail", xa, ha + 0.025f, xb, hb + 0.025f, zc + s * (w / 2f + 0.006f), 0.012f, card, 0f, "card");
 

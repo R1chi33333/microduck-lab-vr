@@ -45,10 +45,10 @@ namespace MicroduckVR.EditorTools
             B("living", "Window sill", WIN.w + 0.12f, 0.06f, 0.16f, trim, WIN.x, WIN.y0 - 0.02f, -2.48f);
             S("living", "Window view", WIN.w, WIN.h, 0.01f, M("window_view", "#9AD8F2"), WIN.x, WIN.y0 + WIN.h / 2f, bz - 0.04f, 0f, null, false);
 
-            WallX("wall_hall_back", 2.56f, -7.12f, 7.12f, new[] { (-0.45f, 0.45f, DOOR_H), (-5.4f, -4.6f, DOOR_H), (4.6f, 5.4f, DOOR_H) }, "hallway");
+            WallX("wall_hall_back", 2.56f, -7.12f, 7.12f, new[] { (-0.45f, 0.45f, DoorH), (-5.4f, -4.6f, DoorH), (4.6f, 5.4f, DoorH) }, "hallway");
             WallX("wall_hall_front", 3.88f, -7.12f, 7.12f, new[] { (-1.0f, 1.0f, 2.1f) }, "hallway");
-            WallZ("wall_living_left", -3.06f, -2.62f, 2.5f, new[] { (-1.2f, -0.4f, DOOR_H) }, "living");
-            WallZ("wall_living_right", 3.06f, -2.62f, 2.5f, new[] { (-1.6f, -0.8f, DOOR_H) }, "living");
+            WallZ("wall_living_left", -3.06f, -2.62f, 2.5f, new[] { (-1.2f, -0.4f, DoorH) }, "living");
+            WallZ("wall_living_right", 3.06f, -2.62f, 2.5f, new[] { (-1.6f, -0.8f, DoorH) }, "living");
             WallX("wall_kitchen_back", -2.56f, 3.0f, 7.12f, new (float, float, float)[0], "kitchen");
             WallX("wall_bedroom_back", -2.56f, -7.12f, -3.0f, new (float, float, float)[0], "bedroom");
             WallZ("wall_east", 7.06f, -2.62f, 3.94f, new (float, float, float)[0], "kitchen");
