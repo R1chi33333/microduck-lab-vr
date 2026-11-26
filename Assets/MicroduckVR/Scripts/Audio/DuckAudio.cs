@@ -80,9 +80,9 @@ namespace MicroduckVR.Audio
             return a;
         }
 
-        void OnBodySound(string kind, object data)
+        void OnBodySound(BodySound kind, object data)
         {
-            if (kind != "plant") return;
+            if (kind != BodySound.Plant) return;
             var surf = SurfaceTag.At(body.Pos);
             string t = surf != null ? surf.type : "wood";
             var clip = t == "tile" || t == "table" ? stepTile : t == "rug" || t == "bed" ? stepSoft : t == "grass" ? stepGrass : stepWood;

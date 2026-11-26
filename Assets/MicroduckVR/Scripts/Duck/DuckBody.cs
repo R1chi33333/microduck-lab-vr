@@ -42,9 +42,12 @@ namespace MicroduckVR.Duck
             public float err;
         }
 
+        /// <summary>Stage of a fall: tipping over, tumbling (thrown), lying, getting up.</summary>
+        public enum FallPhase { Tip, Tumble, Lie, GetUp }
+
         public class Fall
         {
-            public string phase;                  // tip | tumble | lie | getup
+            public FallPhase phase;
             public Vector3 axis, pivot;
             public float angle, angVel, rest, t, lift, getFrom, lieTime = 1.1f;
             public Dictionary<string, float> from;
@@ -58,7 +61,7 @@ namespace MicroduckVR.Duck
 
         // ------------------------------------------------------------------ config + state
         public Func<float, float, float> Ground = (x, z) => 0f;
-        public Action<string, object> OnSound;
+        public Action<BodySound, object> OnSound;
         public Action OnGotUp;
         /// <summary>An emote started (kind, duration) and a tip-over started (direction): the network session passes them on.</summary>
         public Action<string, float> OnEmote;
@@ -249,7 +252,7 @@ namespace MicroduckVR.Duck
             float sitWas = SitW, crouchWas = CrouchW;
             SitW = Damp(SitW, SitTarget ? 1f : 0f, 3.5f, dt);
             CrouchW = Damp(CrouchW, CrouchTarget ? 1f : 0f, 7f, dt);
-            if (OnSound != null) { if (sitWas < 0.8f && SitW >= 0.8f) OnSound("sit", null); if (crouchWas < 0.7f && CrouchW >= 0.7f) OnSound("crouch", null); }
+            if (OnSound != null) { if (sitWas < 0.8f && SitW >= 0.8f) OnSound(BodySound.Sit, null); if (crouchWas < 0.7f && CrouchW >= 0.7f) OnSound(BodySound.Crouch, null); }
             SkateW = Damp(SkateW, Skating ? 1f : 0f, 8f, dt);
             var em = EmoteOffsets(dt);
             bool wantStep = !Skating && SitW < 0.3f && (speed > 0.006f || Mathf.Abs(YawRate) > 0.08f || footErr > 0.012f);
@@ -331,7 +334,7 @@ namespace MicroduckVR.Duck
                     }
                     else
                     {
-                        if (!F.planted) { F.planted = true; F.pos.y = F.toY; F.pitch = 0f; F.justLanded = true; OnSound?.Invoke("plant", side); }
+                        if (!F.planted) { F.planted = true; F.pos.y = F.toY; F.pitch = 0f; F.justLanded = true; OnSound?.Invoke(BodySound.Plant, side); }
                         F.pitch = 0f;
                         if (SkateW <= 0.01f && F.pos.y > BaseY + 0.008f && !Stepping) F.pos.y = Damp(F.pos.y, BaseY, 10f, dt);
                     }
