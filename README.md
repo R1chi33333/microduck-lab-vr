@@ -66,7 +66,7 @@ its Animator trigger.
 <tr><td align="center"><img src="docs/images/moves/duck_walk.gif" width="200" alt="Walk"><br><code>Walk</code></td><td align="center"><img src="docs/images/moves/duck_turn.gif" width="200" alt="Turn on the spot"><br><code>Turn</code></td><td align="center"><img src="docs/images/moves/duck_idle.gif" width="200" alt="Idle"><br><code>Idle</code></td><td align="center"><img src="docs/images/moves/duck_sit.gif" width="200" alt="Sit"><br><code>Sit</code></td></tr>
 <tr><td align="center"><img src="docs/images/moves/duck_crouch.gif" width="200" alt="Crouch"><br><code>Crouch</code></td><td align="center"><img src="docs/images/moves/duck_hop.gif" width="200" alt="Hop"><br><code>Hop</code></td><td align="center"><img src="docs/images/moves/duck_bite.gif" width="200" alt="Reach and bite"><br><code>Bite</code></td><td align="center"><img src="docs/images/moves/duck_nod.gif" width="200" alt="Nod"><br><code>Nod</code></td></tr>
 <tr><td align="center"><img src="docs/images/moves/duck_shake.gif" width="200" alt="Shake"><br><code>Shake</code></td><td align="center"><img src="docs/images/moves/duck_look.gif" width="200" alt="Look around"><br><code>Look</code></td><td align="center"><img src="docs/images/moves/duck_dance.gif" width="200" alt="Dance"><br><code>Dance</code></td><td align="center"><img src="docs/images/moves/duck_wiggle.gif" width="200" alt="Happy wiggle"><br><code>Wiggle</code></td></tr>
-<tr><td align="center"><img src="docs/images/moves/duck_fallgetup.gif" width="200" alt="Fall and get up"><br><code>FallGetUp</code></td></tr>
+<tr><td align="center"><img src="docs/images/moves/duck_skate.gif" width="200" alt="Roller skates"><br><code>Skate</code></td><td align="center"><img src="docs/images/moves/duck_fallgetup.gif" width="200" alt="Fall and get up"><br><code>FallGetUp</code></td></tr>
 </table>
 
 The same moves are also **Unity animation clips**, in `Assets/MicroduckVR/Prefabs/Ducks/Animations/` (and in the
@@ -74,8 +74,9 @@ The same moves are also **Unity animation clips**, in `Assets/MicroduckVR/Prefab
 
 - `Duck (animated).prefab`: the duck with an Animator, ready to drop into a scene. It idles; fire a trigger
   (`animator.SetTrigger("Dance")`) to play a move, and the one-off moves go back to idle by themselves.
-- `Duck.controller` (one state and one trigger per move) and the 13 clips `Duck_*.anim` (30 fps; Idle, Walk and Turn
-  loop). Walk is in place: move the duck yourself while it plays.
+- `Duck.controller` (one state and one trigger per move) and the 14 clips `Duck_*.anim` (30 fps; Idle, Walk and Turn
+  loop). Walk and Skate are in place: move the duck yourself while they play. The skates are not part of the
+  prefab, so `Skate` lifts the feet by the skates' height; add your own skates under the feet if you use it.
 
 These are recordings: the game keeps moving its ducks in code. After changing a move in `DuckBody.cs`, record them
 again with **Microduck > Assets > Bake Duck Moves** (the GIFs are made from the frames it writes to `Logs/motion/`).

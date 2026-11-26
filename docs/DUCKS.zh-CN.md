@@ -14,13 +14,13 @@
 <tr><td align="center"><img src="images/moves/duck_walk.gif" width="200" alt="Walk"><br><code>Walk</code></td><td align="center"><img src="images/moves/duck_turn.gif" width="200" alt="Turn on the spot"><br><code>Turn</code></td><td align="center"><img src="images/moves/duck_idle.gif" width="200" alt="Idle"><br><code>Idle</code></td><td align="center"><img src="images/moves/duck_sit.gif" width="200" alt="Sit"><br><code>Sit</code></td></tr>
 <tr><td align="center"><img src="images/moves/duck_crouch.gif" width="200" alt="Crouch"><br><code>Crouch</code></td><td align="center"><img src="images/moves/duck_hop.gif" width="200" alt="Hop"><br><code>Hop</code></td><td align="center"><img src="images/moves/duck_bite.gif" width="200" alt="Reach and bite"><br><code>Bite</code></td><td align="center"><img src="images/moves/duck_nod.gif" width="200" alt="Nod"><br><code>Nod</code></td></tr>
 <tr><td align="center"><img src="images/moves/duck_shake.gif" width="200" alt="Shake"><br><code>Shake</code></td><td align="center"><img src="images/moves/duck_look.gif" width="200" alt="Look around"><br><code>Look</code></td><td align="center"><img src="images/moves/duck_dance.gif" width="200" alt="Dance"><br><code>Dance</code></td><td align="center"><img src="images/moves/duck_wiggle.gif" width="200" alt="Happy wiggle"><br><code>Wiggle</code></td></tr>
-<tr><td align="center"><img src="images/moves/duck_fallgetup.gif" width="200" alt="Fall and get up"><br><code>FallGetUp</code></td></tr>
+<tr><td align="center"><img src="images/moves/duck_skate.gif" width="200" alt="Roller skates"><br><code>Skate</code></td><td align="center"><img src="images/moves/duck_fallgetup.gif" width="200" alt="Fall and get up"><br><code>FallGetUp</code></td></tr>
 </table>
 
 这些动作也做成了 **Unity 动画**，在 `Assets/MicroduckVR/Prefabs/Ducks/Animations/` 里（`.unitypackage` 里也有）：
 
 - `Duck (animated).prefab`：带 Animator 的鸭子，直接拖进场景就能用。默认在发呆；调用 `animator.SetTrigger("Dance")` 这样的触发器就会做对应动作，一次性的动作做完会自己回到发呆。
-- `Duck.controller`（每个动作一个状态、一个触发器）和 13 个动画片段 `Duck_*.anim`（30 帧每秒；发呆、走路、转身是循环的）。走路是原地走，要走起来得自己移动鸭子。
+- `Duck.controller`（每个动作一个状态、一个触发器）和 14 个动画片段 `Duck_*.anim`（30 帧每秒；发呆、走路、转身是循环的）。走路和轮滑都是原地的，要走起来得自己移动鸭子。prefab 里没有轮滑鞋，所以 `Skate` 只会把脚抬高一个轮滑鞋的高度，要用的话请自己在脚下放上轮滑鞋。
 
 这些是"录下来的"动画，游戏本身还是用代码实时驱动鸭子。在 `DuckBody.cs` 里改了动作之后，用菜单 **Microduck > Assets > Bake Duck Moves** 重新录一遍即可（GIF 是用它输出到 `Logs/motion/` 的帧做的）。
 
