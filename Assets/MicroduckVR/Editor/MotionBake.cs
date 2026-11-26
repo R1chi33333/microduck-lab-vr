@@ -62,7 +62,7 @@ namespace MicroduckVR.EditorTools
             Emote("Nod", "NOD", 1.6f), Emote("Shake", "SHAKE", 1.6f), Emote("Look", "LOOK AROUND", 3.1f), Emote("Dance", "DANCE", 2.9f),
             new Move { id = "Wiggle", title = "HAPPY WIGGLE", warm = 0.3f, len = 1.8f, drive = (t, b, c) => { if (t < 0.05f) b.HappyWiggle = 1f; } },
             new Move { id = "FallGetUp", title = "FALL AND GET UP", warm = 0.3f, len = 4.2f, camAngle = 50f, drive = (t, b, c) =>
-                { if (t >= 0.2f && t < 0.2f + 1f / Fps && !b.Fallen) b.StartTip(new Vector3(0.64f, 0f, -0.77f));          // sideways across the picture } },
+                { if (t >= 0.2f && t < 0.2f + 1f / Fps && !b.Fallen) b.StartTip(new Vector3(0.64f, 0f, -0.77f)); } },
         };
 
         static Move Emote(string id, string title, float len) => new Move
