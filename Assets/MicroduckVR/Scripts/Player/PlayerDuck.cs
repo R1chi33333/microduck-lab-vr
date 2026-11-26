@@ -201,7 +201,7 @@ namespace MicroduckVR.Player
             if (DebugWalk.HasValue) want = DebugWalk.Value.normalized * Gait.MaxSpeed * speedScale;
             if (MicroduckVR.Games.RaceGame.Active) want *= 1.9f;                                 // race pace (skates are faster still)
             var surf = SurfaceTag.At(mover.transform.position);
-            string surfType = surf != null ? surf.type : "wood";
+            SurfaceType surfType = surf != null ? surf.Kind : SurfaceType.Wood;
             float prevYaw = yaw;
             Vector3 before = mover.transform.position;
             if (skates.On)
@@ -214,7 +214,7 @@ namespace MicroduckVR.Player
             }
             else
             {
-                if (surfType == "water") want *= 0.55f;
+                if (surfType == SurfaceType.Water) want *= 0.55f;
                 float grip = surf != null ? Mathf.Lerp(0.18f, 1f, Mathf.InverseLerp(0.15f, 0.7f, surf.Friction)) : 1f;   // tiles: you slide
                 vel = Vector3.MoveTowards(vel, want, 0.9f * grip * dt);   // gentle acceleration (comfort)
 
@@ -274,8 +274,8 @@ namespace MicroduckVR.Player
             else if (cam != null) body.LookAt.gazeDir = cam.transform.forward;
 
             // bed: boing boing (the body hops; the camera only follows a damped fraction of it)
-            bedT = surfType == "bed" ? bedT + dt : 0f;
-            body.Hop = surfType == "bed" ? Mathf.Abs(Mathf.Sin(bedT * 6.5f)) * 0.028f : Mathf.MoveTowards(body.Hop, 0f, 0.2f * dt);
+            bedT = surfType == SurfaceType.Bed ? bedT + dt : 0f;
+            body.Hop = surfType == SurfaceType.Bed ? Mathf.Abs(Mathf.Sin(bedT * 6.5f)) * 0.028f : Mathf.MoveTowards(body.Hop, 0f, 0.2f * dt);
             body.Step(dt, new Vector3(p.x, p.y, p.z), yaw, realVel, yawRate);
 
             if (held != null)

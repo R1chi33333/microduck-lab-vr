@@ -122,7 +122,7 @@ namespace MicroduckVR.Comic
             {
                 waterT = 0.1f;
                 bool w = Physics.Raycast(pd.Body.Pos + Vector3.up * 0.05f, Vector3.down, out var hit, 0.3f, 1 << DuckSetup.LayerWorld, QueryTriggerInteraction.Ignore)
-                         && hit.collider.GetComponent<SurfaceTag>() is SurfaceTag st && st.type == "water";
+                         && hit.collider.GetComponent<SurfaceTag>() is SurfaceTag st && st.Kind == SurfaceType.Water;
                 if (w && !inWater) { Own(pd, "SPLASH!", "#3A86FF", 1.1f); ComicSplash.Spawn(pd.Body.Pos, 1.2f); MicroduckVR.Net.NetSession.SendSplash(pd.Body.Pos, 1.2f); }
                 else if (w && pd.Speed > 0.03f && (paddle = !paddle)) { ComicSplash.Spawn(pd.Body.Pos, 0.7f); MicroduckVR.Net.NetSession.SendSplash(pd.Body.Pos, 0.7f); }     // paddling about: a small one every other look
                 inWater = w;
@@ -130,7 +130,7 @@ namespace MicroduckVR.Comic
                 foreach (var d in MicroduckVR.Flock.DuckBrain.All)
                 {
                     if (d == null) continue;
-                    bool dw = d.Surface == "water"; wet.TryGetValue(d, out bool was);
+                    bool dw = d.Surface == SurfaceType.Water; wet.TryGetValue(d, out bool was);
                     if (dw && !was) ComicSplash.Spawn(d.Pos, 1f);
                     wet[d] = dw;
                 }

@@ -97,7 +97,7 @@ namespace MicroduckVR.World
             if (!OnLawn(p)) return false;
             if (!Physics.Raycast(p + Vector3.up * 0.05f, Vector3.down, out var hit, 0.3f, 1 << DuckSetup.LayerWorld, QueryTriggerInteraction.Ignore)) return false;
             var tag = hit.collider.GetComponent<SurfaceTag>();
-            return tag != null && tag.type == "grass";
+            return tag != null && tag.Kind == SurfaceType.Grass;
         }
 
         Transform Bit(Material m, Vector3 at)

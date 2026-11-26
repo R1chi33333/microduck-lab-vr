@@ -42,6 +42,7 @@ namespace MicroduckVR.EditorTools
         {
             "Assets/MicroduckVR/Scripts/World/Grabbable.cs",
             "Assets/MicroduckVR/Scripts/World/SurfaceTag.cs",
+            SurfaceTypeScript,
         };
 
         // ================================================================== counters

@@ -84,8 +84,8 @@ namespace MicroduckVR.Audio
         {
             if (kind != BodySound.Plant) return;
             var surf = SurfaceTag.At(body.Pos);
-            string t = surf != null ? surf.type : "wood";
-            var clip = t == "tile" || t == "table" ? stepTile : t == "rug" || t == "bed" ? stepSoft : t == "grass" ? stepGrass : stepWood;
+            SurfaceType t = surf != null ? surf.Kind : SurfaceType.Wood;
+            var clip = t == SurfaceType.Tile || t == SurfaceType.Table ? stepTile : t == SurfaceType.Rug || t == SurfaceType.Bed ? stepSoft : t == SurfaceType.Grass ? stepGrass : stepWood;
             steps.pitch = 0.9f + (float)rng.NextDouble() * 0.25f;
             steps.PlayOneShot(clip, volume * 0.45f);
         }

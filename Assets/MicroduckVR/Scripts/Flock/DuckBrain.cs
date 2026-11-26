@@ -41,7 +41,7 @@ namespace MicroduckVR.Flock
         public DuckBody Body => body;
         public Vector3 Pos => mover != null ? mover.transform.position : transform.position;
         public float Speed { get; private set; }
-        public string Surface { get; private set; } = "wood";
+        public SurfaceType Surface { get; private set; } = SurfaceType.Wood;
 
         DuckBody body; CharacterController mover;
         System.Random rng;
@@ -101,8 +101,8 @@ namespace MicroduckVR.Flock
         {
             if (body == null) return;
             var surf = SurfaceTag.At(p);
-            string st = surf != null ? surf.type : "wood";
-            if (st != Surface) { Surface = st; if (st == "bed" || st == "water" || st == "tile") OnEvent?.Invoke(this, st, ""); }
+            SurfaceType st = surf != null ? surf.Kind : SurfaceType.Wood;
+            if (st != Surface) { Surface = st; if (st == SurfaceType.Bed || st == SurfaceType.Water || st == SurfaceType.Tile) OnEvent?.Invoke(this, SurfaceTypes.Name(st), ""); }
             if (mover != null) mover.transform.position = p;
             Speed = Flat(p - lastPos).magnitude / Mathf.Max(dt, 1e-4f);
             lastPos = p; yaw = yawRad; yawRate = w;
@@ -365,9 +365,9 @@ namespace MicroduckVR.Flock
             }
             // surface: slippery tiles, slow water, bouncy bed
             var surf = SurfaceTag.At(Pos);
-            string st = surf != null ? surf.type : "wood";
-            if (st != Surface) { var prevS = Surface; Surface = st; if (st == "bed" || st == "water" || st == "tile") OnEvent?.Invoke(this, st, ""); if (st == "bed") boing = 1f; }
-            if (st == "water") v *= 0.55f;
+            SurfaceType st = surf != null ? surf.Kind : SurfaceType.Wood;
+            if (st != Surface) { var prevS = Surface; Surface = st; if (st == SurfaceType.Bed || st == SurfaceType.Water || st == SurfaceType.Tile) OnEvent?.Invoke(this, SurfaceTypes.Name(st), ""); if (st == SurfaceType.Bed) boing = 1f; }
+            if (st == SurfaceType.Water) v *= 0.55f;
             float grip = surf != null ? Mathf.Lerp(0.18f, 1f, Mathf.InverseLerp(0.15f, 0.7f, surf.Friction)) : 1f;
             yaw += w * dt;
             Vector3 want = GltfSpace.Forward(yaw) * v;
@@ -380,9 +380,9 @@ namespace MicroduckVR.Flock
             if (v > 0.05f && Speed < 0.01f) { stuckT += dt; if (stuckT > 1.2f) { stuckT = 0f; target = HouseLayout.RandomSpot(p, 0.3f, rng); } } else stuckT = 0f;
             lastPos = p;
             yawRate = w;
-            bedT = st == "bed" ? bedT + dt : 0f;
+            bedT = st == SurfaceType.Bed ? bedT + dt : 0f;
             boing *= Mathf.Exp(-2.2f * dt);
-            if (pounceT < 0f) body.Hop = st == "bed" ? Mathf.Abs(Mathf.Sin(bedT * 13f + seed)) * (0.011f * Mathf.Clamp01(Speed / 0.02f) + 0.026f * boing) : Mathf.MoveTowards(body.Hop, 0f, 0.2f * dt);
+            if (pounceT < 0f) body.Hop = st == SurfaceType.Bed ? Mathf.Abs(Mathf.Sin(bedT * 13f + seed)) * (0.011f * Mathf.Clamp01(Speed / 0.02f) + 0.026f * boing) : Mathf.MoveTowards(body.Hop, 0f, 0.2f * dt);
             body.Step(dt, p, yaw, Flat(vel), yawRate);
             if (held != null) { held.transform.position = body.BeakGap(); held.transform.rotation = Quaternion.LookRotation(body.HeadDir(), Vector3.up); }
         }

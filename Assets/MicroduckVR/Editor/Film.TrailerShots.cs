@@ -412,7 +412,7 @@ namespace MicroduckVR.EditorTools
                 {
                     PlayerDuck.DebugWalk = Vector3.left;
                     var st = SurfaceTag.At(Pos);
-                    bool inWater = st != null && st.type == "water";
+                    bool inWater = st != null && st.Kind == SurfaceType.Water;
                     if (inWater && fired.Add("wet")) { Say("SPLASH!", "#3A86FF", 1f, 1.3f); FlockEmote("dance"); ComicSplash.Spawn(Pos + V(-0.02f, 0f, 0f), 1.5f); splashT = 0.3f; }
                     // every step in the puddle throws up more water (the game does this itself; its sound-word watcher is off while filming)
                     if (inWater && fired.Contains("wet") && (splashT -= Dt) <= 0f) { splashT = 0.3f; ComicSplash.Spawn(Pos + V(-0.03f, 0f, 0f), 1.1f); }
