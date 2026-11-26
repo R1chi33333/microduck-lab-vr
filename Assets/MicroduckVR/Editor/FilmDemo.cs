@@ -181,7 +181,7 @@ namespace MicroduckVR.EditorTools
                 {
                     GameHud.Hidden = false;
                     var tgt = RaceGame.Ensure().PlayerTarget(); if (tgt.HasValue) Walk(tgt.Value, 0.02f); else Stop();
-                    if (t < 3.6f) Look(V(3.75f, 0.42f, 3.26f), V(1.6f, 0.12f, 3.22f), 46f); else Chase(0.7f, 0.42f, 64f);
+                    if (t < 3.6f) Look(V(3.3f, 0.34f, 3.44f), V(1.6f, 0.12f, 3.22f), 46f); else Chase(0.7f, 0.42f, 64f);      // in front of the gate behind the grid, clear of its pointer
                 } });
 
             L.Add(new Shot { name = "emotes", dur = 10f, pre = 0.3f, caption = "Toy bag: DANCE, NOD, SHAKE, LOOK",

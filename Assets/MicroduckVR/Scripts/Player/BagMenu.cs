@@ -228,7 +228,9 @@ namespace MicroduckVR.Player
             Selected = kind; panel.gameObject.SetActive(false); SetMode(Mode.Place); Play(clickClip);
         }
 
-        void SetMode(Mode m) { State = m; Busy = m != Mode.Closed; laser.Show(Busy); if (m != Mode.Place) DropGhost(); }
+        /// <summary>Filming from outside: the pointer line is left out of the picture.</summary>
+        public static bool HideBeam;
+        void SetMode(Mode m) { State = m; Busy = m != Mode.Closed; laser.Show(Busy && !HideBeam); if (m != Mode.Place) DropGhost(); }
 
         Ray Aim()
         {
@@ -309,6 +311,7 @@ namespace MicroduckVR.Player
                 }
             }
 
+            if (HideBeam) laser.Show(false);
             laser.Set(ray.origin, end);
             footer.text = State == Mode.Panel && hover >= 0 ? Footer(tiles[hover].kind) : "";
         }

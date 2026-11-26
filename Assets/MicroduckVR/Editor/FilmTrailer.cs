@@ -84,7 +84,7 @@ namespace MicroduckVR.EditorTools
 
         static void Fresh(string lk)
         {
-            Clean(); Unpark(); HideDot(); GameHud.Hidden = true; biteToy = null;
+            Clean(); Unpark(); HideDot(); GameHud.Hidden = true; biteToy = null; BagMenu.HideBeam = false;
             foreach (var pop in Object.FindObjectsByType<ComicPop>(FindObjectsSortMode.None)) Object.Destroy(pop.gameObject);   // no sound word from the last shot hanging in this one
             if (words == null) words = Object.FindAnyObjectByType<ComicEvents>();
             if (words != null) words.enabled = false;
@@ -101,7 +101,36 @@ namespace MicroduckVR.EditorTools
         /// <summary>A comic sound word (the game's own ComicPop) at a place in the world; it turns to face the film camera.</summary>
         static void Pop(string word, Vector3 at, string hex = "#FF5D73", float size = 1.5f, float life = 1f)
         {
-            ComicPop.Spawn(word, Keep(at), hex, size, life);
+            var vp = cam.WorldToViewportPoint(at);
+            if (vp.z > 0.05f)
+            {
+                float tan = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+                var hv = cam.WorldToViewportPoint(P.Body.EyePosition);
+                bool headIn = hv.z > 0.05f && hv.x > 0.02f && hv.x < 0.98f && hv.y > 0.05f && hv.y < 0.98f;
+                // nearer the lens than the player's duck, so never hidden behind it - and looking the same size
+                if (headIn) { float z = Mathf.Min(vp.z, Mathf.Max(0.15f, hv.z - 0.12f)); size *= z / vp.z; vp.z = z; }
+                float fh = 2f * vp.z * tan, fw = fh * cam.aspect;
+                float pw = (word.Length * 0.012f + 0.03f) * size * 1.45f / fw, ph = 0.036f * size * 1.75f / fh;     // half the burst, as a share of the frame
+                if (headIn)
+                {
+                    // not on the duck's head either: beside it on the side it was meant for, else above it, else on the other side
+                    float hw = 0.08f / (2f * hv.z * tan * cam.aspect), hh = 0.045f / (2f * hv.z * tan);
+                    if (Mathf.Abs(vp.x - hv.x) < pw * 0.85f + hw && Mathf.Abs(vp.y - hv.y) < ph + hh)
+                    {
+                        float need = pw * 0.85f + hw, side = vp.x >= hv.x ? 1f : -1f, up = hv.y + ph + hh + 0.02f;
+                        bool Fits(float x) => x >= pw + 0.03f && x <= 0.97f - pw;
+                        if (Fits(hv.x + side * need)) vp.x = hv.x + side * need;
+                        else if (up <= 0.96f - ph) vp.y = up;
+                        else if (Fits(hv.x - side * need)) vp.x = hv.x - side * need;
+                        else vp.x = hv.x + side * need;
+                    }
+                }
+                // and all of it inside the frame (the bottom strip belongs to the captions)
+                vp.x = pw < 0.47f ? Mathf.Clamp(vp.x, pw + 0.03f, 0.97f - pw) : 0.5f;
+                vp.y = Mathf.Clamp(vp.y, Mathf.Min(ph + 0.2f, 0.5f), Mathf.Max(0.96f - ph, 0.5f));
+                at = cam.ViewportToWorldPoint(vp);
+            }
+            ComicPop.Spawn(word, at, hex, size, life);
             var go = GameObject.Find("Pop " + word); if (go != null) go.name = "Film pop";
         }
         /// <summary>A point pulled inside the frame (sound words must not be cut off by its edge).</summary>
@@ -323,7 +352,7 @@ namespace MicroduckVR.EditorTools
                 {
                     At(t, -3.7f, "race", () => { RaceGame.Ensure().StartRace(); Skates(true); });       // a frame after SendHome: the grid must not hold ducks that are leaving
                     if (RaceGame.Active && !RaceGame.Frozen) PlayerDuck.DebugWalk = Vector3.left;
-                    At(t, 0.25f, "boost", () => { PlayerSkates.DebugBoost = 1f; Say("ZOOM!", "#3A86FF", 1f, 1.1f); });
+                    At(t, 0.25f, "boost", () => { PlayerSkates.DebugBoost = 1f; Say("ZOOM!", "#3A86FF", 1f, 1.8f); });
                     At(t, 0.6f, "boostoff", () => PlayerSkates.DebugBoost = null);
                     Soft(Pos + V(-Lerp(0.75f, 0.48f, U), 0.1f, 0.08f), Pos + V(0f, 0.16f, 0f), 60f, 0.12f);
                 }));
@@ -367,11 +396,11 @@ namespace MicroduckVR.EditorTools
 
             // 0:12  through its eyes: in under the table, ducks looking up as you pass
             L.Add(Cut("pov_waddle", 2f, 1.7f,
-                () => { Sweep(TableArea); Place(V(0.42f, 0f, 1.2f), 190f); MoveDuck(0, V(0.12f, 0f, 0.5f), 70f); MoveDuck(1, V(0.55f, 0f, 0.25f), 300f); MoveDuck(2, V(0.2f, 0f, -0.1f), 20f); },
+                () => { Sweep(TableArea); Shoo(); Place(V(0.42f, 0f, 1.2f), 190f); MoveDuck(0, V(-0.04f, 0f, 0.42f), 70f); MoveDuck(1, V(0.68f, 0f, 0.3f), 300f); MoveDuck(2, V(0.22f, 0f, -0.5f), 10f); },
                 t =>
                 {
                     PlayerDuck.DebugWalk = Fwd(190f * Mathf.Deg2Rad);
-                    At(t, 1.0f, "nod", () => FlockEmote("nod"));
+                    At(t, 0.2f, "nod", () => FlockEmote("nod"));
                     Eyes(190f + 5f * Mathf.Sin(t * 0.9f), -3f, 88f);
                 }, true));
 
@@ -446,16 +475,13 @@ namespace MicroduckVR.EditorTools
                 {
                     var bag = Bag; var eye = P.cam.transform.position;
                     At(t, -0.6f, "open", () => bag.Open());
-                    if (t > -0.4f && t < 0.9f) bag.SetDebugAim(new Ray(eye, Vector3.Lerp(bag.TileWorld("help"), bag.TileWorld("wicker_ball"), E((t + 0.4f) / 1.2f)) - eye));
-                    At(t, 1.0f, "pick", () => bag.Choose("wicker_ball"));
-                    if (t >= 1.0f) bag.SetDebugAim(new Ray(eye, BagSpot(0) + V(0f, 0.01f, 0f) - eye));
-                    At(t, 1.5f, "put", () => bag.DebugPress());
-                    Eyes(BagYaw, Lerp(3f, BagPitch, (t - 1.0f) / 0.35f), Lerp(62f, 50f, (t - 1.0f) / 0.35f));
+                    if (t > -0.4f) bag.SetDebugAim(new Ray(eye, Vector3.Lerp(bag.TileWorld("help"), bag.TileWorld("wicker_ball"), E((t + 0.4f) / 1.9f)) - eye));
+                    Eyes(BagYaw, 3f, Lerp(62f, 52f, U));
                 }, true));
 
             // 0:26  ... and three more, one on every beat: from outside now, the duck and its toys in one picture
             L.Add(Cut("bag_rain", 2f, 0.5f,
-                () => { Sweep(FloorArea); Shoo(); MarkToys(); Place(V(-1.45f, 0f, 0.75f), BagYaw); Toy("wicker_ball", BagSpot(0), 0f); },
+                () => { Sweep(FloorArea); Shoo(); MarkToys(); Place(V(-1.45f, 0f, 0.75f), BagYaw); Toy("wicker_ball", BagSpot(0), 0f); BagMenu.HideBeam = true; },
                 t =>
                 {
                     var bag = Bag; var eye = P.cam.transform.position;
@@ -473,11 +499,11 @@ namespace MicroduckVR.EditorTools
                 () => { Sweep(HallArea); Shoo(); Place(V(4.0f, 0f, HallZ), 270f); },
                 t =>
                 {
-                    At(t, 0.35f, "on", () => { Skates(true); Pop("CLICK!", Pos + V(-0.14f, 0.15f, 0.14f), "#FFC43D", 0.8f, 0.55f); });
-                    if (t > 0.8f) PlayerDuck.DebugWalk = Vector3.left;
-                    At(t, 1.1f, "boost", () => PlayerSkates.DebugBoost = 1f); At(t, 1.6f, "boostoff", () => PlayerSkates.DebugBoost = null);
+                    At(t, 0.12f, "on", () => { Skates(true); Pop("CLICK!", Pos + V(-0.16f, 0.13f, 0.1f), "#FFC43D", 0.5f, 0.55f); });
+                    if (t > 0.55f) PlayerDuck.DebugWalk = Vector3.left;
+                    At(t, 1.0f, "boost", () => PlayerSkates.DebugBoost = 1f); At(t, 1.5f, "boostoff", () => PlayerSkates.DebugBoost = null);
                     // at the feet: the skates snap on, one push, and the duck is gone out of the frame
-                    Soft(Pos + V(-0.1f, 0.05f, 0.42f), Pos + V(-0.02f, 0.065f, 0f), 34f, t < 0.8f ? 0.02f : 0.5f); fstop = 2.8f;
+                    Soft(Pos + V(-0.1f, 0.05f, 0.42f), Pos + V(-0.02f, 0.065f, 0f), 34f, t < 0.55f ? 0.02f : 0.5f); fstop = 2.8f;
                 }));
 
             // 0:30  boost: tracking alongside down the hallway, ZOOM! on the second beat, the doorway whips by
@@ -571,22 +597,23 @@ namespace MicroduckVR.EditorTools
 
             // 0:44  the race: the grid seen through the start arch, GO! on the second beat, the pack bursts at the lens
             L.Add(Cut("race_go", 2f, 2.5f,
-                () => { Sweep(HallArea); RaceGame.Ensure().StartRace(); },
+                () => { Sweep(HallArea); RaceGame.Ensure().StartRace(); Skates(true); },
                 t =>
                 {
-                    var tgt = RaceGame.Ensure().PlayerTarget(); if (tgt.HasValue) Walk(tgt.Value, 0.02f);
-                    At(t, 0.5f, "go", () => Pop("GO!", Pos + V(0.1f, 0.42f, 0f), "#8FD35A", 1.8f, 0.9f));
-                    // backing away down the hallway just ahead of the leader, the pack and the start gate behind
-                    Soft(Pos + V(-0.78f, 0.09f, -0.2f), Pos + V(0.05f, 0.16f, 0f), 42f, 0.22f); fstop = 4f;
+                    if (RaceGame.Active && !RaceGame.Frozen) PlayerDuck.DebugWalk = Vector3.left;
+                    At(t, 0.5f, "go", () => { Pop("GO!", Pos + V(0f, 0.3f, 0.26f), "#8FD35A", 1.9f, 0.9f); PlayerSkates.DebugBoost = 1f; });
+                    At(t, 1.0f, "boostoff", () => PlayerSkates.DebugBoost = null);
+                    // backing away down the hallway just ahead of the leader: on GO! it bursts at the lens
+                    Soft(Pos + V(-0.78f, 0.09f, -0.2f), Pos + V(0.05f, 0.16f, 0f), 42f, 0.3f); fstop = 4f;
                 }));
 
             // 0:46  through the next gate, straight over the camera
-            L.Add(Cut("race_gate", 2f, 2.35f,
+            L.Add(Cut("race_gate", 2f, 3.05f,
                 () =>
                 {
                     Sweep(HallArea); RaceGame.Ensure().StartRace();
-                    Place(V(-2.18f, 0f, HallZ), 270f);
-                    for (int i = 0; i < DuckBrain.All.Count; i++) MoveDuck(i, V(-1.98f + 0.2f * (i / 2), 0f, HallZ + (i % 2 == 0 ? -0.2f : 0.2f)), 270f);
+                    Place(V(-1.9f, 0f, HallZ), 270f);
+                    for (int i = 0; i < DuckBrain.All.Count; i++) MoveDuck(i, V(-1.7f + 0.2f * (i / 2), 0f, HallZ + (i % 2 == 0 ? -0.2f : 0.2f)), 270f);
                 },
                 t =>
                 {
@@ -645,11 +672,11 @@ namespace MicroduckVR.EditorTools
 
             // 0:57  through the lawn: the grass parts round the duck, clippings fly
             L.Add(Cut("c_grass", 1f, 1.0f,
-                () => { Sweep(LawnArea); Weed(Lawn + V(0f, 0f, -0.2f), 1.7f); Place(Lawn + V(-0.5f, 0f, 0.25f), 90f); },
+                () => { Sweep(LawnArea); Weed(Lawn + V(0f, 0f, -0.2f), 1.7f); Shoo(); Place(Lawn + V(-0.5f, 0f, 0.25f), 90f); MoveDuck(0, Lawn + V(-0.82f, 0f, 0.45f), 90f); MoveDuck(1, Lawn + V(-1.1f, 0f, 0.62f), 90f); },
                 t =>
                 {
                     PlayerDuck.DebugWalk = Vector3.right;
-                    Soft(Pos + V(0.12f, 0.3f, -0.85f), Pos + V(0.06f, 0.12f, 0f), 34f, 0.2f); fstop = 2.8f; LensClear = true;
+                    Soft(Pos + V(0.12f, 0.3f, -0.85f), Pos + V(-0.1f, 0.12f, 0f), 34f, 0.2f); Focus(P.Body.EyePosition, 4f); LensClear = true;
                 }));
 
             // 0:58  the toy train steams past, the duck watching it go by
@@ -683,11 +710,12 @@ namespace MicroduckVR.EditorTools
                     if (g != null)
                     {
                         At(t, -0.8f, "row", () => Click(g.Board, "row_0")); At(t, -0.7f, "rowr", () => WorldPanel.DebugPoint = null);
-                        At(t, 0.15f, "rep", () => Click(g.Board, "replace")); At(t, 0.25f, "repr", () => WorldPanel.DebugPoint = null);
+                        At(t, -0.05f, "rep", () => Click(g.Board, "replace")); At(t, 0.05f, "repr", () => WorldPanel.DebugPoint = null);
                     }
                     wear.ApplyTo(P.gameObject, false);            // the garage flashes the part and then restores the saved look: keep the film's
-                    At(t, 0.3f, "new", () => Pop("GOOD AS NEW!", V(-2.25f, 0.38f, 2.05f), "#8FD35A", 1.0f, 0.7f));
-                    Look(V(-1.55f, 0.12f, 1.45f), V(-2.2f, 0.2f, 1.78f), 40f); fstop = 4f;
+                    At(t, 0.2f, "new", () => Pop("LIKE NEW!", V(-2.25f, 0.34f, 2.1f), "#FF5D73", 1.25f, 0.78f));
+                    // the duck left of centre: the sign whole on its left, room for the word on its right
+                    Look(V(-1.55f, 0.12f, 1.45f), V(-2.2f, 0.2f, 1.96f), 46f); Focus(P.Body.EyePosition, 4f);
                 }));
 
             // 1:00  to the puddle: head-on, the camera backing away over the water
@@ -762,11 +790,11 @@ namespace MicroduckVR.EditorTools
                 }));
 
             // 1:07  CHOMP! - a strawberry, from the front
-            L.Add(Cut("c_chomp", 1f, 1.5f,
+            L.Add(Cut("c_chomp", 1f, 1.75f,
                 () => { Sweep(FloorArea); Place(V(-1.22f, 0f, 1.0f), 90f); Bait("strawberry", -1.0f, 1.0f); },
                 t =>
                 {
-                    if (Chomp(t, -0.35f) && fired.Add("got")) Say("CHOMP!", "#FF5D73", 1f, 0.85f);
+                    if (Chomp(t, -0.6f) && fired.Add("got")) Say("CHOMP!", "#FF5D73", 1f, 0.85f);
                     Look(V(-0.45f, 0.12f, 1.38f), V(-1.06f, 0.13f, 1.0f), 36f); fstop = 2.8f;
                 }));
 
@@ -824,7 +852,9 @@ namespace MicroduckVR.EditorTools
                 () => { Sweep(FloorArea); Shoo(); Place(V(-1.0f, 0f, 0.9f), 0f); Wear("lavender"); },
                 t =>
                 {
-                    At(t, 0.375f, "graphite", () => Wear("graphite"));
+                    At(t, -0.3f, "dance", () => Emote("dance"));
+                    At(t, 0.25f, "graphite", () => Wear("graphite"));
+                    At(t, 0.5f, "sky", () => Wear("sky"));
                     At(t, 0.75f, "cream", () => Wear("cream"));
                     Look(Pos + V(0.06f, 0.14f, 0.95f), Pos + V(0f, 0.15f, 0f), 25f); fstop = 2.8f;
                 }));
@@ -866,14 +896,14 @@ namespace MicroduckVR.EditorTools
                     {
                         hitAt = t;
                         PlayerSkates.DebugBoost = null;
-                        Pop("BONK!", V(wallX - 0.3f, 0.36f, HallZ), "#FF8A3D", 1.5f, 1.2f);
+                        Pop("BONK!", V(wallX - 0.3f, 0.43f, HallZ), "#FF8A3D", 1.7f, Mathf.Clamp(1.95f - t, 0.3f, 1.2f));
                         if (DuckBrain.All.Count > 0 && DuckBrain.All[0].Body != null) DuckBrain.All[0].Body.PlayEmote("look");
                     }
                     if (fired.Contains("hit")) Stop();
                     else if (gap > 0.45f) SkateOnCue(Vector3.right, gap - 0.45f, 0.68f - t, t);   // be 45 cm out at about 0.62 s ...
                     else { PlayerDuck.DebugWalk = Vector3.right; PlayerSkates.DebugBoost = 1f; }  // ... then boost: 45 cm at boost speed is 0.9 s
                     // down the hallway from behind: the duck speeds away from the lens and meets the end wall ... then, a beat later, close on the heap
-                    if (t - hitAt > 0.6f) { Look(V(Pos.x - 0.62f, 0.46f, Pos.z - 0.2f), Pos + V(-0.08f, 0.06f, 0.04f), 44f); fstop = 11f; }
+                    if (fired.Contains("hit") && t >= 1.999f) { Look(V(Pos.x - 0.62f, 0.46f, Pos.z - 0.2f), Pos + V(-0.08f, 0.06f, 0.04f), 44f); fstop = 11f; }
                     else { Look(V(wallX - 2.25f, 0.15f, HallZ - 0.04f), V(wallX, 0.17f, HallZ), 17f); Focus(V(wallX - 0.2f, 0.15f, HallZ), 5.6f); }
                 }));
 

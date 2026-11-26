@@ -63,9 +63,11 @@ namespace MicroduckVR.EditorTools
 
         [MenuItem("Microduck/Film/Trailer")] public static void Trailer() => Begin("trailer", TrailerShots(), false, Cinema);
         [MenuItem("Microduck/Film/Trailer (preview stills)")] public static void TrailerPreview() => Begin("trailer", TrailerShots(), true, Stills);
-        [MenuItem("Microduck/Film/Demo")] public static void Demo() => Begin("demo", DemoShots(), false, Plain);
+        [MenuItem("Microduck/Film/Demo")] public static void Demo() => Begin("demo", DemoShots(), false, new Quality { ss = 2, bitrate = 16000000 });
         /// <summary>Only the tutorial part of the walkthrough (to re-film it on its own).</summary>
-        public static void DemoTutorial() => Begin("demo_tutorial", DemoShots().GetRange(0, 1), false, Plain);
+        /// <summary>One part of the walkthrough again (the race).</summary>
+        public static void DemoRace() => Begin("demo_race", DemoShots().FindAll(x => x.name == "race"), false, new Quality { ss = 2, bitrate = 16000000 });
+        public static void DemoTutorial() => Begin("demo_tutorial", DemoShots().GetRange(0, 1), false, new Quality { ss = 2, bitrate = 16000000 });
         [MenuItem("Microduck/Film/Demo (preview stills)")] public static void DemoPreview() => Begin("demo", DemoShots(), true, new Quality { w = 480, h = 270 });
         /// <summary>A few named trailer shots only, e.g. to re-film them: set Only first.</summary>
         public static string Only = "";
