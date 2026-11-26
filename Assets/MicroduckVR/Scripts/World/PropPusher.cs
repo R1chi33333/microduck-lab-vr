@@ -18,12 +18,20 @@ namespace MicroduckVR.World
         void OnControllerColliderHit(ControllerColliderHit hit)
         {
             var rb = hit.collider.attachedRigidbody;
-            if (rb == null || rb.isKinematic) return;
+            if (rb == null) return;
+            // playing on a joining PC, the host simulates the toys (here they are kinematic): ask it to push
+            if (rb.isKinematic && !MicroduckVR.Net.NetSession.Joined) return;
             if (hit.moveDirection.y < -0.5f) return;                         // standing on it, not walking into it
             var dir = new Vector3(hit.moveDirection.x, 0f, hit.moveDirection.z);
             if (dir.sqrMagnitude < 1e-6f) return;
             dir.Normalize();
             float speed = Mathf.Max(new Vector3(cc.velocity.x, 0f, cc.velocity.z).magnitude, 0.06f);
+            if (rb.isKinematic)
+            {
+                Vector3 hp = new Vector3(hit.point.x, Mathf.Max(hit.point.y, rb.worldCenterOfMass.y), hit.point.z);
+                MicroduckVR.Net.NetSession.QueuePush(rb, dir, speed * speedFactor, pushForce * Time.deltaTime / Mathf.Max(rb.mass, 0.01f), hp);
+                return;
+            }
             float along = Vector3.Dot(rb.linearVelocity, dir), want = speed * speedFactor;
             if (along >= want) return;
             float dv = Mathf.Min(want - along, pushForce * Time.deltaTime / Mathf.Max(rb.mass, 0.01f));

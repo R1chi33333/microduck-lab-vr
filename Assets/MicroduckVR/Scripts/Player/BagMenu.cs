@@ -34,7 +34,9 @@ namespace MicroduckVR.Player
         const int TotalCap = 60;
 
         InputAction menuA, selectA, navA;
-        Transform panel; TextMeshPro footer;
+        Transform panel; TextMeshPro footer, netLine;
+        readonly Dictionary<string, TextMeshPro> actionLabels = new Dictionary<string, TextMeshPro>();
+        const float NetRow = 0.018f;                                    // the playing-together status line under the footer
         readonly List<(Transform tile, Transform model, string kind)> tiles = new List<(Transform, Transform, string)>();
         readonly List<Vector2> tileHalf = new List<Vector2>();          // half size of each tile, for aiming
         const int ACols = 4; const float AH = 0.024f;                   // the word buttons: four wide ones a row, so their labels are big enough to read
@@ -89,7 +91,7 @@ namespace MicroduckVR.Player
             // toys and the bin as picture tiles; under them the word buttons (games, emotes, ducks, help)
             int nA = entries.Count + 1, rowsA = Mathf.CeilToInt(nA / (float)Cols), n = nA + Actions.Length;
             int rowsB = Mathf.CeilToInt(Actions.Length / (float)ACols);
-            float w = Cols * (Tile + Gap) + Gap * 2f, h = rowsA * (Tile + Gap) + 0.008f + rowsB * (AH + Gap) + 0.056f;
+            float w = Cols * (Tile + Gap) + Gap * 2f, h = rowsA * (Tile + Gap) + 0.008f + rowsB * (AH + Gap) + 0.056f + NetRow;
             float aw = (Cols * (Tile + Gap) - Gap - (ACols - 1) * Gap) / ACols;
             var slab = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(w, h, 0.006f), new ComicMesh.Style { radius = 0.01f, segments = 3 }), Unlit("#FFFFFF", "bag_slab"));
             slab.localPosition = new Vector3(0f, -0.004f, 0.004f);
@@ -97,7 +99,10 @@ namespace MicroduckVR.Player
             tab.localPosition = new Vector3(0f, h / 2f + 0.002f, -0.0015f); tab.localRotation = Quaternion.Euler(0f, 0f, -2f);
             var title = Text(panel, "TOY BAG!", 0.16f, new Vector3(0f, h / 2f + 0.001f, -0.0045f));
             title.color = ComicLook.Ink; title.transform.localRotation = Quaternion.Euler(0f, 0f, -2f);
-            footer = Text(panel, "", 0.13f, new Vector3(0f, -h / 2f + 0.011f, -0.001f)); footer.rectTransform.sizeDelta = new Vector2(w, 0.03f);
+            footer = Text(panel, "", 0.13f, new Vector3(0f, -h / 2f + 0.011f + NetRow, -0.001f)); footer.rectTransform.sizeDelta = new Vector2(w, 0.03f);
+            netLine = Text(panel, "", 0.1f, new Vector3(0f, -h / 2f + 0.01f, -0.001f)); netLine.rectTransform.sizeDelta = new Vector2(w - 0.012f, 0.02f);
+            netLine.enableAutoSizing = true; netLine.fontSizeMin = 0.05f; netLine.fontSizeMax = 0.1f;   // long addresses shrink to fit
+            netLine.color = ComicLook.Hex("#3A86FF");
             float x0 = -(Cols - 1) * (Tile + Gap) / 2f, y0 = h / 2f - 0.045f;
             for (int i = 0; i < n; i++)
             {
@@ -128,6 +133,7 @@ namespace MicroduckVR.Player
                     model = new GameObject("label").transform; model.SetParent(tile, false); model.localPosition = new Vector3(0f, 0f, -0.0035f);
                     var lt = Text(model, alabel, alabel.Length > 9 ? 0.125f : 0.15f, Vector3.zero);
                     lt.rectTransform.sizeDelta = size;
+                    actionLabels[akind] = lt;
                 }
                 else
                 {
@@ -196,24 +202,30 @@ namespace MicroduckVR.Player
             ("football", "FOOTBALL", "#FF8A3D"), ("race", "RACE", "#7B61FF"), ("swap", "SWAP DUCK", "#1FA6A0"), ("view", "VIEW", "#3A86FF"),
             ("dance", "DANCE", "#FF5D73"), ("nod", "NOD", "#FF5D73"), ("shake", "SHAKE", "#FF5D73"), ("look", "LOOK", "#FF5D73"),
             ("addduck", "ADD DUCK", "#FFC43D"), ("removeduck", "REMOVE DUCK", "#7B61FF"), ("mirror", "MY LOOK", "#FF8A3D"), ("tutorial", "TUTORIAL", "#8FD35A"),
-            ("help", "HELP", "#FFC43D"), ("credits", "CREDITS", "#8FD35A"),
+            ("help", "HELP", "#FFC43D"), ("credits", "CREDITS", "#8FD35A"), ("host", "HOST", "#3A86FF"), ("join", "JOIN", "#1FA6A0"),
         };
         readonly Dictionary<Transform, Material> baseMat = new Dictionary<Transform, Material>();
         static bool IsAction(string k) { foreach (var a in Actions) if (a.kind == k) return true; return false; }
+
+        /// <summary>Playing together (phase 1): the games and duck swapping stay off until they work for two.</summary>
+        static bool CoopOnly(string kind) => MicroduckVR.Net.NetSession.InSession && (kind == "football" || kind == "race" || kind == "swap");
 
         void DoAction(string kind)
         {
             var pd = PlayerDuck.Instance;
             Close(); Play(clickClip);
+            if (CoopOnly(kind)) { MicroduckVR.Games.GameHud.Get().Big("NOT IN CO-OP YET!", "#7B61FF", 1.3f); return; }
             switch (kind)
             {
+                case "host": MicroduckVR.Net.NetSession.HostOrStop(); break;
+                case "join": MicroduckVR.Net.NetSession.JoinOrLeave(); break;
                 case "football": var fg = MicroduckVR.Games.FootballGame.Ensure(); if (MicroduckVR.Games.FootballGame.Active) fg.StopGame(); else fg.StartGame(); break;
                 case "race": var rg = MicroduckVR.Games.RaceGame.Ensure(); if (MicroduckVR.Games.RaceGame.Active) rg.StopRace(); else rg.StartRace(); break;
                 case "swap": if (pd != null) pd.SwapWithNearest(); break;
                 case "view": if (pd != null) pd.SetThirdPerson(!pd.thirdPerson); break;
                 case "help": TutorialCoach.ShowHelp(); break;
-                case "addduck": MicroduckVR.Flock.FlockSpawner.Add(); break;
-                case "removeduck": MicroduckVR.Flock.FlockSpawner.Remove(); break;
+                case "addduck": if (!MicroduckVR.Net.NetSession.RequestAddDuck()) MicroduckVR.Flock.FlockSpawner.Add(); break;           // joined: the host adds it
+                case "removeduck": if (!MicroduckVR.Net.NetSession.RequestRemoveDuck()) MicroduckVR.Flock.FlockSpawner.Remove(); break;
                 case "mirror": if (pd != null) { pd.SetThirdPerson(false); pd.Teleport(MicroduckVR.Custom.MirrorStation.StandPos, Mathf.PI); pd.FaceView(Mathf.PI); } break;
                 case "tutorial": TutorialCoach.Restart(); break;
                 case "credits": TutorialCoach.ShowSheet("CREDITS", TutorialCoach.CreditsText, "Y TO CLOSE"); break;
@@ -293,7 +305,8 @@ namespace MicroduckVR.Player
                 else DropGhost();
                 if (press && ok)
                 {
-                    ToyCatalog.Spawn(Selected, hit.point, Yaw(hit.point)); PlacedCount++;
+                    if (!MicroduckVR.Net.NetSession.RequestToy(Selected, hit.point, Yaw(hit.point))) ToyCatalog.Spawn(Selected, hit.point, Yaw(hit.point));   // joined: the host makes it
+                    PlacedCount++;
                     Play(popClip);
                 }
             }
@@ -306,7 +319,7 @@ namespace MicroduckVR.Player
                     if (tag != null)
                     {
                         tag.transform.localScale = Vector3.one * (1f + 0.12f * Mathf.Abs(Mathf.Sin(pulse * 10f)));
-                        if (press) { Poof(tag.transform.position); Destroy(tag.gameObject); Play(popClip); }
+                        if (press) { Poof(tag.transform.position); if (!MicroduckVR.Net.NetSession.RequestTrash(tag.gameObject)) Destroy(tag.gameObject); Play(popClip); }
                     }
                 }
             }
@@ -314,6 +327,16 @@ namespace MicroduckVR.Player
             if (HideBeam) laser.Show(false);
             laser.Set(ray.origin, end);
             footer.text = State == Mode.Panel && hover >= 0 ? Footer(tiles[hover].kind) : "";
+            if (State == Mode.Panel) NetLabels();
+        }
+
+        void NetLabels()
+        {
+            var st = MicroduckVR.Net.NetSession.State;
+            string s = MicroduckVR.Net.NetSession.Status;
+            netLine.text = string.IsNullOrEmpty(s) ? "PLAY TOGETHER: HOST OR JOIN" : s;
+            if (actionLabels.TryGetValue("host", out var h)) h.text = st == MicroduckVR.Net.NetSession.Mode.Hosting ? "STOP HOST" : "HOST";
+            if (actionLabels.TryGetValue("join", out var j)) j.text = st == MicroduckVR.Net.NetSession.Mode.Joined ? "LEAVE" : st == MicroduckVR.Net.NetSession.Mode.Searching || st == MicroduckVR.Net.NetSession.Mode.Connecting ? "CANCEL" : "JOIN";
         }
 
         float Yaw(Vector3 at)
@@ -324,6 +347,7 @@ namespace MicroduckVR.Player
 
         string Footer(string kind)
         {
+            if (CoopOnly(kind)) return "NOT IN CO-OP YET (COMING LATER)";
             if (kind == "trash") return "BIN: REMOVE TOYS";
             if (kind == "football") return MicroduckVR.Games.FootballGame.Active ? "STOP THE MATCH" : "FOOTBALL ON THE RUG";
             if (kind == "race") return MicroduckVR.Games.RaceGame.Active ? "STOP THE RACE" : "RACE ROUND THE HOUSE";
@@ -335,6 +359,8 @@ namespace MicroduckVR.Player
             if (kind == "mirror") return "GO TO THE MIRROR: CHANGE YOUR DUCK";
             if (kind == "tutorial") return "PLAY THE TUTORIAL AGAIN";
             if (kind == "credits") return "WHO MADE THIS";
+            if (kind == "host") return MicroduckVR.Net.NetSession.IsHost ? "STOP HOSTING" : "LET A FRIEND JOIN YOUR HOUSE";
+            if (kind == "join") return MicroduckVR.Net.NetSession.State == MicroduckVR.Net.NetSession.Mode.Off ? "JOIN A FRIEND'S HOUSE" : "LEAVE";
             if (IsAction(kind)) return kind.ToUpperInvariant() + "!";
             var e = ToyCatalog.Get(kind);
             return $"{e.label.ToUpperInvariant()}  {Count(kind)}/{e.cap}" + (e.graspable ? "" : "  (KICK IT!)");

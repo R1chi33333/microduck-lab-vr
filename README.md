@@ -42,6 +42,9 @@ The browser version is [here](https://r1chi33333.github.io/microduck-lab-preview
 
 On the desktop without a headset: WASD walk, Q/E turn, Space beak, C chirp, K skates, Tab bag, L laser, V view.
 
+Two players on two PCs in the same house (local network, no accounts): **HOST** and **JOIN** in the toy bag,
+see [docs/MULTIPLAYER.md](docs/MULTIPLAYER.md).
+
 ## Credits and licence
 
 - The **Microduck robot** is by [Pollen Robotics](https://github.com/pollen-robotics/microduck_rl), licensed

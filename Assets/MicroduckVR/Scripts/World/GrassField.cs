@@ -46,6 +46,7 @@ namespace MicroduckVR.World
             var pd = PlayerDuck.Instance;
             if (pd != null && pd.Body != null && OnLawn(pd.Body.Pos)) pushers[n++] = Pack(pd.Body.Pos, 0.085f);
             foreach (var d in DuckBrain.All) if (n < Max && d != null && OnLawn(d.Pos)) pushers[n++] = Pack(d.Pos, 0.085f);
+            foreach (var r in MicroduckVR.Net.PlayerTargets.Remote) if (n < Max && r != null && r.Body != null && OnLawn(r.Body.Pos)) pushers[n++] = Pack(r.Body.Pos, 0.085f);
             foreach (var rb in props)
             {
                 if (n >= Max) break;
