@@ -74,7 +74,7 @@ namespace MicroduckVR.EditorTools
                 t =>
                 {
                     PlayerDuck.DebugWalk = Fwd(190f * Mathf.Deg2Rad);
-                    At(t, 0.2f, "nod", () => FlockEmote("nod"));
+                    At(t, 0.2f, "nod", () => FlockEmote(EmoteKind.Nod));
                     Eyes(190f + 5f * Mathf.Sin(t * 0.9f), -3f, 88f);
                 }, true));
 
@@ -123,7 +123,7 @@ namespace MicroduckVR.EditorTools
                 t =>
                 {
                     At(t, 0.4f, "q", () => { PlayerDuck.DebugChirp = true; Say("QUACK!", "#FFC43D"); });
-                    At(t, 1.1f, "nod", () => FlockEmote("nod"));
+                    At(t, 1.1f, "nod", () => FlockEmote(EmoteKind.Nod));
                     Look(V(-0.96f, 0.1f, 0.75f + Lerp(1.05f, 0.95f, U)), V(-1.0f, 0.16f, 0.6f), 38f);
                 }));
 
@@ -137,7 +137,7 @@ namespace MicroduckVR.EditorTools
                 },
                 t =>
                 {
-                    At(t, -0.45f, "dance", () => AllEmote("dance"));
+                    At(t, -0.45f, "dance", () => AllEmote(EmoteKind.Dance));
                     Look(V(-1.0f + Lerp(-0.14f, 0.14f, U), 0.09f, 1.5f), V(-1.0f, 0.16f, 0.74f), 32f); fstop = 2.8f;
                 }));
 
@@ -264,7 +264,7 @@ namespace MicroduckVR.EditorTools
                 t =>
                 {
                     var c = FootballGame.Centre;
-                    At(t, -0.45f, "dance", () => AllEmote("dance"));
+                    At(t, -0.45f, "dance", () => AllEmote(EmoteKind.Dance));
                     At(t, 0f, "goal", () => Pop("GOAL!", FootballGame.Centre + V(0f, 0.42f, 1.0f), "#FF9F0A", 1.7f, 1.2f));
                     Look(c + V(0.05f, 0.12f, -0.05f), c + V(0f, 0.2f, 0.95f), 34f); fstop = 2.8f;
                 }));
@@ -310,7 +310,7 @@ namespace MicroduckVR.EditorTools
                 () => { Sweep(BedroomArea); Shoo(); Place(MirrorStation.StandPos + V(0f, 0f, -0.22f), 180f); WorldPanel.HideAll = true; },
                 t =>
                 {
-                    At(t, 0.2f, "nod", () => Emote("nod"));
+                    At(t, 0.2f, "nod", () => Emote(EmoteKind.Nod));
                     At(t, 1.0f, "lavender", () => Wear("lavender"));
                     // the reflection stands as far behind the glass (z = -2.408) as the duck stands in front of it
                     Look(P.cam.transform.position, V(4.42f, Pos.y + 0.14f, -4.816f - Pos.z), 40f);
@@ -322,10 +322,10 @@ namespace MicroduckVR.EditorTools
                 () => { Sweep(BedroomArea); Place(MirrorStation.StandPos, 180f); Wear("lavender"); WorldPanel.HideAll = true; },
                 t =>
                 {
-                    At(t, 0.3f, "look", () => Emote("look"));
+                    At(t, 0.3f, "look", () => Emote(EmoteKind.Look));
                     At(t, 1.0f, "graphite", () => Wear("graphite"));
                     At(t, 2.0f, "twotone", () => Wear("cream", "graphite", "", "", "graphite"));
-                    At(t, 3.0f, "sky", () => { Wear("sky"); Emote("dance"); });
+                    At(t, 3.0f, "sky", () => { Wear("sky"); Emote(EmoteKind.Dance); });
                     // from the toy-box side (the block ramp rises on the other), swinging round to the front
                     float a = Mathf.Lerp(50f, 12f, E(U)) * Mathf.Deg2Rad;
                     Look(Pos + V(-Mathf.Sin(a) * 0.5f, 0.1f, -Mathf.Cos(a) * 0.5f), Pos + V(0f, 0.1f, 0f), 50f); fstop = 2.8f;
@@ -370,7 +370,7 @@ namespace MicroduckVR.EditorTools
                 },
                 t =>
                 {
-                    At(t, 0.1f, "look", () => Emote("look"));
+                    At(t, 0.1f, "look", () => Emote(EmoteKind.Look));
                     // from inside the track (the rug there is always clear): the train crosses the foreground, the duck faces the lens behind it
                     Look(trainC + trainU * (trainR - 0.62f) + trainT * 0.1f + V(0f, 0.12f, 0f), trainC + trainU * (trainR + 0.1f) + V(0f, 0.13f, 0f), 46f); fstop = 5.6f;
                 }));
@@ -412,8 +412,8 @@ namespace MicroduckVR.EditorTools
                 {
                     PlayerDuck.DebugWalk = Vector3.left;
                     var st = SurfaceTag.At(Pos);
-                    bool inWater = st != null && st.type == "water";
-                    if (inWater && fired.Add("wet")) { Say("SPLASH!", "#3A86FF", 1f, 1.3f); FlockEmote("dance"); ComicSplash.Spawn(Pos + V(-0.02f, 0f, 0f), 1.5f); splashT = 0.3f; }
+                    bool inWater = st != null && st.Kind == SurfaceType.Water;
+                    if (inWater && fired.Add("wet")) { Say("SPLASH!", "#3A86FF", 1f, 1.3f); FlockEmote(EmoteKind.Dance); ComicSplash.Spawn(Pos + V(-0.02f, 0f, 0f), 1.5f); splashT = 0.3f; }
                     // every step in the puddle throws up more water (the game does this itself; its sound-word watcher is off while filming)
                     if (inWater && fired.Contains("wet") && (splashT -= Dt) <= 0f) { splashT = 0.3f; ComicSplash.Spawn(Pos + V(-0.03f, 0f, 0f), 1.1f); }
                     if (t >= 0f && fired.Contains("wet")) Slow = 3f;
@@ -526,7 +526,7 @@ namespace MicroduckVR.EditorTools
                 () => { Sweep(FloorArea); Shoo(); Place(V(-1.0f, 0f, 0.9f), 0f); Wear("lavender"); },
                 t =>
                 {
-                    At(t, -0.3f, "dance", () => Emote("dance"));
+                    At(t, -0.3f, "dance", () => Emote(EmoteKind.Dance));
                     At(t, 0.25f, "graphite", () => Wear("graphite"));
                     At(t, 0.5f, "sky", () => Wear("sky"));
                     At(t, 0.75f, "cream", () => Wear("cream"));
@@ -547,7 +547,7 @@ namespace MicroduckVR.EditorTools
                 () => { Sweep(LawnArea); Weed(PartyAt + V(0f, 0f, -0.2f), 1.6f); Party(); },
                 t =>
                 {
-                    At(t, -0.6f, "dance", () => AllEmote("dance"));
+                    At(t, -0.6f, "dance", () => AllEmote(EmoteKind.Dance));
                     Look(PartyAt + V(0.03f, 0.36f, -0.8f), PartyAt + V(0f, 0.14f, 0.08f), 40f); fstop = 5.6f;
                 }));
 
@@ -571,7 +571,7 @@ namespace MicroduckVR.EditorTools
                         hitAt = t;
                         PlayerSkates.DebugBoost = null;
                         Pop("BONK!", V(wallX - 0.3f, 0.43f, HallZ), "#FF8A3D", 1.7f, Mathf.Clamp(1.95f - t, 0.3f, 1.2f));
-                        if (DuckBrain.All.Count > 0 && DuckBrain.All[0].Body != null) DuckBrain.All[0].Body.PlayEmote("look");
+                        if (DuckBrain.All.Count > 0 && DuckBrain.All[0].Body != null) DuckBrain.All[0].Body.PlayEmote(EmoteKind.Look);
                     }
                     if (fired.Contains("hit")) Stop();
                     else if (gap > 0.45f) SkateOnCue(Vector3.right, gap - 0.45f, 0.68f - t, t);   // be 45 cm out at about 0.62 s ...

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MicroduckVR.Custom;
+using MicroduckVR.Duck;
 using MicroduckVR.Flock;
 using MicroduckVR.Games;
 using MicroduckVR.Player;
@@ -188,7 +189,7 @@ namespace MicroduckVR.EditorTools
                 start = () => { Place(V(-1.0f, 0f, 1.0f), 180f); },
                 tick = t =>
                 {
-                    At(t, 0.5f, "e1", () => Emote("dance")); At(t, 4.0f, "e2", () => Emote("nod")); At(t, 6.0f, "e3", () => Emote("shake")); At(t, 8.0f, "e4", () => Emote("look"));
+                    At(t, 0.5f, "e1", () => Emote(EmoteKind.Dance)); At(t, 4.0f, "e2", () => Emote(EmoteKind.Nod)); At(t, 6.0f, "e3", () => Emote(EmoteKind.Shake)); At(t, 8.0f, "e4", () => Emote(EmoteKind.Look));
                     Look(Pos + V(0.15f, 0.15f, -0.6f), Pos + V(0f, 0.15f, 0f), 42f);
                 } });
 

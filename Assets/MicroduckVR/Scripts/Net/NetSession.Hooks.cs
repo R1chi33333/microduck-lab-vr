@@ -1,3 +1,4 @@
+using MicroduckVR.Comic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -10,14 +11,14 @@ namespace MicroduckVR.Net
         public static void SendOwnWord(string word, string hex, float size)
         {
             var s = Instance; if (s == null || !s.PeerReady) return;
-            var w = s.Begin(NetMsg.Word); w.WriteValueSafe(word ?? ""); w.WriteValueSafe(hex ?? "#FF5D73"); w.WriteValueSafe(size); s.Send(w, true);
+            var w = s.Begin(NetMsg.Word); w.WriteValueSafe(word ?? ""); w.WriteValueSafe(hex ?? ComicColors.Pink); w.WriteValueSafe(size); s.Send(w, true);
         }
 
         /// <summary>A toy sent flying (only the host simulates toys): POW! on both PCs.</summary>
         public static void SendPow(string word, Vector3 at, string hex)
         {
             var s = Instance; if (s == null || !s.PeerReady || s.mode != Mode.Hosting) return;
-            var w = s.Begin(NetMsg.Pow); w.WriteValueSafe(word ?? ""); w.WriteValueSafe(at); w.WriteValueSafe(hex ?? "#FF8A3D"); s.Send(w, true);
+            var w = s.Begin(NetMsg.Pow); w.WriteValueSafe(word ?? ""); w.WriteValueSafe(at); w.WriteValueSafe(hex ?? ComicColors.Orange); s.Send(w, true);
         }
 
         public static void SendSplash(Vector3 at, float size)

@@ -24,8 +24,8 @@ namespace MicroduckVR.Flock
         static Vector3 readZone; static float readRadius, readUntil; static bool readAlways;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { All.Clear(); readZone = Vector3.zero; readRadius = 0f; readUntil = 0f; readAlways = false; }
-        static readonly string[] IdleEmotes = { "nod", "look", "dance", "shake" };
-        static readonly string[] PauseEmotes = { "look", "nod", "dance" };
+        static readonly EmoteKind[] IdleEmotes = { EmoteKind.Nod, EmoteKind.Look, EmoteKind.Dance, EmoteKind.Shake };
+        static readonly EmoteKind[] PauseEmotes = { EmoteKind.Look, EmoteKind.Nod, EmoteKind.Dance };
         /// <summary>Call every frame while something is being read: keeps the flock out of the way between eyes and panel.
         /// 'always' also during a match or a race (filming).</summary>
         public static void ClearView(Vector3 eye, Vector3 panel, bool always = false)
@@ -35,13 +35,13 @@ namespace MicroduckVR.Flock
         public int seed = 1;
         public int index;
 
-        public string State { get; private set; } = "idle";
+        public AiState State { get; private set; } = AiState.Idle;
         public string Context { get; private set; } = "";        // room name, toy label...
-        public event Action<DuckBrain, string, string> OnEvent;  // (duck, kind, context)
+        public event Action<DuckBrain, DuckEventKind, string> OnEvent;  // (duck, kind, context)
         public DuckBody Body => body;
         public Vector3 Pos => mover != null ? mover.transform.position : transform.position;
         public float Speed { get; private set; }
-        public string Surface { get; private set; } = "wood";
+        public SurfaceType Surface { get; private set; } = SurfaceType.Wood;
 
         DuckBody body; CharacterController mover;
         System.Random rng;
@@ -50,7 +50,8 @@ namespace MicroduckVR.Flock
         Vector3? target;
         List<Vector3> route; int ri; float best, routeStuck;
         // toy task
-        Grabbable toy, held; float taskT; string taskPhase;
+        enum TaskPhase { None, Approach, Reach, Carry, Drop }
+        Grabbable toy, held; float taskT; TaskPhase taskPhase;
 
         float R(float a = 0f, float b = 1f) => a + (float)rng.NextDouble() * (b - a);
 
@@ -86,22 +87,22 @@ namespace MicroduckVR.Flock
                 yaw = body.Yaw; vel = Vector3.zero; vy = 0f; lastPos = Pos;
                 body.Hop = 0f; body.SitTarget = false; body.CrouchTarget = false; body.LookAt.target = null; body.LookAt.weight = 0f;
                 body.ReachState.target = null; body.ReachState.weight = 0f; body.JawTarget = 0f; body.JawStop = 0f;
-                Pick("idle");
+                Pick(AiState.Idle);
             }
         }
 
         /// <summary>What the host's brain says this duck is doing (the thought bubbles read it).</summary>
-        public void PuppetState(string state, string context) { State = state ?? "idle"; Context = context ?? ""; }
+        public void PuppetState(AiState state, string context) { State = state; Context = context ?? ""; }
         /// <summary>A toy event the host's duck had (got, drop): bubbles and chirps here too.</summary>
-        public void PuppetEvent(string kind, string context) => OnEvent?.Invoke(this, kind, context);
+        public void PuppetEvent(DuckEventKind kind, string context) => OnEvent?.Invoke(this, kind, context);
 
         /// <summary>Pose the puppet: the body walks to the host's pose; the floor under it is looked up here (splashes, boings).</summary>
         public void PuppetStep(float dt, Vector3 p, float yawRad, Vector3 v, float w)
         {
             if (body == null) return;
             var surf = SurfaceTag.At(p);
-            string st = surf != null ? surf.type : "wood";
-            if (st != Surface) { Surface = st; if (st == "bed" || st == "water" || st == "tile") OnEvent?.Invoke(this, st, ""); }
+            SurfaceType st = surf != null ? surf.Kind : SurfaceType.Wood;
+            if (st != Surface) { Surface = st; if (st == SurfaceType.Bed || st == SurfaceType.Water || st == SurfaceType.Tile) OnEvent?.Invoke(this, SurfaceEvent(st), ""); }
             if (mover != null) mover.transform.position = p;
             Speed = Flat(p - lastPos).magnitude / Mathf.Max(dt, 1e-4f);
             lastPos = p; yaw = yawRad; yawRate = w;
@@ -109,31 +110,34 @@ namespace MicroduckVR.Flock
         }
 
         // ------------------------------------------------------------------ decisions
-        void Pick(string force)
+        void Pick(AiState? force)
         {
             float r = R();
             t = 0f; target = null; route = null; body.SitTarget = false;
-            if (held == null) { toy = null; taskPhase = null; body.ReachState.weight = 0f; body.JawTarget = 0f; }
-            State = force ?? (r < 0.3f ? "follow" : r < 0.42f ? "roam" : r < 0.66f ? "wander" : r < 0.8f ? "toy" : r < 0.9f ? "sit" : "idle");
-            if (State == "follow" && PlayerTargets.Count == 0) State = "wander";
-            dur = State switch { "roam" => 40f, "follow" => R(8f, 16f), "wander" => R(7f, 13f), "toy" => 14f, "sit" => R(3f, 6f), _ => R(1.5f, 3.5f) };
+            if (held == null) { toy = null; taskPhase = TaskPhase.None; body.ReachState.weight = 0f; body.JawTarget = 0f; }
+            State = force ?? (r < 0.3f ? AiState.Follow : r < 0.42f ? AiState.Roam : r < 0.66f ? AiState.Wander : r < 0.8f ? AiState.Toy : r < 0.9f ? AiState.Sit : AiState.Idle);
+            if (State == AiState.Follow && PlayerTargets.Count == 0) State = AiState.Wander;
+            dur = State switch { AiState.Roam => 40f, AiState.Follow => R(8f, 16f), AiState.Wander => R(7f, 13f), AiState.Toy => 14f, AiState.Sit => R(3f, 6f), _ => R(1.5f, 3.5f) };
             Context = "";
-            if (State == "idle" && R() < 0.5f) body.PlayEmote(IdleEmotes[rng.Next(4)]);
+            if (State == AiState.Idle && R() < 0.5f) body.PlayEmote(IdleEmotes[rng.Next(4)]);
         }
 
         /// <summary>Put the duck somewhere at once (race grid, duck swap): drops what it carries, stops what it was doing.</summary>
         public void Teleport(Vector3 pos, float yawRad)
         {
             if (held != null) { held.Release(Vector3.zero); held = null; }
-            toy = null; taskPhase = null; body.ReachState.weight = 0f; body.JawTarget = 0f; body.JawStop = 0f;
+            toy = null; taskPhase = TaskPhase.None; body.ReachState.weight = 0f; body.JawTarget = 0f; body.JawStop = 0f;
             mover.enabled = false; mover.transform.position = pos + Vector3.up * 0.02f; mover.enabled = true;
             yaw = yawRad; vel = Vector3.zero; vy = 0f; lastPos = mover.transform.position;
             body.Teleport(new Vector3(pos.x, WorldQueries.GroundNear(pos.x, pos.z, pos.y + 0.02f), pos.z), yawRad);
-            Pick("idle");
+            Pick(AiState.Idle);
         }
 
-        void Mode(string s) { if (State != s) { State = s; Context = ""; } }
-        void DropHeld() { if (held != null) { held.Release(Vector3.zero); OnEvent?.Invoke(this, "drop", held.label); held = null; } toy = null; taskPhase = null; body.ReachState.weight = 0f; body.JawTarget = 0f; body.JawStop = 0f; }
+        /// <summary>The event for stepping onto a surface that has one (bed, water, tiles).</summary>
+        static DuckEventKind SurfaceEvent(SurfaceType s) => s == SurfaceType.Bed ? DuckEventKind.Bed : s == SurfaceType.Water ? DuckEventKind.Water : DuckEventKind.Tile;
+
+        void Mode(AiState s) { if (State != s) { State = s; Context = ""; } }
+        void DropHeld() { if (held != null) { held.Release(Vector3.zero); OnEvent?.Invoke(this, DuckEventKind.Drop, held.label); held = null; } toy = null; taskPhase = TaskPhase.None; body.ReachState.weight = 0f; body.JawTarget = 0f; body.JawStop = 0f; }
 
         // ------------------------------------------------------------------ games (they take over from the normal life)
         float lastKick = -9f, lastPounce = -9f, pounceT = -1f; bool cheered;
@@ -143,16 +147,16 @@ namespace MicroduckVR.Flock
             if (MicroduckVR.Games.RaceGame.Active)
             {
                 var rg = MicroduckVR.Games.RaceGame.Instance;
-                Mode("race"); DropHeld();
+                Mode(AiState.Race); DropHeld();
                 if (MicroduckVR.Games.RaceGame.Frozen) { cheered = false; return (0f, 0f); }
-                if (rg.Done(this)) { if (!cheered) { cheered = true; body.PlayEmote("dance"); } return (0f, 0f); }
+                if (rg.Done(this)) { if (!cheered) { cheered = true; body.PlayEmote(EmoteKind.Dance); } return (0f, 0f); }
                 // a slightly different pace per duck so it is a real race
                 return SteerAvoid(rg.TargetFor(this), Gait.MaxSpeed * 1.9f * (0.8f + 0.16f * ((index * 37) % 7) / 7f), 0.05f);   // race pace, as on the web
             }
             if (MicroduckVR.Games.FootballGame.Active && MicroduckVR.Games.FootballGame.Instance.Team.TryGetValue(this, out int team))
             {
                 var fg = MicroduckVR.Games.FootballGame.Instance;
-                Mode("football"); DropHeld();
+                Mode(AiState.Football); DropHeld();
                 if (!fg.IsChaser(this)) return SteerAvoid(fg.HomeSpot(this), Gait.MaxSpeed * 0.6f, 0.04f);
                 Vector3 b = fg.BallPos, goal = fg.GoalCentre(1 - team);
                 Vector3 toGoal = Flat(goal - b).normalized, behind = Flat(b) - toGoal * 0.09f;
@@ -173,7 +177,7 @@ namespace MicroduckVR.Flock
                 float d = Flat(P - Pos).magnitude;
                 if (d < 0.8f && Mathf.Abs(P.y - Pos.y) < 0.12f)
                 {
-                    Mode("laser"); DropHeld();
+                    Mode(AiState.Laser); DropHeld();
                     body.LookAt.target = P; body.LookAt.weight = 0.8f;
                     if (pounceT >= 0f) return Pounce(dt);
                     if (d < 0.13f && Time.time - lastPounce > 2.2f) { pounceT = 0f; lastPounce = Time.time; return (0f, 0f); }
@@ -185,7 +189,7 @@ namespace MicroduckVR.Flock
                 }
             }
             if (pounceT >= 0f) return Pounce(dt);
-            if (State == "race" || State == "football" || State == "laser") { body.LookAt.weight = 0f; Pick("idle"); }
+            if (State == AiState.Race || State == AiState.Football || State == AiState.Laser) { body.LookAt.weight = 0f; Pick(AiState.Idle); }
             return null;
         }
 
@@ -194,7 +198,7 @@ namespace MicroduckVR.Flock
             pounceT += dt; float u = pounceT / 0.6f;
             body.CrouchTarget = u < 0.35f;
             body.Hop = u > 0.35f && u < 1f ? Mathf.Sin(Mathf.PI * (u - 0.35f) / 0.65f) * 0.03f : 0f;
-            if (u >= 1f) { pounceT = -1f; body.Hop = 0f; body.CrouchTarget = false; body.HappyWiggle = 1f; OnEvent?.Invoke(this, "got", "dot"); }
+            if (u >= 1f) { pounceT = -1f; body.Hop = 0f; body.CrouchTarget = false; body.HappyWiggle = 1f; OnEvent?.Invoke(this, DuckEventKind.Got, "dot"); }
             return (u > 0.35f && u < 0.9f ? 0.26f : 0f, 0f);
         }
 
@@ -207,10 +211,10 @@ namespace MicroduckVR.Flock
             if (t > dur) Pick(null);
             switch (State)
             {
-                case "follow":
+                case AiState.Follow:
                 {
                     var L = PlayerTargets.ForDuck(index);                       // you (or, playing together, one of the two players)
-                    if (L == null) { Pick("wander"); break; }
+                    if (L == null) { Pick(AiState.Wander); break; }
                     int slot = index % 5;
                     Vector3 lf = GltfSpace.Forward(L.Yaw);
                     Vector3 back = -lf * (0.22f + 0.13f * (slot / 2));
@@ -220,7 +224,7 @@ namespace MicroduckVR.Flock
                     if (d < 0.04f && Flat(L.Vel).magnitude < 0.02f) return (0f, Mathf.Clamp(Wrap(L.Yaw - yaw) * 3f, -1.2f, 1.2f));
                     return SteerAvoid(goal, Gait.MaxSpeed * Mathf.Clamp(d / 0.25f, 0.4f, 1f), 0.03f);
                 }
-                case "roam":
+                case AiState.Roam:
                 {
                     if (route == null)
                     {
@@ -232,20 +236,20 @@ namespace MicroduckVR.Flock
                         route = HouseLayout.Route(Pos, dest); ri = 0; best = 99f; routeStuck = 0f;
                         Context = HouseLayout.RoomName[to];
                     }
-                    if (ri >= route.Count) { route = null; Pick("idle"); break; }
+                    if (ri >= route.Count) { route = null; Pick(AiState.Idle); break; }
                     var tgt = route[ri];
                     float dd = Flat(tgt - Pos).magnitude;
-                    if (dd < 0.12f) { ri++; best = 99f; if (ri >= route.Count) { route = null; Pick("idle"); } break; }
-                    if (dd < best - 0.02f) { best = dd; routeStuck = 0f; } else if ((routeStuck += dt) > 4f) { route = null; Pick("wander"); break; }
+                    if (dd < 0.12f) { ri++; best = 99f; if (ri >= route.Count) { route = null; Pick(AiState.Idle); } break; }
+                    if (dd < best - 0.02f) { best = dd; routeStuck = 0f; } else if ((routeStuck += dt) > 4f) { route = null; Pick(AiState.Wander); break; }
                     return SteerAvoid(tgt, Gait.MaxSpeed * 0.85f, 0.03f);
                 }
-                case "wander":
+                case AiState.Wander:
                 {
                     if (!target.HasValue || Flat(target.Value - Pos).magnitude < 0.04f)
                     {
                         if (target.HasValue)
                         {
-                            State = "idle"; t = 0f; dur = R(1f, 3f);
+                            State = AiState.Idle; t = 0f; dur = R(1f, 3f);
                             if (R() < 0.3f) body.PlayEmote(PauseEmotes[rng.Next(3)]);
                             break;
                         }
@@ -253,7 +257,7 @@ namespace MicroduckVR.Flock
                     }
                     return SteerAvoid(target.Value, Gait.MaxSpeed * 0.7f, 0.03f);
                 }
-                case "toy":
+                case AiState.Toy:
                 {
                     Grabbable bestToy = null; float bd = 0.7f;
                     foreach (var g in Grabbable.All)
@@ -263,11 +267,11 @@ namespace MicroduckVR.Flock
                         float d = Flat(gp - Pos).magnitude;
                         if (d < bd && Mathf.Abs(gp.y - Pos.y) < 0.05f) { bd = d; bestToy = g; }
                     }
-                    if (bestToy == null) { Pick("wander"); break; }
-                    toy = bestToy; taskPhase = "approach"; taskT = 0f; Context = toy.label;
+                    if (bestToy == null) { Pick(AiState.Wander); break; }
+                    toy = bestToy; taskPhase = TaskPhase.Approach; taskT = 0f; Context = toy.label;
                     return (0f, 0f);
                 }
-                case "sit":
+                case AiState.Sit:
                     if (!body.SitTarget && t < 0.2f) body.SitTarget = true;
                     if (t > dur - 0.5f) body.SitTarget = false;
                     return (0f, 0f);
@@ -281,42 +285,42 @@ namespace MicroduckVR.Flock
             if (held != null)
             {
                 // carry it around for a bit, then put it down
-                if (taskPhase == "carry")
+                if (taskPhase == TaskPhase.Carry)
                 {
                     if (!target.HasValue || Flat(target.Value - Pos).magnitude < 0.05f) target = HouseLayout.RandomSpot(Pos, 0.5f, rng);
-                    if (taskT > 4.5f) { taskPhase = "drop"; taskT = 0f; }
+                    if (taskT > 4.5f) { taskPhase = TaskPhase.Drop; taskT = 0f; }
                     return SteerAvoid(target.Value, Gait.MaxSpeed * 0.6f, 0.03f);
                 }
-                if (taskPhase == "drop")
+                if (taskPhase == TaskPhase.Drop)
                 {
                     body.JawStop = 0f; body.JawTarget = 0.5f;
                     if (taskT > 0.25f)
                     {
-                        held.Release(Vector3.zero); OnEvent?.Invoke(this, "drop", held.label); held = null; body.JawTarget = 0f;
-                        Pick(R() < 0.5f ? "idle" : "wander");
+                        held.Release(Vector3.zero); OnEvent?.Invoke(this, DuckEventKind.Drop, held.label); held = null; body.JawTarget = 0f;
+                        Pick(R() < 0.5f ? AiState.Idle : AiState.Wander);
                     }
                     return (0f, 0f);
                 }
             }
-            if (toy == null || toy.IsHeld || taskT > 10f) { toy = null; body.ReachState.weight = 0f; body.JawTarget = 0f; Pick("wander"); return (0f, 0f); }
+            if (toy == null || toy.IsHeld || taskT > 10f) { toy = null; body.ReachState.weight = 0f; body.JawTarget = 0f; Pick(AiState.Wander); return (0f, 0f); }
             Vector3 tp = toy.transform.position;
             Vector3 to = Flat(tp - Pos); float dist = to.magnitude;
-            if (taskPhase == "approach")
+            if (taskPhase == TaskPhase.Approach)
             {
                 // stand ~8 cm short of the toy, facing it
                 if (dist > 0.1f) return SteerAvoid(tp - to.normalized * 0.08f, Gait.MaxSpeed * 0.6f, 0.02f);
                 float err = Wrap(Mathf.Atan2(to.x, to.z) - yaw);
                 if (Mathf.Abs(err) > 0.12f) return (0f, Mathf.Clamp(err * 3f, -1.5f, 1.5f));
-                taskPhase = "reach"; taskT = 0f;
+                taskPhase = TaskPhase.Reach; taskT = 0f;
             }
-            if (taskPhase == "reach")
+            if (taskPhase == TaskPhase.Reach)
             {
                 body.ReachState.target = tp; body.ReachState.weight = 1f; body.JawTarget = 0.5f;
                 if (Vector3.Distance(body.BeakGap(), tp) < 0.03f && taskT > 0.5f)
                 {
-                    if (toy.TryHold(this)) { held = toy; toy = null; body.JawTarget = 0f; body.JawStop = 0.12f; body.ReachState.weight = 0f; taskPhase = "carry"; taskT = 0f; target = null; OnEvent?.Invoke(this, "got", held.label); }
+                    if (toy.TryHold(this)) { held = toy; toy = null; body.JawTarget = 0f; body.JawStop = 0.12f; body.ReachState.weight = 0f; taskPhase = TaskPhase.Carry; taskT = 0f; target = null; OnEvent?.Invoke(this, DuckEventKind.Got, held.label); }
                 }
-                else if (taskT > 3f) { taskPhase = "approach"; taskT = 0f; body.ReachState.weight = 0f; }
+                else if (taskT > 3f) { taskPhase = TaskPhase.Approach; taskT = 0f; body.ReachState.weight = 0f; }
                 return (0f, 0f);
             }
             return (0f, 0f);
@@ -364,9 +368,9 @@ namespace MicroduckVR.Flock
             }
             // surface: slippery tiles, slow water, bouncy bed
             var surf = SurfaceTag.At(Pos);
-            string st = surf != null ? surf.type : "wood";
-            if (st != Surface) { var prevS = Surface; Surface = st; if (st == "bed" || st == "water" || st == "tile") OnEvent?.Invoke(this, st, ""); if (st == "bed") boing = 1f; }
-            if (st == "water") v *= 0.55f;
+            SurfaceType st = surf != null ? surf.Kind : SurfaceType.Wood;
+            if (st != Surface) { var prevS = Surface; Surface = st; if (st == SurfaceType.Bed || st == SurfaceType.Water || st == SurfaceType.Tile) OnEvent?.Invoke(this, SurfaceEvent(st), ""); if (st == SurfaceType.Bed) boing = 1f; }
+            if (st == SurfaceType.Water) v *= 0.55f;
             float grip = surf != null ? Mathf.Lerp(0.18f, 1f, Mathf.InverseLerp(0.15f, 0.7f, surf.Friction)) : 1f;
             yaw += w * dt;
             Vector3 want = GltfSpace.Forward(yaw) * v;
@@ -379,9 +383,9 @@ namespace MicroduckVR.Flock
             if (v > 0.05f && Speed < 0.01f) { stuckT += dt; if (stuckT > 1.2f) { stuckT = 0f; target = HouseLayout.RandomSpot(p, 0.3f, rng); } } else stuckT = 0f;
             lastPos = p;
             yawRate = w;
-            bedT = st == "bed" ? bedT + dt : 0f;
+            bedT = st == SurfaceType.Bed ? bedT + dt : 0f;
             boing *= Mathf.Exp(-2.2f * dt);
-            if (pounceT < 0f) body.Hop = st == "bed" ? Mathf.Abs(Mathf.Sin(bedT * 13f + seed)) * (0.011f * Mathf.Clamp01(Speed / 0.02f) + 0.026f * boing) : Mathf.MoveTowards(body.Hop, 0f, 0.2f * dt);
+            if (pounceT < 0f) body.Hop = st == SurfaceType.Bed ? Mathf.Abs(Mathf.Sin(bedT * 13f + seed)) * (0.011f * Mathf.Clamp01(Speed / 0.02f) + 0.026f * boing) : Mathf.MoveTowards(body.Hop, 0f, 0.2f * dt);
             body.Step(dt, p, yaw, Flat(vel), yawRate);
             if (held != null) { held.transform.position = body.BeakGap(); held.transform.rotation = Quaternion.LookRotation(body.HeadDir(), Vector3.up); }
         }

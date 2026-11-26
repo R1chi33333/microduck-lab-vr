@@ -16,7 +16,7 @@ namespace MicroduckVR.Flock
         public static readonly List<WanderDuck> All = new List<WanderDuck>();
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { All.Clear(); }
-        static readonly string[] Emotes = { "look", "nod", "dance", "shake" };
+        static readonly EmoteKind[] Emotes = { EmoteKind.Look, EmoteKind.Nod, EmoteKind.Dance, EmoteKind.Shake };
         public Vector2 boundsMin = new Vector2(-2.6f, -2.1f), boundsMax = new Vector2(2.6f, 2.1f);
         public float speed = 0.1f;
         public int seed = 1;
@@ -64,8 +64,8 @@ namespace MicroduckVR.Flock
                 if (m > 0.001f && m < 0.25f) want += d / m * (0.25f - m) * 0.8f;
             }
             var surf = SurfaceTag.At(p);
-            string st = surf != null ? surf.type : "wood";
-            if (st == "water") want *= 0.55f;
+            SurfaceType st = surf != null ? surf.Kind : SurfaceType.Wood;
+            if (st == SurfaceType.Water) want *= 0.55f;
             float grip = surf != null ? Mathf.Lerp(0.18f, 1f, Mathf.InverseLerp(0.15f, 0.7f, surf.Friction)) : 1f;
             vel = Vector3.MoveTowards(vel, want, 0.6f * grip * dt);
             // stuck against furniture: give up on this target
@@ -75,8 +75,8 @@ namespace MicroduckVR.Flock
                 if (stuckT > 1.5f) { target = null; stuckT = 0f; wait = R(0.3f, 1f); }
             }
             lastPos = p;
-            bedT = st == "bed" ? bedT + dt : 0f;
-            body.Hop = st == "bed" ? Mathf.Abs(Mathf.Sin(bedT * 6.5f + seed)) * 0.028f : Mathf.MoveTowards(body.Hop, 0f, 0.2f * dt);
+            bedT = st == SurfaceType.Bed ? bedT + dt : 0f;
+            body.Hop = st == SurfaceType.Bed ? Mathf.Abs(Mathf.Sin(bedT * 6.5f + seed)) * 0.028f : Mathf.MoveTowards(body.Hop, 0f, 0.2f * dt);
             float prev = yaw;
             if (vel.magnitude > 0.015f)
             {

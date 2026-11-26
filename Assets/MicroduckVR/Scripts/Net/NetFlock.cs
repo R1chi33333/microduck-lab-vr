@@ -23,7 +23,7 @@ namespace MicroduckVR.Net
         readonly NetSession net;
         readonly Dictionary<DuckBrain, ushort> idOf = new Dictionary<DuckBrain, ushort>();
         readonly Dictionary<ushort, DuckBrain> byId = new Dictionary<ushort, DuckBrain>();
-        readonly Dictionary<ushort, string> sentMeta = new Dictionary<ushort, string>();
+        readonly Dictionary<ushort, (AiState, string)> sentMeta = new Dictionary<ushort, (AiState, string)>();
         readonly Dictionary<ushort, Track<DuckSample>> tracks = new Dictionary<ushort, Track<DuckSample>>();
         readonly List<Action> unhook = new List<Action>();
         readonly HashSet<DuckBrain> seen = new HashSet<DuckBrain>();
@@ -52,11 +52,11 @@ namespace MicroduckVR.Net
             var body = SetupOf(b) != null ? SetupOf(b).Body : null;
             if (body != null)
             {
-                Action<string, float> em = (k, d) => SendEmote(id, k, d);
+                Action<EmoteKind, float> em = (k, d) => SendEmote(id, k, d);
                 body.OnEmote += em;
                 unhook.Add(() => { if (body != null) body.OnEmote -= em; });
             }
-            Action<DuckBrain, string, string> ev = (d, kind, ctx) => { if (kind == "got" || kind == "drop") SendEvent(id, kind, ctx); };
+            Action<DuckBrain, DuckEventKind, string> ev = (d, kind, ctx) => { if (kind == DuckEventKind.Got || kind == DuckEventKind.Drop) SendEvent(id, kind, ctx); };
             b.OnEvent += ev;
             unhook.Add(() => { if (b != null) b.OnEvent -= ev; });
             return id;
@@ -73,7 +73,7 @@ namespace MicroduckVR.Net
             var s = SetupOf(b);
             w.WriteValueSafe(id);
             w.WriteValueSafe(b.gameObject.name);
-            w.WriteValueSafe(s != null ? s.skin : "cream");
+            w.WriteValueSafe(s != null ? s.skin : SkinIds.Cream);
             w.WriteValueSafe(b.seed);
             w.WriteValueSafe(b.index);
             w.WriteValueSafe(b.Pos);
@@ -97,16 +97,16 @@ namespace MicroduckVR.Net
             } while (i < list.Count);
         }
 
-        void SendEmote(ushort id, string kind, float dur)
+        void SendEmote(ushort id, EmoteKind kind, float dur)
         {
             if (!net.PeerReady) return;
-            var w = net.Begin(NetMsg.FlockEmote); w.WriteValueSafe(id); w.WriteValueSafe(kind ?? ""); w.WriteValueSafe(dur); net.Send(w, true);
+            var w = net.Begin(NetMsg.FlockEmote); w.WriteValueSafe(id); w.WriteValueSafe((byte)kind); w.WriteValueSafe(dur); net.Send(w, true);
         }
 
-        void SendEvent(ushort id, string kind, string ctx)
+        void SendEvent(ushort id, DuckEventKind kind, string ctx)
         {
             if (!net.PeerReady) return;
-            var w = net.Begin(NetMsg.FlockEvent); w.WriteValueSafe(id); w.WriteValueSafe(kind ?? ""); w.WriteValueSafe(ctx ?? ""); net.Send(w, true);
+            var w = net.Begin(NetMsg.FlockEvent); w.WriteValueSafe(id); w.WriteValueSafe((byte)kind); w.WriteValueSafe(ctx ?? ""); net.Send(w, true);
         }
 
         /// <summary>Who joined and left the flock, what they think, and where everyone is.</summary>
@@ -132,10 +132,10 @@ namespace MicroduckVR.Net
             foreach (var kv in byId)
             {
                 var b = kv.Value; if (b == null) continue;
-                string meta = b.State + "\n" + b.Context;
+                var meta = (b.State, b.Context ?? "");
                 if (sentMeta.TryGetValue(kv.Key, out var was) && was == meta) continue;
                 sentMeta[kv.Key] = meta;
-                var w = net.Begin(NetMsg.FlockMeta); w.WriteValueSafe(kv.Key); w.WriteValueSafe(b.State ?? ""); w.WriteValueSafe(b.Context ?? ""); net.Send(w, true);
+                var w = net.Begin(NetMsg.FlockMeta); w.WriteValueSafe(kv.Key); w.WriteValueSafe((byte)b.State); w.WriteValueSafe(b.Context ?? ""); net.Send(w, true);
             }
 
             // where everyone is
@@ -247,34 +247,34 @@ namespace MicroduckVR.Net
         {
             var b = Puppetize(ReadEntry(ref r), out _);
             if (b == null) return;
-            ComicPop.Spawn("QUACK!", b.Pos + Vector3.up * 0.26f, "#FFC43D", 1.2f);
-            GameHud.Get().Big("NEW DUCK!", "#FFC43D", 1.0f);
+            ComicPop.Spawn("QUACK!", b.Pos + Vector3.up * 0.26f, ComicColors.Yellow, 1.2f);
+            GameHud.Get().Big("NEW DUCK!", ComicColors.Yellow, 1.0f);
         }
 
         public void OnRemove(ref FastBufferReader r)
         {
             r.ReadValueSafe(out ushort id);
             if (!TryGet(id, out var b)) return;
-            ComicPop.Spawn("BYE!", b.Pos + Vector3.up * 0.26f, "#7B61FF", 1.2f);
+            ComicPop.Spawn("BYE!", b.Pos + Vector3.up * 0.26f, ComicColors.Purple, 1.2f);
             Despawn(b);
         }
 
         public void OnMeta(ref FastBufferReader r)
         {
-            r.ReadValueSafe(out ushort id); r.ReadValueSafe(out string state); r.ReadValueSafe(out string ctx);
-            if (TryGet(id, out var b)) b.PuppetState(state, ctx);
+            r.ReadValueSafe(out ushort id); r.ReadValueSafe(out byte state); r.ReadValueSafe(out string ctx);
+            if (TryGet(id, out var b)) b.PuppetState((AiState)state, ctx);
         }
 
         public void OnEvent(ref FastBufferReader r)
         {
-            r.ReadValueSafe(out ushort id); r.ReadValueSafe(out string kind); r.ReadValueSafe(out string ctx);
-            if (TryGet(id, out var b)) b.PuppetEvent(kind, ctx);
+            r.ReadValueSafe(out ushort id); r.ReadValueSafe(out byte kind); r.ReadValueSafe(out string ctx);
+            if (TryGet(id, out var b)) b.PuppetEvent((DuckEventKind)kind, ctx);
         }
 
         public void OnEmote(ref FastBufferReader r)
         {
-            r.ReadValueSafe(out ushort id); r.ReadValueSafe(out string kind); r.ReadValueSafe(out float dur);
-            if (TryGet(id, out var b)) { var s = SetupOf(b); if (s != null && s.Body != null) s.Body.PlayEmote(kind, dur); }
+            r.ReadValueSafe(out ushort id); r.ReadValueSafe(out byte kind); r.ReadValueSafe(out float dur);
+            if (TryGet(id, out var b)) { var s = SetupOf(b); if (s != null && s.Body != null) s.Body.PlayEmote((EmoteKind)kind, dur); }
         }
 
         public void OnState(ref FastBufferReader r)

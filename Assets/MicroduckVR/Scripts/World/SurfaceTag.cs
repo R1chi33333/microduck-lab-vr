@@ -11,8 +11,21 @@ namespace MicroduckVR.World
         public string type = "wood";
         public string room = "living";
 
-        public float Friction => type switch { "tile" => 0.15f, "water" => 0.25f, "table" => 0.65f, "wood" => 0.7f, "card" => 0.8f, "stone" => 0.8f, "grass" => 0.9f, "bed" => 0.9f, "rug" => 1f, _ => 0.7f };
-        public float Bounce => type == "bed" ? 0.65f : 0f;
+        [System.NonSerialized] string parsedType;
+        [System.NonSerialized] SurfaceType kind;
+
+        /// <summary>'type' as an enum. Parsed once and cached; parsed again whenever 'type' is set to another string.</summary>
+        public SurfaceType Kind
+        {
+            get
+            {
+                if (!ReferenceEquals(parsedType, type)) { kind = SurfaceTypes.Parse(type); parsedType = type; }
+                return kind;
+            }
+        }
+
+        public float Friction => Kind switch { SurfaceType.Tile => 0.15f, SurfaceType.Water => 0.25f, SurfaceType.Table => 0.65f, SurfaceType.Wood => 0.7f, SurfaceType.Card => 0.8f, SurfaceType.Stone => 0.8f, SurfaceType.Grass => 0.9f, SurfaceType.Bed => 0.9f, SurfaceType.Rug => 1f, _ => 0.7f };
+        public float Bounce => Kind == SurfaceType.Bed ? 0.65f : 0f;
 
         /// <summary>The surface under a point (raycast down from just above it), or null.</summary>
         public static SurfaceTag At(Vector3 p)

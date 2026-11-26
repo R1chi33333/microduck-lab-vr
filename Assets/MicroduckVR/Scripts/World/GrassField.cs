@@ -25,8 +25,8 @@ namespace MicroduckVR.World
 
         void Start()
         {
-            leafA = ComicLook.ToonMaterial(ComicLook.Hex("#8FD35A"), "grass_bit_a"); leafA.SetFloat("_Unlit", 1f);
-            leafB = ComicLook.ToonMaterial(ComicLook.Hex("#46A64A"), "grass_bit_b"); leafB.SetFloat("_Unlit", 1f);
+            leafA = ComicLook.ToonMaterial(ComicLook.Hex(ComicColors.Green), "grass_bit_a"); leafA.SetFloat(ShaderIds.Unlit, 1f);
+            leafB = ComicLook.ToonMaterial(ComicLook.Hex("#46A64A"), "grass_bit_b"); leafB.SetFloat(ShaderIds.Unlit, 1f);
         }
 
         void OnDisable() { Shader.SetGlobalFloat(CountId, 0f); }
@@ -97,7 +97,7 @@ namespace MicroduckVR.World
             if (!OnLawn(p)) return false;
             if (!Physics.Raycast(p + Vector3.up * 0.05f, Vector3.down, out var hit, 0.3f, 1 << DuckSetup.LayerWorld, QueryTriggerInteraction.Ignore)) return false;
             var tag = hit.collider.GetComponent<SurfaceTag>();
-            return tag != null && tag.type == "grass";
+            return tag != null && tag.Kind == SurfaceType.Grass;
         }
 
         Transform Bit(Material m, Vector3 at)

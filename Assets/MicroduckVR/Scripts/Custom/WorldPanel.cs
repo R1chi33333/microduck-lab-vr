@@ -29,14 +29,14 @@ namespace MicroduckVR.Custom
         InputAction trig; bool was; Button hover;
         ComicBeam laser; Material hiMat, selMat;
 
-        public static Material Unlit(string hex) { var m = ComicLook.ToonMaterial(ComicLook.Hex(hex), "panel_" + hex); m.SetFloat("_Unlit", 1f); return m; }
+        public static Material Unlit(string hex) { var m = ComicLook.ToonMaterial(ComicLook.Hex(hex), "panel_" + hex); m.SetFloat(ShaderIds.Unlit, 1f); return m; }
 
         void Awake()
         {
             trig = new InputAction("PanelPress", InputActionType.Value, expectedControlType: "Axis");
-            trig.AddBinding("<XRController>{RightHand}/trigger"); trig.AddBinding("<Keyboard>/enter"); trig.Enable();
+            trig.AddBinding(InputPaths.RightTrigger); trig.AddBinding(InputPaths.KeyEnter); trig.Enable();
             hiMat = Unlit("#FFE45C"); selMat = Unlit("#FF8A9A");
-            laser = new ComicBeam("Panel laser", "#FF5D73", 0.0022f, 0.007f);
+            laser = new ComicBeam("Panel laser", ComicColors.Pink, 0.0022f, 0.007f);
         }
 
         void OnDestroy() { trig?.Disable(); if (Aimed) aimedCount--; }
@@ -64,7 +64,7 @@ namespace MicroduckVR.Custom
             var b = new Button { id = id, label = label, rect = new Rect(centre - size / 2f, size), click = click };
             b.t = Slab(size, hex, new Vector3(centre.x, centre.y, -0.006f), 0.35f, 0.012f);     // proud of the board: a clean ink line round each button
             b.mr = b.t.GetComponent<MeshRenderer>(); b.normal = b.mr.sharedMaterial;
-            if (!string.IsNullOrEmpty(label)) b.text = Label(label, new Vector3(centre.x, centre.y, -0.0135f), textSize, "#1B1430", size.x);
+            if (!string.IsNullOrEmpty(label)) b.text = Label(label, new Vector3(centre.x, centre.y, -0.0135f), textSize, ComicColors.Ink, size.x);
             buttons.Add(b);
             return b;
         }

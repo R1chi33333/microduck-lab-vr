@@ -51,7 +51,7 @@ namespace MicroduckVR.EditorTools
                     // only on bare lawn: whatever the down-ray hits first must be grass ground
                     if (!Physics.Raycast(new Vector3(px, 1.2f, pz), Vector3.down, out var hit, 2f, ~0, QueryTriggerInteraction.Ignore)) continue;
                     var tag = hit.collider.GetComponent<MicroduckVR.World.SurfaceTag>();
-                    if (tag == null || tag.type != "grass" || hit.normal.y < 0.95f) continue;
+                    if (tag == null || tag.Kind != MicroduckVR.World.SurfaceType.Grass || hit.normal.y < 0.95f) continue;
                     bool inked = false;                       // ink silhouettes now come from the shader (see ToonGrass / ComicOutline)
                     int n = inked ? 5 : maxBlades - r.Next(2);
                     float size = Rf(0.8f, 1.2f) * scale * (inked ? 1.25f : 1f);

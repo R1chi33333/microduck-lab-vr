@@ -23,14 +23,14 @@ namespace MicroduckVR.Player
             float aw = (Cols * (Tile + Gap) - Gap - (ACols - 1) * Gap) / ACols;
             var slab = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(w, h, 0.006f), new ComicMesh.Style { radius = 0.01f, segments = 3 }), Unlit("#FFFFFF", "bag_slab"));
             slab.localPosition = new Vector3(0f, -0.004f, 0.004f);
-            var tab = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(0.11f, 0.03f, 0.005f), new ComicMesh.Style { radius = 0.008f, segments = 3 }), Unlit("#FFC43D", "bag_tab"));
+            var tab = MakeMesh(panel, ComicMesh.RoundedBox(new Vector3(0.11f, 0.03f, 0.005f), new ComicMesh.Style { radius = 0.008f, segments = 3 }), Unlit(ComicColors.Yellow, "bag_tab"));
             tab.localPosition = new Vector3(0f, h / 2f + 0.002f, -0.0015f); tab.localRotation = Quaternion.Euler(0f, 0f, -2f);
             var title = Text(panel, "TOY BAG!", 0.16f, new Vector3(0f, h / 2f + 0.001f, -0.0045f));
             title.color = ComicLook.Ink; title.transform.localRotation = Quaternion.Euler(0f, 0f, -2f);
             footer = Text(panel, "", 0.13f, new Vector3(0f, -h / 2f + 0.011f + NetRow, -0.001f)); footer.rectTransform.sizeDelta = new Vector2(w, 0.03f);
             netLine = Text(panel, "", 0.1f, new Vector3(0f, -h / 2f + 0.01f, -0.001f)); netLine.rectTransform.sizeDelta = new Vector2(w - 0.012f, 0.02f);
             netLine.enableAutoSizing = true; netLine.fontSizeMin = 0.05f; netLine.fontSizeMax = 0.1f;   // long addresses shrink to fit
-            netLine.color = ComicLook.Hex("#3A86FF");
+            netLine.color = ComicLook.Hex(ComicColors.Blue);
             float x0 = -(Cols - 1) * (Tile + Gap) / 2f, y0 = h / 2f - 0.045f;
             for (int i = 0; i < n; i++)
             {
@@ -65,7 +65,7 @@ namespace MicroduckVR.Player
                 }
                 else
                 {
-                    kind = "trash";
+                    kind = BagActions.Trash;
                     model = new GameObject("bin").transform; model.SetParent(tile, false); model.localPosition = new Vector3(0f, -0.006f, -0.012f);
                     ToyKit.Cyl(model, new Vector3(0f, 0.006f, 0f), 0.0075f, 0.014f, "#97A0AE", default, 0.0085f, 14);
                     ToyKit.Cyl(model, new Vector3(0f, 0.0145f, 0f), 0.0095f, 0.002f, "#5B6472", default, -1f, 14);
@@ -101,7 +101,7 @@ namespace MicroduckVR.Player
 
         void BuildLaser()
         {
-            laser = new ComicBeam("Bag laser", "#FF5D73", 0.0022f, 0.008f);
+            laser = new ComicBeam("Bag laser", ComicColors.Pink, 0.0022f, 0.008f);
         }
 
         void SetHover(int h)

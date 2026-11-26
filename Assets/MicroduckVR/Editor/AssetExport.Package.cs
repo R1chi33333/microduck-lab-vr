@@ -10,6 +10,9 @@ namespace MicroduckVR.EditorTools
     public static partial class AssetExport
     {
         // ================================================================== 3. Export Package
+        /// <summary>SurfaceTag's enum: no asset refers to its file, so it is added to the package by hand.</summary>
+        const string SurfaceTypeScript = "Assets/MicroduckVR/Scripts/World/SurfaceType.cs";
+
         [MenuItem("Microduck/Assets/Export Package")]
         public static void ExportPackage()
         {
@@ -18,6 +21,7 @@ namespace MicroduckVR.EditorTools
             int warnings = 0;
             if (File.Exists(CreditsPath)) roots.Add(CreditsPath); else { Debug.LogWarning("[Microduck] Export Package: " + CreditsPath + " is missing; the package has no credits file"); warnings++; }
             foreach (var p in new[] { OutlineShaderPath, ComicSetup.OutlineMatPath }) if (File.Exists(p)) roots.Add(p);
+            if (File.Exists(SurfaceTypeScript)) roots.Add(SurfaceTypeScript);
             if (AssetDatabase.IsValidFolder(AnimDir))                                   // the duck's moves: clips, controller, animated duck
                 roots.AddRange(AssetDatabase.FindAssets("", new[] { AnimDir }).Select(AssetDatabase.GUIDToAssetPath).Where(x => !AssetDatabase.IsValidFolder(x)));
 

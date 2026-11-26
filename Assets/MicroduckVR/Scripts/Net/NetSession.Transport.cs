@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using MicroduckVR.Comic;
 using MicroduckVR.Games;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
@@ -101,7 +102,7 @@ namespace MicroduckVR.Net
             Playback.Reset();
             lastStatus = why;
             SetMode(Mode.Leaving); leaveT = 0f;
-            if (!tearingDown && !string.IsNullOrEmpty(why) && why != "LEFT") GameHud.Get().Big(why, "#7B61FF", 1.3f);
+            if (!tearingDown && !string.IsNullOrEmpty(why) && why != "LEFT") GameHud.Get().Big(why, ComicColors.Purple, 1.3f);
             Debug.Log("[Microduck] net: session ended" + (why != "" ? " (" + why + ")" : ""));
         }
 
@@ -111,7 +112,7 @@ namespace MicroduckVR.Net
             if (Remote != null) { Props.ReleaseJoiner(Remote); Remote.Despawn(); Remote = null; }
             Flock.HostEnd(); Props.HostEnd(); Unhook();
             remoteId = null; Playback.Reset();
-            GameHud.Get().Big(why, "#7B61FF", 1.2f);
+            GameHud.Get().Big(why, ComicColors.Purple, 1.2f);
             Debug.Log("[Microduck] net: " + why.ToLowerInvariant());
         }
     }

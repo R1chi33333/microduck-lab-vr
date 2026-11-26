@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MicroduckVR.Comic;
 using MicroduckVR.World;
 using UnityEngine;
 
@@ -27,7 +28,7 @@ namespace MicroduckVR.Duck
         {
             var g = new GameObject(name).transform;      // origin = top centre of the deck, forward +z
             ToyKit.Box(g, new Vector3(0f, -T / 2f, 0f), new Vector3(Wd, T, L), deck, 0.42f);
-            ToyKit.Box(g, new Vector3(0f, -0.0008f, 0f), new Vector3(Wd * 0.7f, 0.0012f, L * 0.7f), "#1B1430", 0.3f);      // grip tape
+            ToyKit.Box(g, new Vector3(0f, -0.0008f, 0f), new Vector3(Wd * 0.7f, 0.0012f, L * 0.7f), ComicColors.Ink, 0.3f);      // grip tape
             ToyKit.Box(g, new Vector3(0f, -0.0009f, L * 0.22f), new Vector3(Wd * 0.5f, 0.0012f, 0.006f), "#FFE45C", 0.3f);  // stripe
             foreach (var z in new[] { -L * 0.3f, L * 0.3f }) ToyKit.Box(g, new Vector3(0f, -T - 0.002f, z), new Vector3(Wd * 0.8f, 0.004f, 0.012f), "#B9BEC4", 0.3f);
             ToyKit.Cyl(g, new Vector3(0f, -T - 0.002f, L / 2f + 0.002f), 0.0045f, 0.006f, "#2A2A2C", new Vector3(90f, 0f, 0f), 0.004f, 14);

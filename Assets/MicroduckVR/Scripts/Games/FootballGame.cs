@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MicroduckVR.Duck;
 using MicroduckVR.Flock;
 using MicroduckVR.Player;
 using UnityEngine;
@@ -97,8 +98,8 @@ namespace MicroduckVR.Games
                 int scorer = along < 0f ? 1 : 0;         // into the orange goal (z-) is a goal for blue
                 Score[scorer]++; cool = 2.2f; Caption();
                 GameHud.Get().Big("GOAL!", scorer == 0 ? "#FF9F0A" : "#64D2FF", 1.6f);
-                foreach (var kv in Team) if (kv.Value == scorer) kv.Key.Body.PlayEmote("dance");
-                if (scorer == PlayerTeam && PlayerDuck.Instance != null) PlayerDuck.Instance.Body.PlayEmote("dance");
+                foreach (var kv in Team) if (kv.Value == scorer) kv.Key.Body.PlayEmote(EmoteKind.Dance);
+                if (scorer == PlayerTeam && PlayerDuck.Instance != null) PlayerDuck.Instance.Body.PlayEmote(EmoteKind.Dance);
                 return;
             }
             if (b.y < -0.1f || Mathf.Abs(across) > 0.75f || Mathf.Abs(along) > Half + 0.3f) cool = 0.8f;   // out of play

@@ -41,7 +41,7 @@ namespace MicroduckVR.EditorTools
                     step++; break;
                 case 3 when t > 26:
                     var sb = new System.Text.StringBuilder("race:");
-                    foreach (var b in DuckBrain.All) sb.Append($" [{b.index} {b.State} {MicroduckVR.World.HouseLayout.RoomAt(b.Pos)} target={RaceGame.Instance.TargetFor(b).ToString("F1")}]");
+                    foreach (var b in DuckBrain.All) sb.Append($" [{b.index} {AiStates.Name(b.State)} {MicroduckVR.World.HouseLayout.RoomAt(b.Pos)} target={RaceGame.Instance.TargetFor(b).ToString("F1")}]");
                     Log(sb.ToString());
                     DebugCapture.Shoot("games_race_run", new Vector3(-4.2f, 1.6f, 1.2f), new Vector3(-4.6f, 0f, -0.2f), 1280, 800, 70f);
                     RaceGame.Instance.StopRace(); step++; break;

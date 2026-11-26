@@ -10,16 +10,16 @@ namespace MicroduckVR.Comic
     /// </summary>
     public static class ComicLook
     {
-        public static readonly Color Ink = Hex("#1B1430");
+        public static readonly Color Ink = Hex(ComicColors.Ink);
         public static readonly Color Paper = Hex("#FFF7E8");
 
         public class Skin { public Color shell, accent, accent2, soft, secondary; }
         public static readonly Dictionary<string, Skin> Skins = new Dictionary<string, Skin>
         {
-            { "cream",    new Skin { shell = Hex("#FBF4E4"), accent = Hex("#FF8A1F"), accent2 = Hex("#FFC928"), soft = Hex("#F3D9E8"), secondary = Hex("#DCE0E7") } },
-            { "graphite", new Skin { shell = Hex("#4A505C"), accent = Hex("#FFC928"), accent2 = Hex("#FFC928"), soft = Hex("#6B7280"), secondary = Hex("#353A44") } },
-            { "lavender", new Skin { shell = Hex("#C3B2EC"), accent = Hex("#FFC928"), accent2 = Hex("#FFD95A"), soft = Hex("#EEE6FA"), secondary = Hex("#9D93BD") } },
-            { "sky",      new Skin { shell = Hex("#A6D8F5"), accent = Hex("#FF8A1F"), accent2 = Hex("#FFC928"), soft = Hex("#E6F4FC"), secondary = Hex("#8FB0C8") } },
+            { SkinIds.Cream,    new Skin { shell = Hex("#FBF4E4"), accent = Hex("#FF8A1F"), accent2 = Hex("#FFC928"), soft = Hex("#F3D9E8"), secondary = Hex("#DCE0E7") } },
+            { SkinIds.Graphite, new Skin { shell = Hex("#4A505C"), accent = Hex("#FFC928"), accent2 = Hex("#FFC928"), soft = Hex("#6B7280"), secondary = Hex("#353A44") } },
+            { SkinIds.Lavender, new Skin { shell = Hex("#C3B2EC"), accent = Hex("#FFC928"), accent2 = Hex("#FFD95A"), soft = Hex("#EEE6FA"), secondary = Hex("#9D93BD") } },
+            { SkinIds.Sky,      new Skin { shell = Hex("#A6D8F5"), accent = Hex("#FF8A1F"), accent2 = Hex("#FFC928"), soft = Hex("#E6F4FC"), secondary = Hex("#8FB0C8") } },
         };
 
         static readonly Dictionary<string, Color> Fixed = new Dictionary<string, Color>
@@ -83,11 +83,11 @@ namespace MicroduckVR.Comic
             key ??= ColorUtility.ToHtmlStringRGB(c) + rim.ToString("F2") + spec.ToString("F2");
             if (cache.TryGetValue(key, out var m) && m != null) return m;
             m = new Material(ToonShader) { name = "Toon " + key, enableInstancing = true };
-            m.SetColor("_BaseColor", c);
-            m.SetFloat("_RimAmount", rim);
-            m.SetFloat("_RimT", DefaultRimT);
-            m.SetFloat("_SpecAmount", spec);
-            m.SetFloat("_ContactAO", 0f);
+            m.SetColor(ShaderIds.BaseColor, c);
+            m.SetFloat(ShaderIds.RimAmount, rim);
+            m.SetFloat(ShaderIds.RimT, DefaultRimT);
+            m.SetFloat(ShaderIds.SpecAmount, spec);
+            m.SetFloat(ShaderIds.ContactAO, 0f);
             cache[key] = m;
             return m;
         }
@@ -95,7 +95,7 @@ namespace MicroduckVR.Comic
         /// <summary>Character print (web CHAR_TOON): gentle halftone, no hatching, matte, no floor contact.</summary>
         public static Material Character(Material m)
         {
-            m.SetFloat("_Halftone", 0.4f); m.SetFloat("_Hatch", 0f); m.SetFloat("_SpecAmount", 0f); m.SetFloat("_ContactAO", 0f);
+            m.SetFloat(ShaderIds.Halftone, 0.4f); m.SetFloat(ShaderIds.Hatch, 0f); m.SetFloat(ShaderIds.SpecAmount, 0f); m.SetFloat(ShaderIds.ContactAO, 0f);
             return m;
         }
 
@@ -132,10 +132,10 @@ namespace MicroduckVR.Comic
         /// <summary>Customised duck: a base colourway, then optional colourways per part (head, body, legs, feet).</summary>
         public static readonly (string part, Regex re)[] PaintParts =
         {
-            ("head", new Regex("^(shell_head|shell_beak)", RegexOptions.IgnoreCase)),
-            ("body", new Regex("^shell_body", RegexOptions.IgnoreCase)),
-            ("legs", new Regex("^leg_", RegexOptions.IgnoreCase)),
-            ("feet", new Regex("^foot_", RegexOptions.IgnoreCase)),
+            (PartIds.Head, new Regex("^(shell_head|shell_beak)", RegexOptions.IgnoreCase)),
+            (PartIds.Body, new Regex("^shell_body", RegexOptions.IgnoreCase)),
+            (PartIds.Legs, new Regex("^leg_", RegexOptions.IgnoreCase)),
+            (PartIds.Feet, new Regex("^foot_", RegexOptions.IgnoreCase)),
         };
 
         public static void ApplyCustom(Transform rig, string baseSkin, IDictionary<string, string> parts)
@@ -156,9 +156,9 @@ namespace MicroduckVR.Comic
             }
         }
 
-        public static void ApplyToDuck(Transform rig, string skinId = "cream")
+        public static void ApplyToDuck(Transform rig, string skinId = SkinIds.Cream)
         {
-            var skin = Skins.TryGetValue(skinId, out var sk) ? sk : Skins["cream"];
+            var skin = Skins.TryGetValue(skinId, out var sk) ? sk : Skins[SkinIds.Cream];
             foreach (var r in rig.GetComponentsInChildren<Renderer>(true))
             {
                 if (IsAccessory(r)) continue;
@@ -166,7 +166,7 @@ namespace MicroduckVR.Comic
                 if (Hide.IsMatch(n) || Internal.IsMatch(n)) { r.enabled = false; continue; }
                 string kind = KindFor(n);
                 var mat = Character(ToonMaterial(ColorFor(kind, skin), skinId + ":" + kind, kind == "shell" ? 0.35f : 0f));
-                if (kind == "eye" || kind == "highlight") mat.SetFloat("_Unlit", 1f);
+                if (kind == "eye" || kind == "highlight") mat.SetFloat(ShaderIds.Unlit, 1f);
                 var mats = r.sharedMaterials;
                 for (int i = 0; i < mats.Length; i++) mats[i] = mat;
                 r.sharedMaterials = mats;

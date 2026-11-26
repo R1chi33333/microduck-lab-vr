@@ -1,4 +1,5 @@
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using UnityEngine;
 
 namespace MicroduckVR.Duck
@@ -10,13 +11,13 @@ namespace MicroduckVR.Duck
     {
         public GameObject rigPrefab;
         public DuckJointMap jointMap;
-        public string skin = "cream";             // cream | graphite | lavender | sky
+        public string skin = SkinIds.Cream;             // cream | graphite | lavender | sky
         public bool hideHeadFromPlayer;            // the player's own duck: everything but the legs goes to the PlayerHead layer
 
         public DuckBody Body { get; private set; }
         public CharacterController Mover { get; private set; }
 
-        public const int LayerWorld = 6, LayerDuck = 7, LayerToy = 8, LayerPlayerHead = 9, LayerProp = 10, LayerCeiling = 11;
+        public const int LayerWorld = Layers.World, LayerDuck = Layers.Duck, LayerToy = Layers.Toy, LayerPlayerHead = Layers.PlayerHead, LayerProp = Layers.Prop, LayerCeiling = Layers.Ceiling;
 
         void Awake()
         {
@@ -48,7 +49,7 @@ namespace MicroduckVR.Duck
             {
                 // the player sees out of this duck: hide its shell, electronics and head, keep the legs and feet
                 SetLayer(rig.transform, LayerPlayerHead);
-                foreach (var legRoot in new[] { "body_yaw2roll", "body_bearing_roll" })
+                foreach (var legRoot in new[] { JointNames.LeftLegRoot, JointNames.RightLegRoot })
                     if (Body.Nodes.TryGetValue(legRoot, out var lr)) SetLayer(lr, LayerDuck);
             }
         }

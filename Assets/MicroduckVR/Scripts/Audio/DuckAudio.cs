@@ -39,9 +39,9 @@ namespace MicroduckVR.Audio
             body.OnSound += OnBodySound;
             if (brain != null) brain.OnEvent += (d, kind, ctx) =>
             {
-                if (kind == "got" || kind == "drop") Chirp();
-                else if (kind == "bed") voice.PlayOneShot(boing, volume * 0.7f);
-                else if (kind == "water") voice.PlayOneShot(splash, volume * 0.8f);
+                if (kind == DuckEventKind.Got || kind == DuckEventKind.Drop) Chirp();
+                else if (kind == DuckEventKind.Bed) voice.PlayOneShot(boing, volume * 0.7f);
+                else if (kind == DuckEventKind.Water) voice.PlayOneShot(splash, volume * 0.8f);
             };
             nextIdle = Time.time + 3f + (float)rng.NextDouble() * 10f;
         }
@@ -80,12 +80,12 @@ namespace MicroduckVR.Audio
             return a;
         }
 
-        void OnBodySound(string kind, object data)
+        void OnBodySound(BodySound kind, object data)
         {
-            if (kind != "plant") return;
+            if (kind != BodySound.Plant) return;
             var surf = SurfaceTag.At(body.Pos);
-            string t = surf != null ? surf.type : "wood";
-            var clip = t == "tile" || t == "table" ? stepTile : t == "rug" || t == "bed" ? stepSoft : t == "grass" ? stepGrass : stepWood;
+            SurfaceType t = surf != null ? surf.Kind : SurfaceType.Wood;
+            var clip = t == SurfaceType.Tile || t == SurfaceType.Table ? stepTile : t == SurfaceType.Rug || t == SurfaceType.Bed ? stepSoft : t == SurfaceType.Grass ? stepGrass : stepWood;
             steps.pitch = 0.9f + (float)rng.NextDouble() * 0.25f;
             steps.PlayOneShot(clip, volume * 0.45f);
         }

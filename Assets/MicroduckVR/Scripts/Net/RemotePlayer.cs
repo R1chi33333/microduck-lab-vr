@@ -32,7 +32,7 @@ namespace MicroduckVR.Net
             go.transform.SetPositionAndRotation(pos, Quaternion.Euler(0f, yaw * Mathf.Rad2Deg, 0f));
             go.SetActive(false);
             go.AddComponent<DuckBody>();
-            var s = go.AddComponent<DuckSetup>(); s.rigPrefab = src.rigPrefab; s.jointMap = src.jointMap; s.skin = "cream";
+            var s = go.AddComponent<DuckSetup>(); s.rigPrefab = src.rigPrefab; s.jointMap = src.jointMap; s.skin = SkinIds.Cream;
             go.SetActive(true);                                                     // builds the body (DuckSetup.Awake)
             if (s.Mover != null) s.Mover.enabled = false;                           // posed from the network, never pushed about here
             var a = go.AddComponent<DuckAudio>(); a.idleChirps = false; a.seed = 3;
@@ -41,7 +41,7 @@ namespace MicroduckVR.Net
             rp.skates = new SkatePair();
             rp.ApplyCustom(custom);
             PlayerTargets.Remote.Add(rp);
-            ComicPop.Spawn("HELLO!", pos + Vector3.up * 0.36f, "#FFC43D", 1.3f);
+            ComicPop.Spawn("HELLO!", pos + Vector3.up * 0.36f, ComicColors.Yellow, 1.3f);
             return rp;
         }
 
@@ -61,7 +61,7 @@ namespace MicroduckVR.Net
         public void AddSample(double t, PlayerSample s) => track.Add(t, s);
 
         public void Quack() { if (au != null) au.Chirp(); }
-        public void Emote(string kind, float dur) { if (Body != null) Body.PlayEmote(kind, dur); }
+        public void Emote(EmoteKind kind, float dur) { if (Body != null) Body.PlayEmote(kind, dur); }
         public void Tip(Vector3 dir) { if (Body != null && !Body.Fallen) Body.StartTip(dir); }
         /// <summary>A word about the other player's duck pops up big over its head.</summary>
         public void Word(string word, string hex, float size) { if (Body != null) ComicPop.Spawn(word, Body.Pos + Vector3.up * 0.36f, hex, size); }
@@ -98,7 +98,7 @@ namespace MicroduckVR.Net
 
         static void ShowLaser(bool on)
         {
-            if (beam == null) { if (!on) return; beam = new ComicBeam("Other player laser", "#FF5D73", 0.0028f, 0.016f); }
+            if (beam == null) { if (!on) return; beam = new ComicBeam("Other player laser", ComicColors.Pink, 0.0028f, 0.016f); }
             beam.Show(on);
         }
 
@@ -107,7 +107,7 @@ namespace MicroduckVR.Net
         {
             PlayerTargets.Remote.Remove(this);
             LaserOn = false; ShowLaser(false);
-            if (Body != null) ComicPop.Spawn("BYE!", Body.Pos + Vector3.up * 0.36f, "#7B61FF", 1.2f);
+            if (Body != null) ComicPop.Spawn("BYE!", Body.Pos + Vector3.up * 0.36f, ComicColors.Purple, 1.2f);
             if (skates != null) { if (skates.Left != null) Destroy(skates.Left.gameObject); if (skates.Right != null) Destroy(skates.Right.gameObject); }
             if (Setup != null && Setup.Mover != null) Destroy(Setup.Mover.gameObject);
             Destroy(gameObject);

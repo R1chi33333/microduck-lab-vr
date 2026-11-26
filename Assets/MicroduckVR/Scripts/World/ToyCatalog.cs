@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MicroduckVR.Comic;
 using MicroduckVR.Duck;
 using UnityEngine;
 
@@ -25,7 +26,7 @@ namespace MicroduckVR.World
         public static Entry Get(string kind) { Init(); return byKind.TryGetValue(kind, out var e) ? e : null; }
         public static IReadOnlyList<Entry> All { get { Init(); return Entries; } }
 
-        const string Ink = "#1B1430";
+        const string Ink = ComicColors.Ink;
         static void Add(Entry e) { Entries.Add(e); byKind[e.kind] = e; }
 
         static void Init()
@@ -56,8 +57,8 @@ namespace MicroduckVR.World
             Add(new Entry { kind = "strawberry", label = "Strawberry", icon = "#E8323F", grip = 0.02f, mass = 0.006f, build = Strawberry });
             Add(new Entry { kind = "grape", label = "Grape", icon = "#7B4FC8", grip = 0.017f, mass = 0.004f, build = Grape });
             Add(new Entry { kind = "cracker", label = "Cracker", icon = "#E9B86A", grip = 0.005f, mass = 0.003f, build = Cracker });
-            Add(new Entry { kind = "toy_figure", label = "Toy figure", icon = "#3A86FF", grip = 0.018f, mass = 0.006f, build = Figure });
-            Add(new Entry { kind = "button", label = "Button", icon = "#FF5D73", grip = 0.004f, mass = 0.001f, build = ButtonToy });
+            Add(new Entry { kind = "toy_figure", label = "Toy figure", icon = ComicColors.Blue, grip = 0.018f, mass = 0.006f, build = Figure });
+            Add(new Entry { kind = "button", label = "Button", icon = ComicColors.Pink, grip = 0.004f, mass = 0.001f, build = ButtonToy });
             Add(new Entry { kind = "leaf", label = "Leaf", icon = "#5BB54A", grip = 0.006f, mass = 0.0008f, build = Leaf });
             Add(new Entry { kind = "pebble", label = "Pebble", icon = "#A8A2B8", grip = 0.0155f, mass = 0.006f, build = Pebble });
         }
