@@ -17,6 +17,7 @@ namespace MicroduckVR.Custom
     /// </summary>
     public class MirrorStation : MonoBehaviour
     {
+        /// <summary>The mirror, once made.</summary>
         public static MirrorStation Instance { get; private set; }
         // Unity space: mirror on the bedroom's north wall, facing into the room (+z)
         static readonly Vector3 MirrorCentre = new Vector3(4.42f, 0.75f, -2.42f);   // clear of the toy box
@@ -25,13 +26,15 @@ namespace MicroduckVR.Custom
         /// <summary>Whose eye the reflection is drawn for (filming); the player's own when not set.</summary>
         public static Camera Viewer;
         static readonly int InkScaleId = Shader.PropertyToID("_InkCamScale");
-        public static readonly Vector3 StandPos = new Vector3(4.42f, 0.05f, -2.05f);   // close enough to see your colours in the glass
+        /// <summary>Where the duck stands at the mirror: close enough to see its colours in the glass.</summary>
+        public static readonly Vector3 StandPos = new Vector3(4.42f, 0.05f, -2.05f);
         /// <summary>How many times DONE! has been pressed on the board (the tutorial waits for the first).</summary>
         public static int SaveCount { get; private set; }
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { Instance = null; Viewer = null; SaveCount = 0; InZone = false; }
         const float W = 0.6f, H = 1.4f;
 
+        /// <summary>The customise board.</summary>
         public WorldPanel Board => board;
         /// <summary>The look as it is on the board right now (the network session shows it on the other PC).</summary>
         public DuckCustom Current => custom;
@@ -48,6 +51,7 @@ namespace MicroduckVR.Custom
         readonly System.Random rng = new System.Random();
         string paintPart = "";
 
+        /// <summary>Builds the mirror station for the player's duck the first time.</summary>
         public static void Ensure(PlayerDuck player, TMP_FontAsset font)
         {
             if (Instance != null) return;

@@ -16,6 +16,7 @@ namespace MicroduckVR.Custom
     /// </summary>
     public class Garage : MonoBehaviour
     {
+        /// <summary>The garage, once made.</summary>
         public static Garage Instance { get; private set; }
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { Instance = null; }
@@ -34,12 +35,14 @@ namespace MicroduckVR.Custom
             foreach (var n in sv) Def("servo_" + n, n.Replace('_', ' ').ToUpperInvariant(), "SERVOS", "^servo_" + n + "$", n.Contains("knee") || n.Contains("ankle") ? 12f : n == "jaw" ? 6f : 5f);
         }
 
+        /// <summary>The garage's board.</summary>
         public WorldPanel Board => board;
         PlayerDuck pd; WorldPanel board; string tab = "SHELL"; PartDef selected;
         readonly List<(WorldPanel.Button row, Transform fill, PartDef part)> rows = new List<(WorldPanel.Button, Transform, PartDef)>();
         bool inside, wasThird; float flashT = -1f, odoSaved; Material flash;
         const string OdoKey = PrefKeys.Odometer;
 
+        /// <summary>Builds the garage for the player's duck the first time.</summary>
         public static void Ensure(PlayerDuck player, TMP_FontAsset font)
         {
             if (Instance != null) return;

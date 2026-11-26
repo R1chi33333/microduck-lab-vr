@@ -16,20 +16,29 @@ namespace MicroduckVR.Custom
     /// </summary>
     public class WorldPanel : MonoBehaviour
     {
+        /// <summary>One button: its id, label, rectangle in the panel's plane, objects and click action.</summary>
         public class Button { public string id, label; public Rect rect; public Transform t; public MeshRenderer mr; public Material normal; public TextMeshPro text; public Action click; public bool selected; }
 
+        /// <summary>The player's camera, right controller and the board font.</summary>
         public Camera cam; public Transform rightHand; public TMP_FontAsset font;
+        /// <summary>Furthest the laser reaches the panel from (m).</summary>
         public float reach = 1.2f;
+        /// <summary>The panel's buttons.</summary>
         public readonly List<Button> buttons = new List<Button>();
+        /// <summary>The player is pointing at this panel.</summary>
         public bool Aimed { get; private set; }
+        /// <summary>The player is pointing at any panel (the beak ignores the trigger then).</summary>
         public static bool AnyAimed => aimedCount > 0;
-        public static Vector3? DebugPoint;       // editor tests: a point on a panel to "aim" at
+        /// <summary>Editor tests: a point on a panel to "aim" at.</summary>
+        public static Vector3? DebugPoint;
+        /// <summary>Editor tests: press the trigger once.</summary>
         public static bool DebugPress;
         static int aimedCount;
 
         InputAction trig; bool was; Button hover;
         ComicBeam laser; Material hiMat, selMat;
 
+        /// <summary>A flat (unlit) panel material in this colour.</summary>
         public static Material Unlit(string hex) { var m = ComicLook.ToonMaterial(ComicLook.Hex(hex), "panel_" + hex); m.SetFloat(ShaderIds.Unlit, 1f); return m; }
 
         void Awake()
@@ -43,6 +52,7 @@ namespace MicroduckVR.Custom
         void OnDestroy() { trig?.Disable(); if (Aimed) aimedCount--; }
         void OnDisable() { if (Aimed) { aimedCount--; Aimed = false; } laser?.Show(false); }
 
+        /// <summary>A rounded slab on the panel (a backing card or a button).</summary>
         public Transform Slab(Vector2 size, string hex, Vector3 at, float round = 0.25f, float thick = 0.004f)
         {
             var go = new GameObject("slab"); go.transform.SetParent(transform, false); go.transform.localPosition = at;
@@ -51,6 +61,7 @@ namespace MicroduckVR.Custom
             return go.transform;
         }
 
+        /// <summary>A text label on the panel.</summary>
         public TextMeshPro Label(string s, Vector3 at, float size, string hex, float width = 0.2f, TextAlignmentOptions align = TextAlignmentOptions.Center)
         {
             var go = new GameObject("text"); go.transform.SetParent(transform, false); go.transform.localPosition = at;
@@ -60,6 +71,7 @@ namespace MicroduckVR.Custom
             return t;
         }
 
+        /// <summary>Adds a button; click runs when it is pointed at and the trigger is pressed.</summary>
         public Button Add(string id, string label, Vector2 centre, Vector2 size, string hex, Action click, float textSize = 0.06f)
         {
             var b = new Button { id = id, label = label, rect = new Rect(centre - size / 2f, size), click = click };
@@ -70,6 +82,7 @@ namespace MicroduckVR.Custom
             return b;
         }
 
+        /// <summary>Marks a button as selected (pink) or not.</summary>
         public void Select(Button b, bool on) { b.selected = on; Refresh(b); }
         void Refresh(Button b) { b.mr.sharedMaterial = b == hover ? hiMat : b.selected ? selMat : b.normal; b.t.localScale = b == hover ? new Vector3(1.08f, 1.08f, 1f) : Vector3.one; }
 
@@ -99,12 +112,14 @@ namespace MicroduckVR.Custom
             if (press && hover != null) hover.click?.Invoke();
         }
 
+        /// <summary>The area of the panel that catches the laser (panel plane, x right, y up).</summary>
         public Rect panelRect;
         Rect PanelRect() => panelRect;
 
         // ---- reading distance. A board on a wall is far too small to read from where a duck stands, so a board the
         // player has walked up to floats within reading distance of the eyes (first or third person), off to one side
         // of the thing they came for, and turns to face them. It only glides after them once they have moved away.
+        /// <summary>Reading distance: follow the player, the point they came to look at, and how the board floats near their eyes.</summary>
         public bool follow; public Vector3 focus; public float readDist = 0.42f, sideDeg = 38f, drop = 0.02f, minY = 0.2f;
         /// <summary>Filming: every board out of the shot.</summary>
         public static bool HideAll; bool hiddenNow;
