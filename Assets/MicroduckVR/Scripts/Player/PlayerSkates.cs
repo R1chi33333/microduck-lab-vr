@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using MicroduckVR.Comic;
 using MicroduckVR.Duck;
 using MicroduckVR.World;
@@ -11,7 +10,9 @@ namespace MicroduckVR.Player
     /// Roller skates for the player's duck (port of the skate model in agent.js): momentum, push strokes, braking,
     /// grip that depends on the floor, a drift (hold left grip while turning: lower grip, faster turn, the tail slides
     /// out; let go after a moment for a slingshot) and a boost (left trigger: a short burst, then a cooldown).
-    /// Comic effects: smoke puffs when kicking off, braking or boosting, sparks while drifting, skid marks on the floor.
+    /// Comic effects (the web's skate FX, drawn by ComicFX): smoke puffs, zig-zag bolts, speed streaks, sparks, glints,
+    /// a burst when a fast run comes to a stop, and skid marks on the floor. Through your own eyes a share of the smoke
+    /// and bolts curls forwards into the bottom of the view, since everything at the wheels is out of sight below you.
     ///
     /// VR comfort: you steer by pointing the stick where you want to go relative to where you look (the skates turn
     /// towards it); the view itself never turns, rolls or leans with the duck. Speeds are capped (comfortScale) and the
@@ -40,15 +41,15 @@ namespace MicroduckVR.Player
         DuckBody body;
         SkatePair pair;
         InputAction driftA, boostA;
-        Vector3 sv; float w, boostT, boostCd, driftT, slip, prevSpeed;
+        Vector3 sv; float w, boostT, boostCd, driftT, slip;
         bool drifting;
 
-        // effects
-        Material smokeMat, sparkMat, skidMat;
-        readonly List<(Transform t, Vector3 v, float age, float life, int kind)> fx = new List<(Transform, Vector3, float, float, int)>();
-        readonly Queue<(Transform t, float age)> skids = new Queue<(Transform, float)>();
-        Vector3?[] lastSkid = new Vector3?[2];
-        float smokeT, sparkT;
+        // effects (toon.js skateFX state): smoothed acceleration, turn rate, the last run's peak speed, emission accumulators
+        PlayerDuck pd;
+        bool fxLive, stopped = true;
+        Vector3 fxPos; float fxSp, fxYaw, fxAcc, peak, peakT = 9f, skrrtCd;
+        float smokeAcc, boltAcc, streakAcc, fpSmokeAcc, fpBoltAcc;
+        readonly Vector3?[] lastSkid = new Vector3?[2];
         AudioSource rollSrc, sfxSrc; AudioClip boostClip, pushClip, clackClip;
 
         public void Init(DuckBody b)
@@ -60,15 +61,14 @@ namespace MicroduckVR.Player
             boostA = new InputAction("Boost", InputActionType.Value, expectedControlType: "Axis");
             boostA.AddBinding("<XRController>{LeftHand}/trigger"); boostA.AddBinding("<Keyboard>/leftCtrl");
             driftA.Enable(); boostA.Enable();
-            smokeMat = Unlit("#FFF6E4", "skate_smoke"); sparkMat = Unlit("#FFE45C", "skate_spark"); skidMat = Unlit("#1B1430", "skate_skid");
+            pd = GetComponent<PlayerDuck>();
+            ComicFX.Get();
             rollSrc = gameObject.AddComponent<AudioSource>(); rollSrc.clip = Noise(1f, 0.25f, true); rollSrc.loop = true; rollSrc.volume = 0f; rollSrc.spatialBlend = 0f; rollSrc.Play();
             sfxSrc = gameObject.AddComponent<AudioSource>(); sfxSrc.spatialBlend = 0f;
             boostClip = Sweep(300f, 1400f, 0.35f); pushClip = Noise(0.12f, 0.6f, false); clackClip = Sweep(900f, 500f, 0.04f);
         }
 
         void OnDestroy() { driftA?.Disable(); boostA?.Disable(); }
-
-        static Material Unlit(string hex, string key) { var m = ComicLook.ToonMaterial(ComicLook.Hex(hex), key); m.SetFloat("_Unlit", 1f); return m; }
 
         // ------------------------------------------------------------------ equip
         public void Toggle(float yaw, Vector3 walkVel)
@@ -77,6 +77,7 @@ namespace MicroduckVR.Player
             On = !On;
             if (On) { pair.Attach(body); body.Skating = true; body.SkateLift = SkatePair.Height; sv = walkVel; w = 0f; }
             else { pair.Detach(); body.Skating = false; body.SkateLean = 0f; body.Wobble = 0f; drifting = false; boostT = 0f; sv = Vector3.zero; }
+            fxLive = false; lastSkid[0] = lastSkid[1] = null;
             sfxSrc.PlayOneShot(clackClip, 0.8f);
         }
 
@@ -113,7 +114,7 @@ namespace MicroduckVR.Player
             if (push > 0.02f)
             {
                 body.Stroke = (body.Stroke + StrokeHz * dt) % 1f;
-                if (body.Stroke < StrokeHz * dt) { body.StrokeSide *= -1f; sfxSrc.PlayOneShot(pushClip, 0.25f + 0.35f * push); EmitSmoke(2); }
+                if (body.Stroke < StrokeHz * dt) { body.StrokeSide *= -1f; sfxSrc.PlayOneShot(pushClip, 0.25f + 0.35f * push); KickPuff(); }
                 float phase = Mathf.Max(0f, Mathf.Sin(body.Stroke * Mathf.PI * 2f));
                 sv += f * Accel * push * (0.4f + phase) * dt;
             }
@@ -150,8 +151,7 @@ namespace MicroduckVR.Player
             body.Wobble = Mathf.Lerp(body.Wobble, Mathf.Clamp(wob, 0f, 0.6f), 1f - Mathf.Exp(-3f * dt));
 
             pair.Spin(Vector3.Dot(sv, f2) * dt);
-            Effects(dt, sp, push, braking, boosting);
-            prevSpeed = sp;
+            Effects(dt, yaw);
             return sv;
         }
 
@@ -161,7 +161,7 @@ namespace MicroduckVR.Player
             else boostT = Mathf.Max(boostT, SlingTime);
             sv += Fwd(yaw) * (sling ? SlingKick : BoostKick) * comfortScale;
             sfxSrc.PlayOneShot(boostClip, sling ? 0.5f : 0.8f);
-            EmitSmoke(6);
+            BoostBurst(yaw, sling);
         }
 
         /// <summary>After the capsule moved: a wall stops the skates; a hard hit (only when boosting) knocks the duck over.</summary>
@@ -174,142 +174,181 @@ namespace MicroduckVR.Player
             {
                 // bounce off and sit down backwards: tipping forwards put the duck's head through the wall it had just hit
                 body.StartTip(-new Vector3(intended.x, 0f, intended.z).normalized);
-                sfxSrc.PlayOneShot(clackClip, 1f); EmitSparks(10, 1f);
+                sfxSrc.PlayOneShot(clackClip, 1f); CrashBurst(new Vector3(intended.x, 0f, intended.z).normalized);
                 sv = Vector3.zero;
             }
             else sv *= 0.25f;
             drifting = false; boostT = 0f;
         }
 
-        // ------------------------------------------------------------------ comic effects
-        void Effects(float dt, float sp, float push, bool braking, bool boosting)
+        // ------------------------------------------------------------------ comic effects (port of toon.js skateFX)
+        // Rates are per second with accumulators, so they do not depend on the frame rate. The speed thresholds are the
+        // web's scaled by comfortScale: the VR skates top out lower, and the effects should start at the same share of it.
+        const float FpScale = 1.15f;        // effects seen through your own eyes are drawn a little bigger
+
+        void Effects(float dt, float yaw)
         {
-            float accel = (sp - prevSpeed) / Mathf.Max(dt, 1e-4f);
-            smokeT -= dt; sparkT -= dt;
-            if ((boosting || braking && sp > 0.08f || (accel > 0.25f && sp < 0.2f) || drifting && sp > 0.15f) && smokeT <= 0f) { smokeT = boosting ? 0.05f : 0.1f; EmitSmoke(1); }
-            if (drifting && sp > 0.12f && sparkT <= 0f) { sparkT = 0.04f; EmitSparks(2, Mathf.Clamp01(sp / 0.4f)); }
-            bool marking = (drifting || slip > 0.06f || braking) && sp > 0.06f;
-            Skid(0, pair.Left, marking); Skid(1, pair.Right, marking);
+            float sp = sv.magnitude;
             rollSrc.volume = Mathf.Lerp(rollSrc.volume, On ? Mathf.Clamp01(sp / 0.42f) * 0.32f : 0f, 1f - Mathf.Exp(-8f * dt));
             rollSrc.pitch = 0.6f + sp * 1.4f + (drifting ? 0.25f : 0f);
+            if (dt <= 0f) return;
+            if (body.Fallen) { fxLive = false; lastSkid[0] = lastSkid[1] = null; return; }
 
-            for (int i = fx.Count - 1; i >= 0; i--)
+            // teleports and respawns: start afresh instead of reading a huge acceleration
+            var here = transform.position;
+            if (!fxLive || new Vector2(here.x - fxPos.x, here.z - fxPos.z).sqrMagnitude > 0.04f)
+            { fxSp = sp; fxYaw = yaw; fxAcc = 0f; lastSkid[0] = lastSkid[1] = null; fxLive = true; }
+            fxPos = here;
+            float acc = (sp - fxSp) / dt; fxAcc += (acc - fxAcc) * Mathf.Min(1f, dt * 12f); fxSp = sp;
+            float yr = Mathf.DeltaAngle(fxYaw * Mathf.Rad2Deg, yaw * Mathf.Rad2Deg) * Mathf.Deg2Rad / dt; fxYaw = yaw;
+            if (sp > peak || peakT > 2.2f) { peak = sp; peakT = 0f; }
+            peakT += dt; skrrtCd -= dt;
+
+            float q = comfortScale;
+            var f = Fwd(yaw); var back = -f; var right = new Vector3(f.z, 0f, -f.x);
+            Vector3 w0 = pair.Left.position, w1 = pair.Right.position;
+            float y = Mathf.Min(w0.y, w1.y); w0.y = y; w1.y = y;
+            // the web reads a drift from the slide and the turn rate; the drift button counts too
+            bool drift = (sp > 0.12f * q && (slip > 0.045f || Mathf.Abs(yr) > 1.5f)) || (drifting && sp > DriftMinSpeed);
+            bool braking = sp > 0.06f && fxAcc < -0.22f;
+            bool pushing = fxAcc > 0.1f && sp > 0.04f;
+            bool burst = (fxAcc > 0.2f && sp > 0.2f * q) || (Mathf.Abs(yr) > 1.8f && sp > 0.15f * q) || drift;
+
+            // skid marks
+            bool skidOn = drift || (braking && sp > 0.1f);
+            Skid(0, w0, skidOn); Skid(1, w1, skidOn);
+
+            // smoke: push-offs, acceleration, hard braking, drifting
+            smokeAcc += (drift ? 26f : braking ? 20f : pushing ? 12f : sp > 0.3f * q ? 7f : 0f) * dt;
+            while (smokeAcc >= 1f) { smokeAcc -= 1f; ComicFX.Smoke(Random.value < 0.5f ? w0 : w1, back, drift ? 1.25f : 1f); }
+
+            // zig-zag energy bolts: speed bursts and sharp turns, flying off backwards and up
+            boltAcc += (burst ? 9f : sp > 0.34f * q ? 3f : 0f) * dt;
+            while (boltAcc >= 1f) { boltAcc -= 1f; BackBolt(here, y, back, right, Random.value < 0.5f ? 1f : -1f); }
+
+            // speed streaks behind the wheels
+            streakAcc += (sp > 0.25f * q ? (sp - 0.2f * q) * 110f : 0f) * dt;
+            while (streakAcc >= 1f) { streakAcc -= 1f; ComicFX.Streak((Random.value < 0.5f ? w0 : w1) + back * 0.05f + Vector3.up * (0.01f + Random.value * 0.02f), f); }
+
+            // sparks while braking hard; on the drift button also a few off the wheels
+            if (braking && Random.value < dt * 25f) ComicFX.Spark(Random.value < 0.5f ? w0 : w1);
+            if (drifting && sp > DriftMinSpeed && Random.value < dt * 10f) ComicFX.Spark(Random.value < 0.5f ? w0 : w1);
+
+            // through your own eyes the wheels are out of sight below you: a share of the smoke and bolts comes off
+            // the outside of the turn and curls forwards into the bottom of the view
+            bool fp = FirstPerson(out var cam);
+            Vector3 vf = f;
+            if (fp)
             {
-                var (t, v, age, life, kind) = fx[i];
-                age += dt;
-                if (age >= life) { Destroy(t.gameObject); fx.RemoveAt(i); continue; }
-                float u = age / life;
-                if (kind == 0) { t.position += v * dt; float s = u < 0.18f ? Mathf.Lerp(0.01f, 0.032f, u / 0.18f) : Mathf.Lerp(0.032f, 0f, (u - 0.18f) / 0.82f); t.localScale = new Vector3(s, s * 0.85f, s); }
-                else
+                vf = cam.forward; vf.y = 0f; vf = vf.sqrMagnitude > 1e-4f ? vf.normalized : f;
+                var vr = new Vector3(vf.z, 0f, -vf.x);
+                float turn = Mathf.Abs(yr) > 0.3f ? Mathf.Sign(yr) : (Random.value < 0.5f ? 1f : -1f);
+                var outward = -vr * turn;          // yaw rising = turning right, so the outside is on the left
+                fpSmokeAcc += (drift ? 10f : braking ? 6f : 0f) * dt;
+                while (fpSmokeAcc >= 1f) { fpSmokeAcc -= 1f; FpPuff(cam, y, vf, outward, drift ? 1.25f : 1f); }
+                fpBoltAcc += (burst ? 4f : 0f) * dt;
+                while (fpBoltAcc >= 1f) { fpBoltAcc -= 1f; FpBolt(cam, y, vf, outward); }
+            }
+            else fpSmokeAcc = fpBoltAcc = 0f;
+
+            // a fast run that comes to a stop: sparks, glints and a puff thrown forwards
+            if (sp < 0.08f && peak > 0.2f * q && peakT < 2.2f && !stopped)
+            {
+                bool hard = peak > 0.26f * q;
+                stopped = true; peak = 0f;
+                for (int i = 0; i < 8; i++) ComicFX.Spark(i % 2 == 1 ? w0 : w1, 1.2f);
+                for (int i = 0; i < 4; i++) ComicFX.Glint(new Vector3(here.x, y + 0.03f, here.z), 1.3f);
+                for (int i = 0; i < 5; i++) ComicFX.Smoke(i % 2 == 1 ? w0 : w1, f, 1.1f);
+                if (fp)
                 {
-                    // a little comic star that spins, faces you and shrinks as it falls
-                    v += Vector3.down * 1.2f * dt; t.position += v * dt;
-                    var c = Camera.main; var look = c != null ? t.position - c.transform.position : Vector3.forward;
-                    t.rotation = Quaternion.LookRotation(look, Vector3.up) * Quaternion.Euler(0f, 0f, age * 720f);
-                    float s = 0.011f * (u < 0.15f ? u / 0.15f : 1f - (u - 0.15f) / 0.85f); t.localScale = new Vector3(s, s, s);
+                    var ahead = new Vector3(cam.position.x, y, cam.position.z) + vf * 0.15f;
+                    for (int i = 0; i < 3; i++) ComicFX.Glint(ahead + Vector3.up * 0.02f, 1.3f * FpScale);
+                    for (int i = 0; i < 4; i++) ComicFX.Spark(ahead, FpScale);
                 }
-                fx[i] = (t, v, age, life, kind);
+                // the web flashes the screen here; in VR a sound word instead (never a flash)
+                if (hard && skrrtCd <= 0f && pd != null && pd.cam != null) { skrrtCd = 2.5f; ComicEvents.Own(pd, "SKRRT!", "#FF8A3D", 0.9f); }
             }
-            int n = skids.Count;
-            for (int i = 0; i < n; i++)
+            if (sp > 0.15f * q) stopped = false;
+        }
+
+        bool FirstPerson(out Transform cam)
+        {
+            cam = pd != null && pd.cam != null && !pd.thirdPerson && ComicPop.Viewer == null ? pd.cam.transform : null;
+            return cam != null;
+        }
+
+        void BackBolt(Vector3 here, float y, Vector3 back, Vector3 right, float side)
+        {
+            var d = (back + right * (side * 0.5f) + Vector3.up * (0.15f + Random.value * 0.3f)).normalized;
+            ComicFX.Bolt(new Vector3(here.x, y + 0.05f + Random.value * 0.08f, here.z) - right * (side * 0.05f) + back * 0.03f, d);
+        }
+
+        /// <summary>A puff for your own eyes: starts a little ahead of your feet on the outside of the turn, keeps pace
+        /// with you for a moment (it carries your velocity), rises and slides outwards, then drag lets it fall behind.</summary>
+        void FpPuff(Transform cam, float y, Vector3 vf, Vector3 outward, float scale)
+        {
+            var foot = new Vector3(cam.position.x, y, cam.position.z);
+            var p = foot + vf * Random.Range(0.12f, 0.16f) + outward * Random.Range(0.03f, 0.06f);
+            var carry = sv + vf * 0.25f + outward * Random.Range(0.1f, 0.2f) + Vector3.up * Random.Range(0.1f, 0.16f);
+            ComicFX.Smoke(p, outward, scale * FpScale, carry);
+        }
+
+        /// <summary>A bolt for your own eyes, low in the view on the outside of the turn, travelling with you.</summary>
+        void FpBolt(Transform cam, float y, Vector3 vf, Vector3 outward)
+        {
+            var foot = new Vector3(cam.position.x, y, cam.position.z);
+            var p = foot + vf * Random.Range(0.14f, 0.18f) + outward * Random.Range(0.04f, 0.08f) + Vector3.up * Random.Range(0.05f, 0.09f);
+            var d = (outward * 0.8f + vf * 0.2f + Vector3.up * Random.Range(0.2f, 0.5f)).normalized;
+            ComicFX.Bolt(p, d, FpScale, sv);
+        }
+
+        /// <summary>A push stroke kicks up a small puff.</summary>
+        void KickPuff()
+        {
+            if (!On) return;
+            var w = Random.value < 0.5f ? pair.Left.position : pair.Right.position;
+            ComicFX.Smoke(w, -Fwd(body.Yaw), 0.9f);
+        }
+
+        /// <summary>Boost (or a drift slingshot): a cloud off both wheels and a handful of bolts.</summary>
+        void BoostBurst(float yaw, bool sling)
+        {
+            if (!On) return;
+            var f = Fwd(yaw); var back = -f; var right = new Vector3(f.z, 0f, -f.x);
+            Vector3 w0 = pair.Left.position, w1 = pair.Right.position, here = transform.position;
+            float y = Mathf.Min(w0.y, w1.y); w0.y = y; w1.y = y;
+            for (int i = 0; i < (sling ? 4 : 6); i++) ComicFX.Smoke(i % 2 == 0 ? w0 : w1, back, 1.2f);
+            for (int i = 0; i < (sling ? 2 : 4); i++) BackBolt(here, y, back, right, i % 2 == 0 ? 1f : -1f);
+            if (FirstPerson(out var cam))
             {
-                var (t, age) = skids.Dequeue(); age += dt;
-                if (age > 7f) { Destroy(t.gameObject); continue; }
-                if (age > 5f) { var s = t.localScale; s.x = 0.008f * (1f - (age - 5f) / 2f); t.localScale = s; }
-                skids.Enqueue((t, age));
+                var vf = cam.forward; vf.y = 0f; vf = vf.sqrMagnitude > 1e-4f ? vf.normalized : f;
+                var vr = new Vector3(vf.z, 0f, -vf.x);
+                for (int i = 0; i < (sling ? 2 : 4); i++) FpPuff(cam, y, vf, i % 2 == 0 ? vr : -vr, 1.2f);
+                for (int i = 0; i < 2; i++) FpBolt(cam, y, vf, i % 2 == 0 ? vr : -vr);
             }
         }
 
-        Transform Bit(Mesh mesh, Material mat, Vector3 at)
+        /// <summary>A hard hit on a wall: sparks and glints where the skates met it.</summary>
+        void CrashBurst(Vector3 into)
         {
-            var go = new GameObject("skate fx");
-            go.AddComponent<MeshFilter>().sharedMesh = mesh;
-            var mr = go.AddComponent<MeshRenderer>(); mr.sharedMaterial = mat; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.receiveShadows = false;
-            go.transform.position = at;
-            return go.transform;
+            Vector3 w0 = pair.Left.position, w1 = pair.Right.position, here = transform.position;
+            float y = Mathf.Min(w0.y, w1.y); w0.y = y; w1.y = y;
+            var hit = new Vector3(here.x, y + 0.03f, here.z) + into * 0.06f;
+            for (int i = 0; i < 10; i++) ComicFX.Spark(hit, 1.2f);
+            for (int i = 0; i < 3; i++) ComicFX.Glint(hit, 1.2f);
+            for (int i = 0; i < 4; i++) ComicFX.Smoke(i % 2 == 0 ? w0 : w1, -into, 1.1f);
         }
 
-        static Mesh star, stroke;
-        /// <summary>A flat four-point comic star (1 unit across, a little thickness so the ink pass outlines it).</summary>
-        static Mesh Star()
-        {
-            if (star != null) return star;
-            var v = new List<Vector3>(); var t = new List<int>();
-            const int P = 8; float th = 0.12f;
-            foreach (var z in new[] { -th, th })
-            {
-                v.Add(new Vector3(0f, 0f, z));
-                for (int i = 0; i < P; i++) { float a = i * Mathf.PI * 2f / P, r = i % 2 == 0 ? 0.5f : 0.17f; v.Add(new Vector3(Mathf.Sin(a) * r, Mathf.Cos(a) * r, z)); }
-            }
-            int o = P + 1;
-            for (int i = 0; i < P; i++)
-            {
-                int a = 1 + i, b = 1 + (i + 1) % P;
-                t.Add(0); t.Add(a); t.Add(b);                         // front
-                t.Add(o); t.Add(o + b); t.Add(o + a);                 // back
-                t.Add(a); t.Add(o + a); t.Add(o + b); t.Add(a); t.Add(o + b); t.Add(b);   // rim
-            }
-            star = new Mesh { name = "comic star" }; star.SetVertices(v); star.SetTriangles(t, 0); star.RecalculateNormals(); star.RecalculateBounds();
-            return star;
-        }
-        /// <summary>A tapered brush stroke along +z (length 1, width 1 in the middle), for skid marks.</summary>
-        static Mesh Stroke()
-        {
-            if (stroke != null) return stroke;
-            var v = new List<Vector3>(); var t = new List<int>(); const int N = 8;
-            for (int i = 0; i <= N; i++)
-            {
-                float u = i / (float)N, w = 0.5f * Mathf.Sin(Mathf.PI * Mathf.Lerp(0.08f, 0.92f, u));
-                v.Add(new Vector3(-w, 0f, u - 0.5f)); v.Add(new Vector3(w, 0f, u - 0.5f));
-                if (i > 0) { int a = (i - 1) * 2; t.Add(a); t.Add(a + 2); t.Add(a + 1); t.Add(a + 1); t.Add(a + 2); t.Add(a + 3); }
-            }
-            stroke = new Mesh { name = "skid stroke" }; stroke.SetVertices(v); stroke.SetTriangles(t, 0); stroke.RecalculateNormals(); stroke.RecalculateBounds();
-            return stroke;
-        }
-
-        void EmitSmoke(int n)
-        {
-            if (!On || fx.Count > 80) return;
-            var back = -Fwd(body.Yaw);
-            foreach (var sk in new[] { pair.Left, pair.Right })
-                for (int i = 0; i < n; i++)
-                {
-                    var p = sk.position + back * 0.03f + Vector3.down * 0.012f + Random.insideUnitSphere * 0.006f;
-                    var v = back * Random.Range(0.02f, 0.06f) + Vector3.up * Random.Range(0.02f, 0.05f) + Random.insideUnitSphere * 0.015f;
-                    fx.Add((Bit(ToyKit.Sphere(), smokeMat, p), v, 0f, Random.Range(0.45f, 0.7f), 0));
-                }
-        }
-
-        void EmitSparks(int n, float k)
-        {
-            if (!On || fx.Count > 80) return;
-            var back = -Fwd(body.Yaw);
-            foreach (var sk in new[] { pair.Left, pair.Right })
-                for (int i = 0; i < n; i++)
-                {
-                    var p = sk.position + Vector3.down * 0.018f + back * 0.02f;
-                    var side = Vector3.Cross(Vector3.up, back) * Random.Range(-1f, 1f);
-                    var v = (back + side * 0.8f).normalized * Random.Range(0.15f, 0.35f) * (0.5f + k) + Vector3.up * Random.Range(0.12f, 0.3f);
-                    fx.Add((Bit(Star(), sparkMat, p), v, 0f, Random.Range(0.25f, 0.4f), 1));
-                }
-        }
-
-        void Skid(int i, Transform sk, bool on)
+        /// <summary>Lay a skid stroke from this wheel's last floor point to its new one (on the floor, never across a step).</summary>
+        void Skid(int i, Vector3 wheel, bool on)
         {
             if (!on || !On) { lastSkid[i] = null; return; }
-            var p = sk.position; p.y = WorldQueries.GroundNear(p.x, p.z, p.y - 0.03f) + 0.0012f;
+            var p = wheel; p.y = WorldQueries.GroundNear(p.x, p.z, p.y - 0.03f) + 0.0015f;
             if (lastSkid[i] is Vector3 a)
             {
-                var d = p - a; float len = d.magnitude;
-                if (len < 0.012f) return;
-                if (len < 0.08f && Mathf.Abs(d.y) < 0.01f)
-                {
-                    var t = Bit(Stroke(), skidMat, (a + p) / 2f);
-                    t.rotation = Quaternion.LookRotation(d.normalized, Vector3.up);
-                    t.localScale = new Vector3(0.008f, 1f, len * 1.35f + 0.004f);
-                    skids.Enqueue((t, 0f));
-                    while (skids.Count > 240) Destroy(skids.Dequeue().t.gameObject);
-                }
+                float len = new Vector2(p.x - a.x, p.z - a.z).magnitude;
+                if (len < 0.008f) return;
+                if (len < 0.08f && Mathf.Abs(p.y - a.y) < 0.01f) ComicFX.Skid(a, p, 0.012f + 0.006f * Random.value);
             }
             lastSkid[i] = p;
         }

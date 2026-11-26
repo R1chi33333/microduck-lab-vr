@@ -96,7 +96,7 @@ namespace MicroduckVR.Comic
 
         /// <summary>A word about the player's own duck. Through your own eyes it is small, off to the side of what you are
         /// looking at, and travels with you; seen from outside (third person, filming) it pops big over the duck's head.</summary>
-        static void Own(PlayerDuck pd, string word, string hex, float size)
+        public static void Own(PlayerDuck pd, string word, string hex, float size)
         {
             var c = pd.cam.transform; var f = c.forward; f.y = 0f; f = f.sqrMagnitude > 1e-4f ? f.normalized : Vector3.forward;
             if (pd.thirdPerson || ComicPop.Viewer != null) { ComicPop.Spawn(word, pd.Body.Pos + Vector3.up * 0.36f, hex, size); return; }

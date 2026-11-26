@@ -18,6 +18,8 @@ namespace MicroduckVR.EditorTools
             PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone, ScriptingImplementation.Mono2x);
             AlwaysInclude("Universal Render Pipeline/Unlit");   // the mirror glass material is made at runtime
             AlwaysInclude("Microduck/ToonLit");
+            AlwaysInclude("Microduck/ComicFX");                  // skate effects: materials made at runtime (ComicFX.cs)
+            AlwaysInclude("Microduck/ComicSkid");
             var opts = new BuildPlayerOptions
             {
                 scenes = new[] { SceneBuilderHouse.ScenePath },
