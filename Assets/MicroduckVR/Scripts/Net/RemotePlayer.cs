@@ -32,7 +32,7 @@ namespace MicroduckVR.Net
             go.transform.SetPositionAndRotation(pos, Quaternion.Euler(0f, yaw * Mathf.Rad2Deg, 0f));
             go.SetActive(false);
             go.AddComponent<DuckBody>();
-            var s = go.AddComponent<DuckSetup>(); s.rigPrefab = src.rigPrefab; s.jointMap = src.jointMap; s.skin = "cream";
+            var s = go.AddComponent<DuckSetup>(); s.rigPrefab = src.rigPrefab; s.jointMap = src.jointMap; s.skin = SkinIds.Cream;
             go.SetActive(true);                                                     // builds the body (DuckSetup.Awake)
             if (s.Mover != null) s.Mover.enabled = false;                           // posed from the network, never pushed about here
             var a = go.AddComponent<DuckAudio>(); a.idleChirps = false; a.seed = 3;

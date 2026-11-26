@@ -73,7 +73,7 @@ namespace MicroduckVR.Net
             var s = SetupOf(b);
             w.WriteValueSafe(id);
             w.WriteValueSafe(b.gameObject.name);
-            w.WriteValueSafe(s != null ? s.skin : "cream");
+            w.WriteValueSafe(s != null ? s.skin : SkinIds.Cream);
             w.WriteValueSafe(b.seed);
             w.WriteValueSafe(b.index);
             w.WriteValueSafe(b.Pos);

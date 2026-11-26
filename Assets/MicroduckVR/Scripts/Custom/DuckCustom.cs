@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using MicroduckVR.Audio;
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using UnityEngine;
 
@@ -14,17 +15,17 @@ namespace MicroduckVR.Custom
     [Serializable]
     public class DuckCustom
     {
-        public string skin = "cream";
+        public string skin = Comic.SkinIds.Cream;
         public string head = "", body = "", legs = "", feet = "";
         public int voice;
 
-        public static readonly string[] SkinIds = { "cream", "graphite", "lavender", "sky" };
-        public static readonly string[] PartIds = { "head", "body", "legs", "feet" };
+        public static readonly string[] SkinIds = { Comic.SkinIds.Cream, Comic.SkinIds.Graphite, Comic.SkinIds.Lavender, Comic.SkinIds.Sky };
+        public static readonly string[] PartIds = { Comic.PartIds.Head, Comic.PartIds.Body, Comic.PartIds.Legs, Comic.PartIds.Feet };
         public static readonly (string name, int seed)[] Voices = { ("CHIRPY", 3), ("SQUEAKY", 41), ("WARBLY", 77), ("HONKY", 112) };
-        const string Key = "microduck_custom_v1";
+        const string Key = PrefKeys.Custom;
 
-        public string Part(string p) => p switch { "head" => head, "body" => body, "legs" => legs, "feet" => feet, _ => "" };
-        public void SetPart(string p, string v) { switch (p) { case "head": head = v; break; case "body": body = v; break; case "legs": legs = v; break; case "feet": feet = v; break; } }
+        public string Part(string p) => p switch { Comic.PartIds.Head => head, Comic.PartIds.Body => body, Comic.PartIds.Legs => legs, Comic.PartIds.Feet => feet, _ => "" };
+        public void SetPart(string p, string v) { switch (p) { case Comic.PartIds.Head: head = v; break; case Comic.PartIds.Body: body = v; break; case Comic.PartIds.Legs: legs = v; break; case Comic.PartIds.Feet: feet = v; break; } }
 
         public static DuckCustom Load()
         {

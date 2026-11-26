@@ -12,7 +12,7 @@ namespace MicroduckVR.Flock
     public static class FlockSpawner
     {
         public const int Max = 12, Min = 1;
-        static readonly string[] Skins = { "cream", "lavender", "sky", "graphite" };
+        static readonly string[] Skins = { SkinIds.Cream, SkinIds.Lavender, SkinIds.Sky, SkinIds.Graphite };
         static readonly List<GameObject> added = new List<GameObject>();
         static int serial;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

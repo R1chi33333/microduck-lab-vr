@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Player;
 using TMPro;
 using UnityEngine;
@@ -37,7 +38,7 @@ namespace MicroduckVR.Custom
         PlayerDuck pd; WorldPanel board; string tab = "SHELL"; PartDef selected;
         readonly List<(WorldPanel.Button row, Transform fill, PartDef part)> rows = new List<(WorldPanel.Button, Transform, PartDef)>();
         bool inside, wasThird; float flashT = -1f, odoSaved; Material flash;
-        const string OdoKey = "microduck_odometer";
+        const string OdoKey = PrefKeys.Odometer;
 
         public static void Ensure(PlayerDuck player, TMP_FontAsset font)
         {
@@ -47,7 +48,7 @@ namespace MicroduckVR.Custom
         }
 
         static float Odo { get { try { return PlayerPrefs.GetFloat(OdoKey, 0f); } catch { return 0f; } } }
-        static float ReplacedAt(string id) { try { return PlayerPrefs.GetFloat("microduck_part_" + id, 0f); } catch { return 0f; } }
+        static float ReplacedAt(string id) { try { return PlayerPrefs.GetFloat(PrefKeys.PartPrefix + id, 0f); } catch { return 0f; } }
         float Condition(PartDef p) => Mathf.Clamp(100f - (Odo + pd.Walked - odoSaved - ReplacedAt(p.id)) * p.rate, 12f, 100f);
 
         void Build(TMP_FontAsset font)
@@ -108,7 +109,7 @@ namespace MicroduckVR.Custom
         void Replace()
         {
             if (selected == null) return;
-            try { PlayerPrefs.SetFloat("microduck_part_" + selected.id, Odo + pd.Walked - odoSaved); PlayerPrefs.Save(); } catch { }
+            try { PlayerPrefs.SetFloat(PrefKeys.PartPrefix + selected.id, Odo + pd.Walked - odoSaved); PlayerPrefs.Save(); } catch { }
             // the old part pops off: copies of its meshes fly up and away, the real ones flash in as new
             foreach (var r in Renderers(selected))
             {

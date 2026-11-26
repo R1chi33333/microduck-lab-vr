@@ -1,5 +1,6 @@
 using System;
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using MicroduckVR.Games;
 using MicroduckVR.World;
@@ -19,7 +20,7 @@ namespace MicroduckVR.Player
     {
         public Camera cam;
         public Font font;
-        const string DoneKey = "microduck_tutorial_done_v2";
+        const string DoneKey = PrefKeys.TutorialDone;
 
         class Step
         {

@@ -16,10 +16,10 @@ namespace MicroduckVR.Comic
         public class Skin { public Color shell, accent, accent2, soft, secondary; }
         public static readonly Dictionary<string, Skin> Skins = new Dictionary<string, Skin>
         {
-            { "cream",    new Skin { shell = Hex("#FBF4E4"), accent = Hex("#FF8A1F"), accent2 = Hex("#FFC928"), soft = Hex("#F3D9E8"), secondary = Hex("#DCE0E7") } },
-            { "graphite", new Skin { shell = Hex("#4A505C"), accent = Hex("#FFC928"), accent2 = Hex("#FFC928"), soft = Hex("#6B7280"), secondary = Hex("#353A44") } },
-            { "lavender", new Skin { shell = Hex("#C3B2EC"), accent = Hex("#FFC928"), accent2 = Hex("#FFD95A"), soft = Hex("#EEE6FA"), secondary = Hex("#9D93BD") } },
-            { "sky",      new Skin { shell = Hex("#A6D8F5"), accent = Hex("#FF8A1F"), accent2 = Hex("#FFC928"), soft = Hex("#E6F4FC"), secondary = Hex("#8FB0C8") } },
+            { SkinIds.Cream,    new Skin { shell = Hex("#FBF4E4"), accent = Hex("#FF8A1F"), accent2 = Hex("#FFC928"), soft = Hex("#F3D9E8"), secondary = Hex("#DCE0E7") } },
+            { SkinIds.Graphite, new Skin { shell = Hex("#4A505C"), accent = Hex("#FFC928"), accent2 = Hex("#FFC928"), soft = Hex("#6B7280"), secondary = Hex("#353A44") } },
+            { SkinIds.Lavender, new Skin { shell = Hex("#C3B2EC"), accent = Hex("#FFC928"), accent2 = Hex("#FFD95A"), soft = Hex("#EEE6FA"), secondary = Hex("#9D93BD") } },
+            { SkinIds.Sky,      new Skin { shell = Hex("#A6D8F5"), accent = Hex("#FF8A1F"), accent2 = Hex("#FFC928"), soft = Hex("#E6F4FC"), secondary = Hex("#8FB0C8") } },
         };
 
         static readonly Dictionary<string, Color> Fixed = new Dictionary<string, Color>
@@ -132,10 +132,10 @@ namespace MicroduckVR.Comic
         /// <summary>Customised duck: a base colourway, then optional colourways per part (head, body, legs, feet).</summary>
         public static readonly (string part, Regex re)[] PaintParts =
         {
-            ("head", new Regex("^(shell_head|shell_beak)", RegexOptions.IgnoreCase)),
-            ("body", new Regex("^shell_body", RegexOptions.IgnoreCase)),
-            ("legs", new Regex("^leg_", RegexOptions.IgnoreCase)),
-            ("feet", new Regex("^foot_", RegexOptions.IgnoreCase)),
+            (PartIds.Head, new Regex("^(shell_head|shell_beak)", RegexOptions.IgnoreCase)),
+            (PartIds.Body, new Regex("^shell_body", RegexOptions.IgnoreCase)),
+            (PartIds.Legs, new Regex("^leg_", RegexOptions.IgnoreCase)),
+            (PartIds.Feet, new Regex("^foot_", RegexOptions.IgnoreCase)),
         };
 
         public static void ApplyCustom(Transform rig, string baseSkin, IDictionary<string, string> parts)
@@ -156,9 +156,9 @@ namespace MicroduckVR.Comic
             }
         }
 
-        public static void ApplyToDuck(Transform rig, string skinId = "cream")
+        public static void ApplyToDuck(Transform rig, string skinId = SkinIds.Cream)
         {
-            var skin = Skins.TryGetValue(skinId, out var sk) ? sk : Skins["cream"];
+            var skin = Skins.TryGetValue(skinId, out var sk) ? sk : Skins[SkinIds.Cream];
             foreach (var r in rig.GetComponentsInChildren<Renderer>(true))
             {
                 if (IsAccessory(r)) continue;
