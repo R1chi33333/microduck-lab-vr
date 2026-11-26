@@ -171,7 +171,7 @@ namespace MicroduckVR.Player
                 else DropGhost();
                 if (press && ok)
                 {
-                    if (!MicroduckVR.Net.NetSession.RequestToy(Selected, hit.point, Yaw(hit.point))) ToyCatalog.Spawn(Selected, hit.point, Yaw(hit.point));   // joined: the host makes it
+                    if (!Coop.RequestToy(Selected, hit.point, Yaw(hit.point))) ToyCatalog.Spawn(Selected, hit.point, Yaw(hit.point));   // joined: the host makes it
                     PlacedCount++;
                     Play(popClip);
                 }
@@ -185,7 +185,7 @@ namespace MicroduckVR.Player
                     if (tag != null)
                     {
                         tag.transform.localScale = Vector3.one * (1f + 0.12f * Mathf.Abs(Mathf.Sin(pulse * 10f)));
-                        if (press) { Poof(tag.transform.position); if (!MicroduckVR.Net.NetSession.RequestTrash(tag.gameObject)) Destroy(tag.gameObject); Play(popClip); }
+                        if (press) { Poof(tag.transform.position); if (!Coop.RequestTrash(tag.gameObject)) Destroy(tag.gameObject); Play(popClip); }
                     }
                 }
             }

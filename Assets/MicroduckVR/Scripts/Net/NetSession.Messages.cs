@@ -9,6 +9,7 @@ using MicroduckVR.Player;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
+using Mode = MicroduckVR.Core.CoopMode;
 
 namespace MicroduckVR.Net
 {

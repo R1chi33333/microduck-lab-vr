@@ -8,6 +8,7 @@ using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Mode = MicroduckVR.Core.CoopMode;
 
 namespace MicroduckVR.Net
 {
@@ -31,8 +32,6 @@ namespace MicroduckVR.Net
         public const string Version = "mdvr-coop-2";
         const string Channel = "microduck";
         const float PlayerRate = 1f / 30f, WorldRate = 1f / 20f, PeerTimeout = 6f, ConnectTimeout = 10f;
-
-        public enum Mode { Off, Hosting, Searching, Connecting, Joined, Leaving }
 
         public static NetSession Instance { get; private set; }
         public static Mode State => Instance != null ? Instance.mode : Mode.Off;

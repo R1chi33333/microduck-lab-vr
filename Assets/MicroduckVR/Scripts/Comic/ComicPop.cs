@@ -99,7 +99,7 @@ namespace MicroduckVR.Comic
         /// looking at, and travels with you; seen from outside (third person, filming) it pops big over the duck's head.</summary>
         public static void Own(PlayerDuck pd, string word, string hex, float size)
         {
-            MicroduckVR.Net.NetSession.SendOwnWord(word, hex, size);          // playing together: it pops over this duck on the other PC
+            Coop.SendOwnWord(word, hex, size);          // playing together: it pops over this duck on the other PC
             var c = pd.cam.transform; var f = c.forward; f.y = 0f; f = f.sqrMagnitude > 1e-4f ? f.normalized : Vector3.forward;
             if (pd.thirdPerson || ComicPop.Viewer != null) { ComicPop.Spawn(word, pd.Body.Pos + Vector3.up * 0.36f, hex, size); return; }
             var right = Vector3.Cross(Vector3.up, f);
@@ -124,8 +124,8 @@ namespace MicroduckVR.Comic
                 waterT = 0.1f;
                 bool w = Physics.Raycast(pd.Body.Pos + Vector3.up * 0.05f, Vector3.down, out var hit, 0.3f, 1 << Layers.World, QueryTriggerInteraction.Ignore)
                          && hit.collider.GetComponent<SurfaceTag>() is SurfaceTag st && st.Kind == SurfaceType.Water;
-                if (w && !inWater) { Own(pd, "SPLASH!", ComicColors.Blue, 1.1f); ComicSplash.Spawn(pd.Body.Pos, 1.2f); MicroduckVR.Net.NetSession.SendSplash(pd.Body.Pos, 1.2f); }
-                else if (w && pd.Speed > 0.03f && (paddle = !paddle)) { ComicSplash.Spawn(pd.Body.Pos, 0.7f); MicroduckVR.Net.NetSession.SendSplash(pd.Body.Pos, 0.7f); }     // paddling about: a small one every other look
+                if (w && !inWater) { Own(pd, "SPLASH!", ComicColors.Blue, 1.1f); ComicSplash.Spawn(pd.Body.Pos, 1.2f); Coop.SendSplash(pd.Body.Pos, 1.2f); }
+                else if (w && pd.Speed > 0.03f && (paddle = !paddle)) { ComicSplash.Spawn(pd.Body.Pos, 0.7f); Coop.SendSplash(pd.Body.Pos, 0.7f); }     // paddling about: a small one every other look
                 inWater = w;
                 // the other ducks splash too
                 foreach (var d in MicroduckVR.Flock.DuckBrain.All)
@@ -154,7 +154,7 @@ namespace MicroduckVR.Comic
                     var eye = ComicPop.Viewer != null ? ComicPop.Viewer.transform.position : pd.cam.transform.position;
                     string pow = Random.value < 0.5f ? "POW!" : "BONK!";
                     ComicPop.Spawn(pow, rb.worldCenterOfMass + Vector3.up * 0.1f, ComicColors.Orange, 1.2f * Mathf.Clamp(Vector3.Distance(eye, rb.worldCenterOfMass), 1f, 3f));
-                    MicroduckVR.Net.NetSession.SendPow(pow, rb.worldCenterOfMass + Vector3.up * 0.1f, ComicColors.Orange);     // the host simulates toys: the joining PC sees it too
+                    Coop.SendPow(pow, rb.worldCenterOfMass + Vector3.up * 0.1f, ComicColors.Orange);     // the host simulates toys: the joining PC sees it too
                 }
                 speeds[rb] = s;
             }
