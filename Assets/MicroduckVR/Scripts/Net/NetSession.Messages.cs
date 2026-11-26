@@ -1,5 +1,6 @@
 using System;
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Custom;
 using MicroduckVR.Duck;
 using MicroduckVR.Flock;
@@ -8,6 +9,7 @@ using MicroduckVR.Player;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
+using Mode = MicroduckVR.Core.CoopMode;
 
 namespace MicroduckVR.Net
 {

@@ -1,3 +1,4 @@
+using MicroduckVR.Core;
 using UnityEditor;
 using UnityEngine;
 
@@ -29,7 +30,7 @@ namespace MicroduckVR.EditorTools
             foreach (var (room, cx, cz, w, d) in new[] { ("living", 0f, 0f, 6.24f, 5.24f), ("kitchen", 5.06f, -0.06f, 4.12f, 5.24f), ("bedroom", -5.06f, -0.06f, 4.12f, 5.24f), ("hallway", 0f, 3.22f, 14.36f, 1.56f) })
             {
                 var c = S(room, "Ceiling " + room, w, 0.03f, d, ceil, cx, WH + 0.015f, cz, 0f, null, false);
-                c.layer = MicroduckVR.Duck.DuckSetup.LayerCeiling;
+                c.layer = Layers.Ceiling;
                 c.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             }
             S("garden", "Grass", 7.0f, 0.02f, 3.66f, GrassMat("lawn_soil", true), 0f, -0.009f, 5.77f, 0f, "grass");

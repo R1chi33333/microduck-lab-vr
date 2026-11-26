@@ -1,6 +1,7 @@
+using MicroduckVR.Core;
 using UnityEngine;
 
-namespace MicroduckVR.World
+namespace MicroduckVR.Duck
 {
     /// <summary>
     /// On a duck's mover capsule: walking into a loose toy nudges it along. The duck has a small, steady push, so
@@ -20,7 +21,7 @@ namespace MicroduckVR.World
             var rb = hit.collider.attachedRigidbody;
             if (rb == null) return;
             // playing on a joining PC, the host simulates the toys (here they are kinematic): ask it to push
-            if (rb.isKinematic && !MicroduckVR.Net.NetSession.Joined) return;
+            if (rb.isKinematic && !Coop.Joined) return;
             if (hit.moveDirection.y < -0.5f) return;                         // standing on it, not walking into it
             var dir = new Vector3(hit.moveDirection.x, 0f, hit.moveDirection.z);
             if (dir.sqrMagnitude < 1e-6f) return;
@@ -29,7 +30,7 @@ namespace MicroduckVR.World
             if (rb.isKinematic)
             {
                 Vector3 hp = new Vector3(hit.point.x, Mathf.Max(hit.point.y, rb.worldCenterOfMass.y), hit.point.z);
-                MicroduckVR.Net.NetSession.QueuePush(rb, dir, speed * speedFactor, pushForce * Time.deltaTime / Mathf.Max(rb.mass, 0.01f), hp);
+                Coop.QueuePush(rb, dir, speed * speedFactor, pushForce * Time.deltaTime / Mathf.Max(rb.mass, 0.01f), hp);
                 return;
             }
             float along = Vector3.Dot(rb.linearVelocity, dir), want = speed * speedFactor;

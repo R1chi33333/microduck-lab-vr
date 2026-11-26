@@ -1,3 +1,4 @@
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using MicroduckVR.World;
 using UnityEngine;
@@ -162,7 +163,7 @@ namespace MicroduckVR.EditorTools
             var cars = new[] { engine, wagon, coach };
             foreach (var car in cars)
             {
-                SetLayerAll(car, DuckSetup.LayerProp, false);
+                SetLayerAll(car, Layers.Prop, false);
                 var b = LocalBounds(car);
                 var bc = car.gameObject.AddComponent<BoxCollider>(); bc.center = b.center; bc.size = b.size;
                 var rb = car.gameObject.AddComponent<Rigidbody>(); rb.isKinematic = true; rb.interpolation = RigidbodyInterpolation.Interpolate;

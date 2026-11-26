@@ -5,6 +5,7 @@ using MicroduckVR.Games;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
+using Mode = MicroduckVR.Core.CoopMode;
 
 namespace MicroduckVR.Net
 {

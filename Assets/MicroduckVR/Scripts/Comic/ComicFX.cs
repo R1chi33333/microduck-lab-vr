@@ -1,4 +1,4 @@
-using MicroduckVR.Player;
+using MicroduckVR.Core;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -210,8 +210,8 @@ namespace MicroduckVR.Comic
 
             // the player's own eyes (first person only): particles shrink away before they get too close
             bool guard = false; Vector3 eye = default;
-            var pd = PlayerDuck.Instance;
-            if (pd != null && pd.cam != null && !pd.thirdPerson && ComicPop.Viewer == null) { guard = true; eye = pd.cam.transform.position; }
+            var pd = LocalPlayer.Current;
+            if (pd != null && pd.Cam != null && !pd.ThirdPerson && ComicPop.Viewer == null) { guard = true; eye = pd.Cam.transform.position; }
 
             for (int i = 0; i < n; i++)
             {

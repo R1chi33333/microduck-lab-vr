@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Custom;
 using MicroduckVR.Dev;
 using MicroduckVR.Duck;
@@ -337,7 +338,7 @@ namespace MicroduckVR.EditorTools
             var renderers = new List<Renderer>();
             foreach (var r in P.Body.GetComponentsInChildren<Renderer>()) if (r.enabled && r.gameObject.activeInHierarchy) renderers.Add(r);
             var saved = new List<Material[]>(); foreach (var r in renderers) saved.Add(r.sharedMaterials);
-            int mask = (1 << DuckSetup.LayerDuck) | (1 << DuckSetup.LayerPlayerHead);
+            int mask = (1 << Layers.Duck) | (1 << Layers.PlayerHead);
             var c = Pos + Vector3.up * 0.15f; float yaw = P.Body.Yaw;
             var views = new (string n, float ang, float h)[] { ("front", 28f, 0.03f), ("side", 95f, 0.0f), ("back", 205f, 0.04f) };
             Material Flat(string hex, bool unlit) { var m = new Material(Shader.Find("Microduck/ToonLit")); m.SetColor("_BaseColor", ComicLook.Hex(hex)); m.SetFloat("_Unlit", unlit ? 1f : 0f); ComicLook.Character(m); return m; }

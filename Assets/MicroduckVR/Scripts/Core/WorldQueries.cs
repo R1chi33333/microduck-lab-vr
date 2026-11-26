@@ -1,11 +1,11 @@
 using UnityEngine;
 
-namespace MicroduckVR.Duck
+namespace MicroduckVR.Core
 {
     /// <summary>World queries shared by all ducks (raycasts against the World layer).</summary>
     public static class WorldQueries
     {
-        public static readonly int WorldMask = 1 << DuckSetup.LayerWorld;
+        public static readonly int WorldMask = 1 << Layers.World;
 
         /// <summary>Highest walkable surface at (x, z) at or below about 10 cm above the probe height.</summary>
         public static float GroundAt(float x, float z) => GroundAt(x, z, 3f);

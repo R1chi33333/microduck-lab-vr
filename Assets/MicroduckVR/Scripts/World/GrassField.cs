@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using MicroduckVR.Comic;
-using MicroduckVR.Duck;
-using MicroduckVR.Flock;
-using MicroduckVR.Player;
+using MicroduckVR.Core;
 using UnityEngine;
 
 namespace MicroduckVR.World
@@ -16,9 +14,14 @@ namespace MicroduckVR.World
         const int Max = 12;
         static readonly int PushersId = Shader.PropertyToID("_GrassPushers"), CountId = Shader.PropertyToID("_GrassPusherCount");
         readonly Vector4[] pushers = new Vector4[Max];
+        readonly List<Vector3> walkers = new List<Vector3>();
         readonly List<Rigidbody> props = new List<Rigidbody>();
         readonly List<(Transform t, Vector3 v, float age, float life, float spin)> bits = new List<(Transform, Vector3, float, float, float)>();
         float scanT, bitT; Vector3 lastPos; bool hasLast; Material leafA, leafB; static Mesh leaf;
+
+        /// <summary>Adds where the ducks that part the grass are, in order: the player's own, the flock, the other players
+        /// (the game fills it in).</summary>
+        public static System.Action<List<Vector3>> CollectWalkers;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Boot() { if (FindAnyObjectByType<GrassField>() == null) new GameObject("Grass field").AddComponent<GrassField>(); }
@@ -40,13 +43,13 @@ namespace MicroduckVR.World
             {
                 scanT = 1f; props.Clear();
                 foreach (var rb in FindObjectsByType<Rigidbody>())
-                    if (rb.gameObject.layer == DuckSetup.LayerProp && OnLawn(rb.position)) props.Add(rb);
+                    if (rb.gameObject.layer == Layers.Prop && OnLawn(rb.position)) props.Add(rb);
             }
             int n = 0;
-            var pd = PlayerDuck.Instance;
-            if (pd != null && pd.Body != null && OnLawn(pd.Body.Pos)) pushers[n++] = Pack(pd.Body.Pos, 0.085f);
-            foreach (var d in DuckBrain.All) if (n < Max && d != null && OnLawn(d.Pos)) pushers[n++] = Pack(d.Pos, 0.085f);
-            foreach (var r in MicroduckVR.Net.PlayerTargets.Remote) if (n < Max && r != null && r.Body != null && OnLawn(r.Body.Pos)) pushers[n++] = Pack(r.Body.Pos, 0.085f);
+            var pd = LocalPlayer.Current;
+            walkers.Clear();
+            if (CollectWalkers != null) CollectWalkers(walkers);
+            foreach (var w in walkers) if (n < Max && OnLawn(w)) pushers[n++] = Pack(w, 0.085f);
             foreach (var rb in props)
             {
                 if (n >= Max) break;
@@ -63,12 +66,12 @@ namespace MicroduckVR.World
         static Vector4 Pack(Vector3 p, float r) => new Vector4(p.x, p.y, p.z, r);
 
         // ------------------------------------------------------------------ clippings
-        void Clippings(PlayerDuck pd)
+        void Clippings(ILocalPlayer pd)
         {
             float dt = Time.deltaTime;
-            if (pd != null && pd.Body != null)
+            if (pd != null && pd.HasBody)
             {
-                var p = pd.Body.Pos;
+                var p = pd.BodyPos;
                 float speed = hasLast && dt > 1e-5f ? Vector3.ProjectOnPlane(p - lastPos, Vector3.up).magnitude / dt : 0f;
                 lastPos = p; hasLast = true; bitT -= dt;
                 if (speed > 0.06f && speed < 3f && bitT <= 0f && bits.Count < 40 && OnGrass(p))
@@ -95,7 +98,7 @@ namespace MicroduckVR.World
         static bool OnGrass(Vector3 p)
         {
             if (!OnLawn(p)) return false;
-            if (!Physics.Raycast(p + Vector3.up * 0.05f, Vector3.down, out var hit, 0.3f, 1 << DuckSetup.LayerWorld, QueryTriggerInteraction.Ignore)) return false;
+            if (!Physics.Raycast(p + Vector3.up * 0.05f, Vector3.down, out var hit, 0.3f, 1 << Layers.World, QueryTriggerInteraction.Ignore)) return false;
             var tag = hit.collider.GetComponent<SurfaceTag>();
             return tag != null && tag.Kind == SurfaceType.Grass;
         }

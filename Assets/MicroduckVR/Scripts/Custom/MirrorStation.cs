@@ -1,4 +1,5 @@
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using MicroduckVR.Player;
 using MicroduckVR.World;
@@ -67,7 +68,7 @@ namespace MicroduckVR.Custom
                 ToyKit.Box(frame, pos + new Vector3(0f, 0f, 0.0f), new Vector3(size.x, size.y, 0.05f), ComicColors.Orange, 0.4f);
             ToyKit.Box(frame, new Vector3(0f, 0f, -0.016f), new Vector3(W + 0.1f, H + 0.1f, 0.016f), "#C9622A", 0.2f);   // back board (wall side)
             ToyKit.Ball(frame, new Vector3(0f, H / 2f + 0.1f, 0.01f), new Vector3(0.12f, 0.12f, 0.04f), ComicColors.Yellow);   // a star-ish knob on top
-            foreach (var t in frame.GetComponentsInChildren<Transform>()) t.gameObject.layer = MicroduckVR.Duck.DuckSetup.LayerWorld;
+            foreach (var t in frame.GetComponentsInChildren<Transform>()) t.gameObject.layer = Layers.World;
             var col = frame.gameObject.AddComponent<BoxCollider>(); col.size = new Vector3(W + 0.16f, H + 0.16f, 0.06f);
 
             // the glass: a quad whose UVs map straight onto the mirror camera's fitted frustum
@@ -89,7 +90,7 @@ namespace MicroduckVR.Custom
             {
                 var st = ToyKit.Box(g.transform, new Vector3(dx, dy, 0.0135f), new Vector3(len, wd, 0.001f), "#FFFFFF", 0f, new Vector3(0f, 0f, 40f));
                 var smr = st.GetComponent<MeshRenderer>(); smr.sharedMaterial = gl; smr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                st.gameObject.layer = MicroduckVR.Duck.DuckSetup.LayerWorld; glints.Add(st.gameObject);
+                st.gameObject.layer = Layers.World; glints.Add(st.gameObject);
             }
             var cg = new GameObject("Mirror camera"); cg.transform.SetParent(transform, false);
             mirrorCam = cg.AddComponent<Camera>(); mirrorCam.enabled = false; mirrorCam.targetTexture = rt;
@@ -111,7 +112,7 @@ namespace MicroduckVR.Custom
             float w = (text.Length * 0.034f + 0.06f) * size, h = 0.09f * size;
             ToyKit.Box(go.transform, new Vector3(0f, 0f, 0.012f * size), new Vector3(w + 0.03f * size, h + 0.03f * size, 0.016f * size), ComicColors.Ink, 0.35f);
             ToyKit.Box(go.transform, Vector3.zero, new Vector3(w, h, 0.02f * size), hex, 0.35f);
-            foreach (var mr in go.GetComponentsInChildren<MeshRenderer>()) { mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.gameObject.layer = MicroduckVR.Duck.DuckSetup.LayerWorld; }
+            foreach (var mr in go.GetComponentsInChildren<MeshRenderer>()) { mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.gameObject.layer = Layers.World; }
             var tg = new GameObject("text"); tg.transform.SetParent(go.transform, false); tg.transform.localPosition = new Vector3(0f, 0f, -0.012f * size);
             var t = tg.AddComponent<TextMeshPro>(); if (font != null) t.font = font;
             t.text = text; t.fontSize = 0.62f * size; t.alignment = TextAlignmentOptions.Center; t.textWrappingMode = TextWrappingModes.NoWrap; t.color = ComicLook.Ink;

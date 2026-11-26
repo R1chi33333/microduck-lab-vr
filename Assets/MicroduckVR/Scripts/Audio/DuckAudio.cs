@@ -1,5 +1,4 @@
 using MicroduckVR.Duck;
-using MicroduckVR.Flock;
 using MicroduckVR.World;
 using UnityEngine;
 
@@ -20,7 +19,7 @@ namespace MicroduckVR.Audio
         AudioSource voice, steps;
         AudioClip[] chirps; AudioClip hello, boing, splash;
         AudioClip stepWood, stepTile, stepSoft, stepGrass;
-        DuckBody body; DuckBrain brain;
+        DuckBody body; IDuckEventSource source;
         float nextIdle;
         System.Random rng;
 
@@ -29,7 +28,7 @@ namespace MicroduckVR.Audio
         void Start()
         {
             rng = new System.Random(seed * 7919 + 13);
-            var s = GetComponent<DuckSetup>(); body = s.Body; brain = GetComponent<DuckBrain>();
+            var s = GetComponent<DuckSetup>(); body = s.Body; source = TryGetComponent<IDuckEventSource>(out var src) ? src : null;
             voice = MakeSource("voice", 1f); steps = MakeSource("steps", 0.5f);
             BuildVoice();
             boing = Chirp(260f, 2.2f, 0.18f, 0.05f, 0f);
@@ -37,7 +36,7 @@ namespace MicroduckVR.Audio
             stepWood = Noise(0.035f, 0.35f, 0.5f); stepTile = Noise(0.03f, 0.85f, 0.55f);
             stepSoft = Noise(0.045f, 0.12f, 0.3f); stepGrass = Noise(0.05f, 0.5f, 0.35f);
             body.OnSound += OnBodySound;
-            if (brain != null) brain.OnEvent += (d, kind, ctx) =>
+            if (source != null) source.DuckEvent += (kind, ctx) =>
             {
                 if (kind == DuckEventKind.Got || kind == DuckEventKind.Drop) Chirp();
                 else if (kind == DuckEventKind.Bed) voice.PlayOneShot(boing, volume * 0.7f);
@@ -95,7 +94,7 @@ namespace MicroduckVR.Audio
 
         void Update()
         {
-            if (!idleChirps || brain == null) return;
+            if (!idleChirps || source == null || !source.IsBrain) return;
             if (Time.time > nextIdle) { Chirp(); nextIdle = Time.time + 6f + (float)rng.NextDouble() * 12f; }
         }
 

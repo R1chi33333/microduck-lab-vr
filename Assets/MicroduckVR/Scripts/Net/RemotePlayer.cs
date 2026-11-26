@@ -1,7 +1,9 @@
 using MicroduckVR.Audio;
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Custom;
 using MicroduckVR.Duck;
+using MicroduckVR.Player;
 using UnityEngine;
 
 namespace MicroduckVR.Net
@@ -11,7 +13,7 @@ namespace MicroduckVR.Net
     /// their PC sends, blended at the playback time. It has no brain and no physics capsule of its own; the flock
     /// treats it as a player (PlayerTargets). Its sounds play from its own body.
     /// </summary>
-    public class RemotePlayer : MonoBehaviour
+    public class RemotePlayer : MonoBehaviour, IPlayerTarget
     {
         public DuckBody Body { get; private set; }
         public DuckSetup Setup { get; private set; }

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MicroduckVR.Duck
+namespace MicroduckVR.Core
 {
     /// <summary>
     /// Conversions between glTF space (right-handed, +Y up, +Z forward; the web version's space)

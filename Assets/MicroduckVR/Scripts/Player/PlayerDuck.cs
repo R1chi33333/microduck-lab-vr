@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using MicroduckVR.World;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace MicroduckVR.Player
     /// </summary>
     [DefaultExecutionOrder(10)]
     [RequireComponent(typeof(DuckSetup))]
-    public class PlayerDuck : MonoBehaviour
+    public class PlayerDuck : MonoBehaviour, ILocalPlayer
     {
         [Header("Rig")]
         public Transform xrOrigin;
@@ -64,6 +65,16 @@ namespace MicroduckVR.Player
         public static PlayerDuck Instance { get; private set; }
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { Instance = null; }
+        /// <summary>Lets the layers below the player (comic effects, the lawn) find this duck, in play mode and in edit mode.</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+#endif
+        static void RegisterLocalPlayer() { LocalPlayer.Resolve = () => Instance != null ? Instance : null; }
+        bool ILocalPlayer.HasBody => Body != null;
+        Vector3 ILocalPlayer.BodyPos => Body.Pos;
+        Camera ILocalPlayer.Cam => cam;
+        bool ILocalPlayer.ThirdPerson => thirdPerson;
         /// <summary>Debug only: when set, the duck walks this world direction at full speed (used by editor tests).</summary>
         public static Vector3? DebugWalk;
         public static float? DebugBeak;                    // editor tests and filming: the beak trigger
@@ -95,7 +106,7 @@ namespace MicroduckVR.Player
             eyeY = body.transform.position.y + eyeHeight;
             originYaw = yaw * Mathf.Rad2Deg;
             if (xrOrigin != null) xrOrigin.localScale = Vector3.one * worldScale;
-            if (cam != null) cam.cullingMask &= ~(1 << DuckSetup.LayerPlayerHead);
+            if (cam != null) cam.cullingMask &= ~(1 << Layers.PlayerHead);
             TrySetDeviceOrigin();
         }
 
@@ -138,7 +149,7 @@ namespace MicroduckVR.Player
         public void SetThirdPerson(bool on)
         {
             thirdPerson = on; thirdSnap = true; ViewToggles++; headAim = Vector2.zero;
-            if (cam != null) { if (on) cam.cullingMask |= 1 << DuckSetup.LayerPlayerHead; else cam.cullingMask &= ~(1 << DuckSetup.LayerPlayerHead); }
+            if (cam != null) { if (on) cam.cullingMask |= 1 << Layers.PlayerHead; else cam.cullingMask &= ~(1 << Layers.PlayerHead); }
             if (vignette != null) vignette.Pulse(0.6f);
         }
 

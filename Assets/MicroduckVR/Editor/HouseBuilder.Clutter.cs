@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using UnityEngine;
 
@@ -35,7 +36,7 @@ namespace MicroduckVR.EditorTools
         {
             foreach (var (p, pr) in placed) if (Vector2.Distance(p, new Vector2(x, z)) < r + pr) return false;
             Physics.SyncTransforms();
-            return !Physics.CheckSphere(new Vector3(x, y + r + 0.012f, z), r, ~(1 << DuckSetup.LayerDuck), QueryTriggerInteraction.Ignore);
+            return !Physics.CheckSphere(new Vector3(x, y + r + 0.012f, z), r, ~(1 << Layers.Duck), QueryTriggerInteraction.Ignore);
         }
         static void Mark(float x, float z, float r) => placed.Add((new Vector2(x, z), r));
 

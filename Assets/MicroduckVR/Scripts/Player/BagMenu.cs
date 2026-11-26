@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using MicroduckVR.World;
 using TMPro;
@@ -159,32 +160,32 @@ namespace MicroduckVR.Player
             else if (State == Mode.Place)
             {
                 bool ok = false;
-                if (Physics.Raycast(ray, out var hit, Reach, WorldQueries.WorldMask | (1 << DuckSetup.LayerProp), QueryTriggerInteraction.Ignore))
+                if (Physics.Raycast(ray, out var hit, Reach, WorldQueries.WorldMask | (1 << Layers.Prop), QueryTriggerInteraction.Ignore))
                 {
                     end = hit.point;
                     var duck = PlayerDuck.Instance != null ? PlayerDuck.Instance.Body.transform.position : cam.transform.position;
                     ok = hit.normal.y > 0.6f && Vector3.Distance(hit.point, duck) < Reach && Count(Selected) < ToyCatalog.Get(Selected).cap && Count(null) < TotalCap
-                         && !Physics.CheckSphere(hit.point + Vector3.up * 0.022f, 0.016f, ~((1 << DuckSetup.LayerDuck) | (1 << DuckSetup.LayerPlayerHead)), QueryTriggerInteraction.Ignore);
+                         && !Physics.CheckSphere(hit.point + Vector3.up * 0.022f, 0.016f, ~((1 << Layers.Duck) | (1 << Layers.PlayerHead)), QueryTriggerInteraction.Ignore);
                     ShowGhost(Selected, hit.point, Yaw(hit.point), ok);
                 }
                 else DropGhost();
                 if (press && ok)
                 {
-                    if (!MicroduckVR.Net.NetSession.RequestToy(Selected, hit.point, Yaw(hit.point))) ToyCatalog.Spawn(Selected, hit.point, Yaw(hit.point));   // joined: the host makes it
+                    if (!Coop.RequestToy(Selected, hit.point, Yaw(hit.point))) ToyCatalog.Spawn(Selected, hit.point, Yaw(hit.point));   // joined: the host makes it
                     PlacedCount++;
                     Play(popClip);
                 }
             }
             else if (State == Mode.Trash)
             {
-                if (Physics.Raycast(ray, out var hit, Reach, ~((1 << DuckSetup.LayerDuck) | (1 << DuckSetup.LayerPlayerHead)), QueryTriggerInteraction.Ignore))
+                if (Physics.Raycast(ray, out var hit, Reach, ~((1 << Layers.Duck) | (1 << Layers.PlayerHead)), QueryTriggerInteraction.Ignore))
                 {
                     end = hit.point;
                     var tag = hit.collider.GetComponentInParent<ToyTag>();
                     if (tag != null)
                     {
                         tag.transform.localScale = Vector3.one * (1f + 0.12f * Mathf.Abs(Mathf.Sin(pulse * 10f)));
-                        if (press) { Poof(tag.transform.position); if (!MicroduckVR.Net.NetSession.RequestTrash(tag.gameObject)) Destroy(tag.gameObject); Play(popClip); }
+                        if (press) { Poof(tag.transform.position); if (!Coop.RequestTrash(tag.gameObject)) Destroy(tag.gameObject); Play(popClip); }
                     }
                 }
             }

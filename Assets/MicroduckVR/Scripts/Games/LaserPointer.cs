@@ -1,4 +1,5 @@
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using MicroduckVR.Player;
 using UnityEngine;
@@ -43,7 +44,7 @@ namespace MicroduckVR.Games
             Vector3 dir = rightHand != null && rightHand.localPosition.sqrMagnitude > 1e-6f ? rightHand.forward : cam.transform.forward;
             bool hitOk = false; RaycastHit hit = default;
             if (DebugPoint.HasValue) { hitOk = Physics.Raycast(DebugPoint.Value + Vector3.up * 0.3f, Vector3.down, out hit, 1f, WorldQueries.WorldMask); from = DebugPoint.Value + Vector3.up * 0.3f; }
-            else if (on) hitOk = Physics.Raycast(from, dir, out hit, 6f, WorldQueries.WorldMask | (1 << DuckSetup.LayerProp), QueryTriggerInteraction.Ignore);
+            else if (on) hitOk = Physics.Raycast(from, dir, out hit, 6f, WorldQueries.WorldMask | (1 << Layers.Prop), QueryTriggerInteraction.Ignore);
             Active = on && hitOk;
             beam.Show(Active && !HideBeam);
             if (!Active) return;

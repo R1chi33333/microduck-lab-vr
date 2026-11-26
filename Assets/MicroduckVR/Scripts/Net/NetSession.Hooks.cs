@@ -1,6 +1,8 @@
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using Unity.Netcode;
 using UnityEngine;
+using Mode = MicroduckVR.Core.CoopMode;
 
 namespace MicroduckVR.Net
 {
@@ -58,6 +60,31 @@ namespace MicroduckVR.Net
         {
             var s = Instance; if (s == null || s.mode != Mode.Joined) return;
             s.Props.QueuePush(rb, dir, want, dv, at);
+        }
+
+        // ================================================================== Coop: the same hooks for code below the network layer
+        /// <summary>Points Coop at the static controls and hooks above, in play mode and (for the editor tools) in edit mode.</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+#endif
+        static void RegisterCoop() { Coop.Session = new CoopHooks(); }
+
+        /// <summary>Forwards every Coop call to the NetSession statics, which handle a missing session themselves.</summary>
+        sealed class CoopHooks : ICoopSession
+        {
+            public CoopMode State => NetSession.State;
+            public string Status => NetSession.Status;
+            public void HostOrStop() => NetSession.HostOrStop();
+            public void JoinOrLeave() => NetSession.JoinOrLeave();
+            public bool RequestToy(string kind, Vector3 pos, float yawDeg) => NetSession.RequestToy(kind, pos, yawDeg);
+            public bool RequestTrash(GameObject toy) => NetSession.RequestTrash(toy);
+            public bool RequestAddDuck() => NetSession.RequestAddDuck();
+            public bool RequestRemoveDuck() => NetSession.RequestRemoveDuck();
+            public void SendOwnWord(string word, string hex, float size) => NetSession.SendOwnWord(word, hex, size);
+            public void SendPow(string word, Vector3 at, string hex) => NetSession.SendPow(word, at, hex);
+            public void SendSplash(Vector3 at, float size) => NetSession.SendSplash(at, size);
+            public void QueuePush(Rigidbody rb, Vector3 dir, float want, float dv, Vector3 at) => NetSession.QueuePush(rb, dir, want, dv, at);
         }
     }
 }

@@ -1,4 +1,5 @@
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using TMPro;
 using UnityEngine;
 
@@ -18,6 +19,13 @@ namespace MicroduckVR.Games
             inst = new GameObject("Game HUD").AddComponent<GameHud>();
             return inst;
         }
+
+        /// <summary>Comic sound words use the HUD's font, in play mode and in edit mode.</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+#endif
+        static void RegisterFont() { ComicPop.FontProvider = () => Get().Font; }
 
         Camera cam; Transform root, card, bigRoot, bigBurst; TextMeshPro caption, big, bigInk, arrowL, arrowR; TMP_FontAsset font;
         float bigT, bigDur, hudYaw; bool placed, glide; string capText = "";
@@ -99,7 +107,7 @@ namespace MicroduckVR.Games
             var eye = cam.transform.position;
             float dist = 0.24f, k = 0.7f;      // close and small (the same size in the eye as 0.34 m at full scale): in front of the tutorial card and of ducks that crowd round
             // never inside a wall: come closer to the eyes instead, and shrink to look the same size
-            if (Physics.SphereCast(eye, 0.03f, dir, out var hit, dist + 0.02f, MicroduckVR.Duck.WorldQueries.WorldMask, QueryTriggerInteraction.Ignore)) { float near = Mathf.Max(0.12f, hit.distance - 0.02f); k *= near / dist; dist = near; }
+            if (Physics.SphereCast(eye, 0.03f, dir, out var hit, dist + 0.02f, WorldQueries.WorldMask, QueryTriggerInteraction.Ignore)) { float near = Mathf.Max(0.12f, hit.distance - 0.02f); k *= near / dist; dist = near; }
             root.position = eye + dir * dist + Vector3.down * 0.02f * k;
             root.localScale = Vector3.one * k;
             root.rotation = Quaternion.LookRotation(root.position - eye, Vector3.up);

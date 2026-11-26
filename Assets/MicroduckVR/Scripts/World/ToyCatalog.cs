@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using UnityEngine;
 
@@ -79,7 +80,7 @@ namespace MicroduckVR.World
             var e = Get(kind); if (e == null) return null;
             var go = BuildVisual(kind);
             go.transform.SetPositionAndRotation(pos + Vector3.up * 0.001f, Quaternion.Euler(0f, yawDeg, 0f));
-            int layer = e.graspable ? DuckSetup.LayerToy : DuckSetup.LayerProp;
+            int layer = e.graspable ? Layers.Toy : Layers.Prop;
             foreach (var t in go.GetComponentsInChildren<Transform>()) t.gameObject.layer = layer;
             var b = ToyKit.LocalBounds(go.transform);
             var pm = new PhysicsMaterial(e.kind) { bounciness = e.bounce, dynamicFriction = e.ball ? 0.4f : 0.7f, staticFriction = e.ball ? 0.4f : 0.7f, bounceCombine = PhysicsMaterialCombine.Maximum };

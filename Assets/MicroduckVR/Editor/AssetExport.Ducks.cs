@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Custom;
 using MicroduckVR.Duck;
 using MicroduckVR.Flock;
@@ -42,7 +43,7 @@ namespace MicroduckVR.EditorTools
                 int stripped = 0;
                 foreach (var t in root.GetComponentsInChildren<Transform>(true))
                 {
-                    t.gameObject.layer = DuckSetup.LayerDuck;
+                    t.gameObject.layer = Layers.Duck;
                     var r = t.GetComponent<Renderer>();
                     if (r != null && !r.enabled)
                     {

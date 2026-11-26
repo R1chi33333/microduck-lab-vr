@@ -1,8 +1,7 @@
-using MicroduckVR.Comic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace MicroduckVR.World
+namespace MicroduckVR.Comic
 {
     /// <summary>Runtime comic parts for toys: rounded boxes, round legs and discs, rings and balls, toon materials.</summary>
     public static class ToyKit

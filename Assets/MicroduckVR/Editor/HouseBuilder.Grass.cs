@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using UnityEditor;
 using UnityEngine;
@@ -81,7 +82,7 @@ namespace MicroduckVR.EditorTools
                 var mesh = new Mesh { name = $"grass {kv.Key}", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
                 mesh.SetVertices(c.v); mesh.SetNormals(c.n); mesh.SetUVs(0, c.uv); mesh.SetUVs(1, c.blade); mesh.SetTriangles(c.t, 0); mesh.RecalculateBounds();
                 var bb = mesh.bounds; bb.Expand(new Vector3(0.2f, 0.1f, 0.2f)); mesh.bounds = bb;      // room for the sway
-                var go = new GameObject(inked ? "grass ink tufts" : "grass chunk") { layer = DuckSetup.LayerWorld };
+                var go = new GameObject(inked ? "grass ink tufts" : "grass chunk") { layer = Layers.World };
                 go.transform.SetParent(rootT, false);
                 go.AddComponent<MeshFilter>().sharedMesh = SaveMesh(mesh);
                 var mr = go.AddComponent<MeshRenderer>(); mr.sharedMaterial = inked ? ink : blades;

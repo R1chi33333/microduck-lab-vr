@@ -11,7 +11,9 @@ namespace MicroduckVR.EditorTools
     {
         // ================================================================== 3. Export Package
         /// <summary>SurfaceTag's enum: no asset refers to its file, so it is added to the package by hand.</summary>
-        const string SurfaceTypeScript = "Assets/MicroduckVR/Scripts/World/SurfaceType.cs";
+        const string SurfaceTypeScript = "Assets/MicroduckVR/Scripts/World/Shared/SurfaceType.cs";
+        /// <summary>The assembly definition of the shared scripts, so they compile on their own in the importing project (added when it exists).</summary>
+        const string SharedAsmdef = "Assets/MicroduckVR/Scripts/World/Shared/MicroduckVR.World.Shared.asmdef";
 
         [MenuItem("Microduck/Assets/Export Package")]
         public static void ExportPackage()
@@ -22,6 +24,7 @@ namespace MicroduckVR.EditorTools
             if (File.Exists(CreditsPath)) roots.Add(CreditsPath); else { Debug.LogWarning("[Microduck] Export Package: " + CreditsPath + " is missing; the package has no credits file"); warnings++; }
             foreach (var p in new[] { OutlineShaderPath, ComicSetup.OutlineMatPath }) if (File.Exists(p)) roots.Add(p);
             if (File.Exists(SurfaceTypeScript)) roots.Add(SurfaceTypeScript);
+            if (File.Exists(SharedAsmdef)) roots.Add(SharedAsmdef);
             if (AssetDatabase.IsValidFolder(AnimDir))                                   // the duck's moves: clips, controller, animated duck
                 roots.AddRange(AssetDatabase.FindAssets("", new[] { AnimDir }).Select(AssetDatabase.GUIDToAssetPath).Where(x => !AssetDatabase.IsValidFolder(x)));
 

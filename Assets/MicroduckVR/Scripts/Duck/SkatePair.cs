@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using MicroduckVR.Comic;
-using MicroduckVR.World;
+using MicroduckVR.Core;
 using UnityEngine;
 
 namespace MicroduckVR.Duck
@@ -41,7 +41,7 @@ namespace MicroduckVR.Duck
                 ToyKit.Box(w, Vector3.zero, new Vector3(Ww * 1.08f, Wr * 1.3f, 0.0015f), "#E6513D", 0.3f);   // a spoke so the roll shows
                 wheels.Add((w, w.localRotation));
             }
-            foreach (var r in g.GetComponentsInChildren<Renderer>()) r.gameObject.layer = DuckSetup.LayerDuck;
+            foreach (var r in g.GetComponentsInChildren<Renderer>()) r.gameObject.layer = Layers.Duck;
             g.gameObject.SetActive(false);
             return g;
         }

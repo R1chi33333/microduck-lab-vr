@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using UnityEditor;
 using UnityEngine;
@@ -35,7 +36,7 @@ namespace MicroduckVR.EditorTools
                 int c0 = v.Count; v.Add(Vector3.up * Y1); n.Add(Vector3.down); uv.Add(new Vector2(0.5f, 0.97f));
                 for (int i = 0; i < N; i++) { t.Add(c0); t.Add(i * 2 + 3); t.Add(i * 2 + 1); t.Add(c0); t.Add(i * 2 + 1); t.Add(i * 2 + 3); }
                 var mesh = new Mesh { name = "sky drum" }; mesh.SetVertices(v); mesh.SetNormals(n); mesh.SetUVs(0, uv); mesh.SetTriangles(t, 0); mesh.RecalculateBounds();
-                var sky = new GameObject("Sky drum") { layer = DuckSetup.LayerWorld };
+                var sky = new GameObject("Sky drum") { layer = Layers.World };
                 sky.transform.SetParent(rooms[R], false); sky.transform.position = new Vector3(0f, 0f, 3f);
                 sky.AddComponent<MeshFilter>().sharedMesh = SaveMesh(mesh);
                 var smr = sky.AddComponent<MeshRenderer>(); smr.sharedMaterial = skyM; smr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; smr.receiveShadows = false;

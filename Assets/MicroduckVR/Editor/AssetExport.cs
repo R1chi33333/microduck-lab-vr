@@ -40,8 +40,8 @@ namespace MicroduckVR.EditorTools
         /// <summary>Scripts that may travel in the package: they compile on their own.</summary>
         static readonly HashSet<string> PackageScripts = new HashSet<string>
         {
-            "Assets/MicroduckVR/Scripts/World/Grabbable.cs",
-            "Assets/MicroduckVR/Scripts/World/SurfaceTag.cs",
+            "Assets/MicroduckVR/Scripts/World/Shared/Grabbable.cs",
+            "Assets/MicroduckVR/Scripts/World/Shared/SurfaceTag.cs",
             SurfaceTypeScript,
         };
 

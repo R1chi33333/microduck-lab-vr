@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
-namespace MicroduckVR.Util
+namespace MicroduckVR.Core
 {
     /// <summary>
     /// Small JSON reader: objects become Dictionary&lt;string, object&gt;, arrays List&lt;object&gt;,

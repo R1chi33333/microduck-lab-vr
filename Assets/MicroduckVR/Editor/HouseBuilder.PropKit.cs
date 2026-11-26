@@ -1,4 +1,5 @@
 using MicroduckVR.Comic;
+using MicroduckVR.Core;
 using MicroduckVR.Duck;
 using UnityEditor;
 using UnityEngine;
@@ -102,7 +103,7 @@ namespace MicroduckVR.EditorTools
         /// <summary>Dynamic toy: Prop layer, one box (or sphere) collider around its parts, mass from its size.</summary>
         static Transform Dyn(Transform root, float density = 250f, bool sphere = false, PhysicsMaterial pm = null, float minMass = 0.015f)
         {
-            SetLayerAll(root, DuckSetup.LayerProp, false);
+            SetLayerAll(root, Layers.Prop, false);
             var b = LocalBounds(root);
             Collider col;
             if (sphere) { var sc = root.gameObject.AddComponent<SphereCollider>(); sc.center = b.center; sc.radius = Mathf.Max(b.extents.x, Mathf.Max(b.extents.y, b.extents.z)); col = sc; }
@@ -127,7 +128,7 @@ namespace MicroduckVR.EditorTools
         /// <summary>Static scenery: World layer, batched; optional box collider with a surface tag.</summary>
         static Transform Stat(Transform root, string room, bool collide = false, string surface = null)
         {
-            SetLayerAll(root, DuckSetup.LayerWorld, true);
+            SetLayerAll(root, Layers.World, true);
             if (collide)
             {
                 var b = LocalBounds(root);
