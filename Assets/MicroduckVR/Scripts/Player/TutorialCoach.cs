@@ -21,6 +21,7 @@ namespace MicroduckVR.Player
         public Camera cam;
         public Font font;
         const string DoneKey = PrefKeys.TutorialDone;
+        const string PictureFolder = "Tutorial/";                 // Resources/Tutorial/*.png
 
         class Step
         {
@@ -218,7 +219,7 @@ namespace MicroduckVR.Player
         {
             var st = steps[index];
             string name = st.seq == null ? "pads_" + st.pic + "_0" : "pads_" + st.pic + "_" + st.seq[animI % st.seq.Length].frame;
-            if (!texCache.TryGetValue(name, out var tex)) { tex = Resources.Load<Texture2D>("Tutorial/" + name); texCache[name] = tex; }
+            if (!texCache.TryGetValue(name, out var tex)) { tex = Resources.Load<Texture2D>(PictureFolder + name); texCache[name] = tex; }
             if (tex != null) { picMat.SetTexture(ShaderIds.BaseMap, tex); picMat.mainTexture = tex; }
         }
 

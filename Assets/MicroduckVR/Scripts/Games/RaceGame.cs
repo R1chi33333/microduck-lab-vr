@@ -27,6 +27,8 @@ namespace MicroduckVR.Games
             (new Vector3(-5.3f, 0f, -0.6f), 0.5f), (new Vector3(-3.06f, 0f, -1.2f), 0.4f), (new Vector3(-0.4f, 0f, -1.35f), 0.45f),
             (new Vector3(3.06f, 0f, -0.8f), 0.4f), (new Vector3(4.6f, 0f, 0.7f), 0.5f), (new Vector3(5.0f, 0f, 2.56f), 0.4f), (new Vector3(3.6f, 0f, 3.22f), 0.45f),
         };
+        /// <summary>Name of the gate parts that keep their own material (the chequered band) when the gate changes colour.</summary>
+        const string KeepMaterial = "chk";
         const int Laps = 1;                       // a lap of the whole house is long at duck pace
 
         class Prog { public int next = 1, lap = 1; public bool done; public float time; }
@@ -74,23 +76,23 @@ namespace MicroduckVR.Games
                     {
                         var c = ToyKit.Box(g, new Vector3(-bw / 2f + 0.01f + (k + 0.5f) * cw, top - 0.027f + (k % 2) * 0.0f, fz * 0.0105f),
                             new Vector3(cw, 0.012f, 0.0015f), k % 2 == 0 ? ComicColors.Ink : "#FFF6E4", 0f);
-                        c.name = "chk";
-                        if (k % 2 == 0) { var c2 = ToyKit.Box(g, new Vector3(-bw / 2f + 0.01f + (k + 0.5f) * cw, top - 0.015f, fz * 0.0105f), new Vector3(cw, 0.012f, 0.0015f), "#FFF6E4", 0f); c2.name = "chk"; }
-                        else { var c2 = ToyKit.Box(g, new Vector3(-bw / 2f + 0.01f + (k + 0.5f) * cw, top - 0.015f, fz * 0.0105f), new Vector3(cw, 0.012f, 0.0015f), ComicColors.Ink, 0f); c2.name = "chk"; }
+                        c.name = KeepMaterial;
+                        if (k % 2 == 0) { var c2 = ToyKit.Box(g, new Vector3(-bw / 2f + 0.01f + (k + 0.5f) * cw, top - 0.015f, fz * 0.0105f), new Vector3(cw, 0.012f, 0.0015f), "#FFF6E4", 0f); c2.name = KeepMaterial; }
+                        else { var c2 = ToyKit.Box(g, new Vector3(-bw / 2f + 0.01f + (k + 0.5f) * cw, top - 0.015f, fz * 0.0105f), new Vector3(cw, 0.012f, 0.0015f), ComicColors.Ink, 0f); c2.name = KeepMaterial; }
                     }
                 // a fat ring on the floor, with a cream inner band
                 ToyKit.Ring(g, new Vector3(0f, 0.003f, 0f), r * 0.88f, r * 0.74f, 0.006f, "#FFFFFF");
-                var inner = ToyKit.Ring(g, new Vector3(0f, 0.0035f, 0f), r * 0.74f, r * 0.7f, 0.006f, "#FFF6E4"); inner.name = "chk";
+                var inner = ToyKit.Ring(g, new Vector3(0f, 0.0035f, 0f), r * 0.74f, r * 0.7f, 0.006f, "#FFF6E4"); inner.name = KeepMaterial;
                 foreach (var mr in g.GetComponentsInChildren<MeshRenderer>())
                 {
-                    if (mr.name != "chk") mr.sharedMaterial = m;
+                    if (mr.name != KeepMaterial) mr.sharedMaterial = m;
                     mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
                 }
                 // the gate's number, big, on both sides above the banner
                 var font = GameHud.Get().Font;
                 foreach (var fz in new[] { -1f, 1f })
                 {
-                    var ng = new GameObject("chk"); ng.transform.SetParent(g, false);    // "chk": keeps its own material when the gate changes colour
+                    var ng = new GameObject(KeepMaterial); ng.transform.SetParent(g, false);    // KeepMaterial: keeps its own material when the gate changes colour
                     ng.transform.localPosition = new Vector3(0f, top + 0.06f, 0f); ng.transform.localRotation = Quaternion.Euler(0f, fz > 0f ? 180f : 0f, 0f);
                     var nt = ng.AddComponent<TMPro.TextMeshPro>(); if (font != null) nt.font = font;
                     nt.text = i == 0 ? "GO" : i.ToString(); nt.fontSize = 0.9f; nt.alignment = TMPro.TextAlignmentOptions.Center; nt.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
@@ -174,7 +176,7 @@ namespace MicroduckVR.Games
                 {
                     bool on = !me.done && i == me.next;
                     var mat = on ? gateOn : i == 0 ? gateStart : gateOff;
-                    foreach (var mr in gates[i].g.GetComponentsInChildren<MeshRenderer>()) if (mr.name != "chk") mr.sharedMaterial = mat;
+                    foreach (var mr in gates[i].g.GetComponentsInChildren<MeshRenderer>()) if (mr.name != KeepMaterial) mr.sharedMaterial = mat;
                     gates[i].g.localScale = Vector3.one * (on ? 1f + 0.05f * Mathf.Sin(Time.time * 6f) : 1f);
                 }
                 hud.Caption(me.done ? $"FINISHED {Place(finish.IndexOf(PlayerDuck.Instance) + 1)}  {me.time:0.0}s"

@@ -10,6 +10,7 @@ namespace MicroduckVR.Games
     /// </summary>
     public class GameHud : MonoBehaviour
     {
+        const string FontResource = "Bangers-Regular";          // Resources.Load name of the comic font
         static GameHud inst;
         public static GameHud Get()
         {
@@ -24,7 +25,7 @@ namespace MicroduckVR.Games
         void Awake()
         {
             cam = Camera.main;
-            var f = Resources.Load<Font>("Bangers-Regular");
+            var f = Resources.Load<Font>(FontResource);
             foreach (var tb in FindObjectsByType<MicroduckVR.Flock.ThoughtBubbles>()) if (tb.font != null) f = tb.font;
             if (f != null) font = TMP_FontAsset.CreateFontAsset(f);
             root = new GameObject("hud root").transform; root.SetParent(transform, false);
