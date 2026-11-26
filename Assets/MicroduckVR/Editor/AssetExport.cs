@@ -110,7 +110,7 @@ namespace MicroduckVR.EditorTools
                     if (go == null) { Warn("toy " + entry.kind + " did not build"); continue; }
                     go.transform.SetParent(temp.root, true);
                     var tag = go.GetComponent<ToyTag>();
-                    if (tag != null) Object.DestroyImmediate(tag);        // ToyTag lives in ToyCatalog.cs and cannot be saved on a prefab
+                    if (tag != null) Object.DestroyImmediate(tag);        // ToyTag is game-only runtime data: keep it off the exported prefabs
                     go.name = entry.label;
                     Normalise(go.transform, false);
                     string file = Sanitize(entry.label);
