@@ -1,0 +1,36 @@
+{
+    "name": "MicroduckVR.Editor",
+    "rootNamespace": "MicroduckVR.EditorTools",
+    "references": [
+        "MicroduckVR.Core",
+        "MicroduckVR.World.Shared",
+        "MicroduckVR.Comic",
+        "MicroduckVR.Duck",
+        "MicroduckVR.World",
+        "MicroduckVR.Audio",
+        "MicroduckVR.Gameplay",
+        "MicroduckVR.Net",
+        "MicroduckVR.Dev",
+        "Unity.InputSystem",
+        "Unity.TextMeshPro",
+        "Unity.Netcode.Runtime",
+        "Unity.Collections",
+        "Unity.XR.Management",
+        "Unity.XR.Management.Editor",
+        "Unity.XR.OpenXR",
+        "Unity.XR.OpenXR.Editor",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,29 @@
+{
+    "name": "MicroduckVR.Net",
+    "rootNamespace": "MicroduckVR.Net",
+    "references": [
+        "MicroduckVR.Core",
+        "MicroduckVR.World.Shared",
+        "MicroduckVR.Comic",
+        "MicroduckVR.Duck",
+        "MicroduckVR.World",
+        "MicroduckVR.Audio",
+        "MicroduckVR.Gameplay",
+        "Unity.Netcode.Runtime",
+        "Unity.Networking.Transport",
+        "Unity.Collections",
+        "Unity.InputSystem",
+        "Unity.TextMeshPro",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
