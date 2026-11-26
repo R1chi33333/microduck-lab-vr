@@ -1,41 +1,8 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace MicroduckVR.Net
 {
-    /// <summary>
-    /// Playback clock for what the other PC sends: runs a little behind the newest snapshot (Delay), so there are
-    /// always two snapshots to blend between. Every snapshot carries the sender's own clock; the playback time
-    /// follows it smoothly and jumps only after a long gap.
-    /// </summary>
-    public class NetClock
-    {
-        public const double Delay = 0.1;
-        double latest = double.NegativeInfinity, render;
-        bool started;
-
-        public bool Started => started;
-        public double Now => render;
-
-        public void Observe(double senderTime)
-        {
-            if (senderTime > latest) latest = senderTime;
-            if (!started) { render = latest - Delay; started = true; }
-        }
-
-        public void Advance(float dt)
-        {
-            if (!started) return;
-            render += dt;
-            double target = latest - Delay, err = target - render;
-            if (Math.Abs(err) > 0.5) render = target;                              // a long hiccup: catch up at once
-            else render += err * Mathf.Clamp01(dt * 3f);                          // otherwise drift gently onto it
-        }
-
-        public void Reset() { started = false; latest = double.NegativeInfinity; }
-    }
-
     /// <summary>A short history of timestamped samples of one thing, blended at the playback time (no guessing ahead).</summary>
     public class Track<T> where T : struct
     {
@@ -89,18 +56,5 @@ namespace MicroduckVR.Net
             if (n == 0) { v = default; return false; }
             v = values[n - 1]; return true;
         }
-    }
-
-    /// <summary>Position and rotation of a toy.</summary>
-    public struct NetPose
-    {
-        public Vector3 pos; public Quaternion rot;
-        public static NetPose Lerp(NetPose a, NetPose b, float u) => new NetPose { pos = Vector3.Lerp(a.pos, b.pos, u), rot = Quaternion.Slerp(a.rot, b.rot, u) };
-    }
-
-    static class NetMath
-    {
-        public static float Wrap(float a) => Mathf.Atan2(Mathf.Sin(a), Mathf.Cos(a));
-        public static float LerpYaw(float a, float b, float u) => a + Wrap(b - a) * u;
     }
 }
