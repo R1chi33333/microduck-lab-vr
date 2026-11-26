@@ -20,11 +20,18 @@ namespace MicroduckVR.Player
     /// </summary>
     public class PlayerSkates : MonoBehaviour
     {
-        // web SKATE constants (duck-scale metres and seconds)
-        const float Accel = 0.42f, MaxSpeed = 0.42f, Friction = 0.32f, Brake = 0.9f, Grip = 2.4f, Turn = 2.0f, StrokeHz = 1.25f;
-        const float BoostMult = 1.5f, BoostTime = 1.2f, BoostCooldown = 2.0f, BoostKick = 0.22f, BoostAccel = 1.1f;
-        const float DriftGrip = 0.45f, DriftTurnMult = 1.7f, DriftFlick = 0.22f, DriftMinSpeed = 0.1f, SlingAfter = 0.6f, SlingKick = 0.16f, SlingTime = 0.5f;
-        const float CrashSpeed = 0.5f;
+        // web SKATE constants (duck-scale metres and seconds), read from the tuning; its defaults are the web numbers
+        /// <summary>Optional feel settings. Left empty, Init looks for Resources/SkateTuning, then uses SkateTuning.Defaults.</summary>
+        public SkateTuning tuning;
+        SkateTuning Tuning => tuning != null ? tuning : SkateTuning.Defaults;
+        float Accel => Tuning.accel; float MaxSpeed => Tuning.maxSpeed; float Friction => Tuning.friction; float Brake => Tuning.brake;
+        float Grip => Tuning.grip; float Turn => Tuning.turn; float StrokeHz => Tuning.strokeHz;
+        float BoostMult => Tuning.boostMult; float BoostTime => Tuning.boostTime; float BoostCooldown => Tuning.boostCooldown;
+        float BoostKick => Tuning.boostKick; float BoostAccel => Tuning.boostAccel;
+        float DriftGrip => Tuning.driftGrip; float DriftTurnMult => Tuning.driftTurnMult; float DriftFlick => Tuning.driftFlick;
+        float DriftMinSpeed => Tuning.driftMinSpeed; float SlingAfter => Tuning.slingAfter; float SlingKick => Tuning.slingKick;
+        float SlingTime => Tuning.slingTime;
+        float CrashSpeed => Tuning.crashSpeed;
 
         [Range(0.5f, 1f)] public float comfortScale = 0.85f;      // caps top speed and boost in VR
 
@@ -55,6 +62,7 @@ namespace MicroduckVR.Player
         public void Init(DuckBody b)
         {
             body = b;
+            if (tuning == null) tuning = Resources.Load<SkateTuning>(SkateTuning.ResourceName);
             pair = new SkatePair();
             driftA = new InputAction("Drift", InputActionType.Value, expectedControlType: "Axis");
             driftA.AddBinding(InputPaths.LeftGrip); driftA.AddBinding(InputPaths.KeyLeftShift);
