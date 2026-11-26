@@ -25,7 +25,7 @@ namespace MicroduckVR.EditorTools
     ///   Link Scene To Prefabs  swaps the House scene's furniture and clutter for instances of those prefabs.
     /// Every menu item is also a public static method without arguments, and logs a "[Microduck]" summary.
     /// </summary>
-    public static class AssetExport
+    public static partial class AssetExport
     {
         public const string Root = "Assets/MicroduckVR/Prefabs";
         public const string IndexPath = Root + "/prefab_index.json";
@@ -1075,7 +1075,7 @@ Renderer Feature using `Materials/ComicOutline.mat` (Depth and Normal inputs) to
                 string dir = $"{Root}/{cat}";
                 if (!AssetDatabase.IsValidFolder(dir)) continue;
                 var paths = AssetDatabase.FindAssets("t:Prefab", new[] { dir }).Select(g => AssetDatabase.GUIDToAssetPath(g))
-                    .Where(p => includeLive || !p.StartsWith(LiveDir + "/")).Distinct().OrderBy(p => p, StringComparer.Ordinal);
+                    .Where(p => (includeLive || !p.StartsWith(LiveDir + "/")) && !p.StartsWith(AnimDir + "/")).Distinct().OrderBy(p => p, StringComparer.Ordinal);
                 foreach (var p in paths) list.Add((cat, p));
             }
             return list;
@@ -1090,6 +1090,8 @@ Renderer Feature using `Materials/ComicOutline.mat` (Depth and Normal inputs) to
             int warnings = 0;
             if (File.Exists(CreditsPath)) roots.Add(CreditsPath); else { Debug.LogWarning("[Microduck] Export Package: " + CreditsPath + " is missing; the package has no credits file"); warnings++; }
             foreach (var p in new[] { OutlineShaderPath, ComicSetup.OutlineMatPath }) if (File.Exists(p)) roots.Add(p);
+            if (AssetDatabase.IsValidFolder(AnimDir))                                   // the duck's moves: clips, controller, animated duck
+                roots.AddRange(AssetDatabase.FindAssets("", new[] { AnimDir }).Select(AssetDatabase.GUIDToAssetPath).Where(x => !AssetDatabase.IsValidFolder(x)));
 
             var keep = new SortedSet<string>(StringComparer.Ordinal);
             int left = 0;
