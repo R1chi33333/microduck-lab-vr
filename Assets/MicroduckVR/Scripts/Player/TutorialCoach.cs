@@ -25,6 +25,7 @@ namespace MicroduckVR.Player
         {
             public string pic = "pads"; public (int frame, float secs)[] seq;   // the controller flip-book and its timing
             public string title, body; public Func<bool> done; public Action enter;
+            public bool silent;                                                  // no card: the step is on a board of its own (the mirror)
             public float max = float.PositiveInfinity;                           // only the talking cards time out
             public Func<bool> lost; public int back = 1;                         // precondition gone: step back
             public Vector2 offset;                                               // card shift (right, up) so it never covers what you work on
@@ -51,10 +52,13 @@ namespace MicroduckVR.Player
             "BUILT WITH UNITY, URP, OPENXR\n" +
             "HOUSE, TOYS AND SOUNDS: MADE IN CODE\n" +
             "THANKS FOR PLAYING!";
-        public static string DebugTitle => inst != null && inst.card.gameObject.activeSelf ? inst.title.text + " [" + inst.counter.text + "]" : "(none)";
+        public static string DebugTitle => inst == null ? "(none)" : inst.card.gameObject.activeSelf ? inst.title.text + " [" + inst.counter.text + "]"
+            : inst.index >= 0 && inst.index < inst.steps.Length && inst.steps[inst.index].silent ? inst.steps[inst.index].title + " [board]" : "(none)";
         public static void Restart() { if (inst != null) inst.Begin(); }
         /// <summary>Editor checks: jump straight to a step.</summary>
         public static void DebugGo(int i) { if (inst != null) { inst.help = false; inst.Go(i); } }
+        /// <summary>The card (kept out of the mirror's reflection).</summary>
+        public static Transform Root => inst != null ? inst.root : null;
         public static void HideAll() { if (inst != null) { inst.help = false; inst.index = -1; inst.card.gameObject.SetActive(false); } }
 
         void Start()
@@ -71,10 +75,9 @@ namespace MicroduckVR.Player
             // Every step waits until you have really done the thing; nothing moves on by itself except the talking cards.
             steps = new[]
             {
-                new Step { title = "HI, LITTLE DUCK!", body = "YOU ARE THE DUCK.\nFIRST, LET'S MAKE YOU LOOK\nTHE WAY YOU LIKE!", max = 4.5f, done = () => stepT > 4f, enter = ToMirror, offset = new Vector2(-0.25f, -0.02f), focus = AtMirror },
-                new Step { pic = "trigger_r", seq = Press, title = "MAKE YOUR DUCK", offset = new Vector2(-0.25f, -0.02f), focus = AtMirror,
-                           body = "THAT'S YOU IN THE MIRROR!\nPOINT YOUR RIGHT HAND AT THE BOARD ON YOUR RIGHT,\nPULL THE TRIGGER TO PICK COLOURS.\nPRESS DONE! WHEN YOU LIKE IT.",
-                           done = () => MicroduckVR.Custom.MirrorStation.SaveCount > save0 },
+                // first your look, at the mirror, with only the mirror's own board in view; the lessons start after DONE!
+                new Step { title = "MAKE YOUR DUCK", silent = true, enter = ToMirror, done = () => MicroduckVR.Custom.MirrorStation.SaveCount > save0 },
+                new Step { title = "LOOKING GOOD!", body = "YOU ARE THE DUCK.\nNOW LET'S LEARN TO GET AROUND!", max = 4.5f, done = () => stepT > 4f },
                 new Step { pic = "stick_l", seq = Hold, title = "WADDLE", body = "PUSH THE LEFT STICK TO WALK\nTOWARDS WHERE YOU LOOK.\nGO FOR A LITTLE WALK!", done = () => pd.Walked - walk0 > 0.4f },
                 new Step { pic = "stick_r", seq = LeftRight, title = "TURN", body = "FLICK THE RIGHT STICK\nLEFT OR RIGHT TO TURN ROUND.", done = () => pd.SnapCount > snap0 || pd.Turned - turn0 > 40f },
                 new Step { pic = "trigger_r", seq = Hold, title = "OPEN YOUR BEAK", body = "HOLD THE RIGHT TRIGGER:\nYOUR BEAK OPENS. KEEP IT OPEN!", enter = SpawnPracticeToy,
@@ -110,6 +113,7 @@ namespace MicroduckVR.Player
             pd.SetThirdPerson(false);
             pd.Teleport(MicroduckVR.Custom.MirrorStation.StandPos, Mathf.PI);
             pd.FaceView(Mathf.PI);
+            if (MicroduckVR.Custom.MirrorStation.Instance != null) MicroduckVR.Custom.MirrorStation.Instance.OpenBoard(true);
         }
 
         void OnDestroy() { skipA?.Disable(); skipHoldA?.Disable(); if (inst == this) inst = null; }
@@ -123,6 +127,7 @@ namespace MicroduckVR.Player
             snap0 = pd.SnapCount; chirp0 = pd.ChirpCount; grab0 = pd.GrabCount; drop0 = pd.DropCount; view0 = pd.ViewToggles; walk0 = pd.Walked; turn0 = pd.Turned;
             save0 = MicroduckVR.Custom.MirrorStation.SaveCount; placed0 = bag != null ? bag.PlacedCount : 0;
             steps[index].enter?.Invoke();
+            if (steps[index].silent) { card.gameObject.SetActive(false); return; }
             Show(steps[index].title, steps[index].body.Replace('\n', ' '), $"{index + 1}/{steps.Length}");
             animI = 0; animT = 0f; SetFrame();
         }
@@ -278,6 +283,14 @@ namespace MicroduckVR.Player
         {
             if (cam == null) cam = Camera.main;
             if (sk == null && pd != null) sk = pd.Skates;
+            bool silent = !help && index >= 0 && index < steps.Length && steps[index].silent;
+            if (silent)
+            {
+                // a step with no card still has to notice when it is done
+                stepT += Time.deltaTime;
+                if (steps[index].done() || stepT > steps[index].max) Go(index + 1);
+                return;
+            }
             if (!card.gameObject.activeSelf) return;
             Place(false);
             holdT += Time.deltaTime;

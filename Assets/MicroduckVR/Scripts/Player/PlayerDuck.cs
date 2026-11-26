@@ -263,7 +263,7 @@ namespace MicroduckVR.Player
 
             if (!BagMenu.Busy && (input.Chirp.WasPressedThisFrame() || DebugChirp)) { DebugChirp = false; chirpT = 0.25f; ChirpCount++; var au = GetComponent<MicroduckVR.Audio.DuckAudio>(); if (au != null) au.Chirp(); }
             if (chirpT > 0f) { chirpT -= dt; if (held == null) body.JawTarget = Mathf.Max(body.JawTarget, 0.55f); }
-            if (input.Emote.WasPressedThisFrame()) body.PlayEmote("dance");
+            if (input.Emote.WasPressedThisFrame() && !MicroduckVR.Custom.MirrorStation.InZone) body.PlayEmote("dance");      // at the mirror X opens the board
             if (!BagMenu.Busy && input.Skates.WasPressedThisFrame()) skates.Toggle(yaw, vel);
             if (input.View.WasPressedThisFrame()) SetThirdPerson(!thirdPerson);
 

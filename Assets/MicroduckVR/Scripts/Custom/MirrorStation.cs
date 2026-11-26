@@ -3,6 +3,7 @@ using MicroduckVR.Player;
 using MicroduckVR.World;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace MicroduckVR.Custom
 {
@@ -22,7 +23,7 @@ namespace MicroduckVR.Custom
         /// <summary>Whose eye the reflection is drawn for (filming); the player's own when not set.</summary>
         public static Camera Viewer;
         static readonly int InkScaleId = Shader.PropertyToID("_InkCamScale");
-        public static readonly Vector3 StandPos = new Vector3(4.42f, 0.05f, -1.85f);
+        public static readonly Vector3 StandPos = new Vector3(4.42f, 0.05f, -2.05f);   // close enough to see your colours in the glass
         /// <summary>How many times DONE! has been pressed on the board (the tutorial waits for the first).</summary>
         public static int SaveCount { get; private set; }
         const float W = 0.6f, H = 1.4f;
@@ -32,7 +33,14 @@ namespace MicroduckVR.Custom
         public DuckCustom Current => custom;
         readonly System.Collections.Generic.List<Renderer> hidden = new System.Collections.Generic.List<Renderer>();
         Camera mirrorCam; RenderTexture rt; Transform glass; readonly System.Collections.Generic.List<GameObject> glints = new System.Collections.Generic.List<GameObject>();
-        WorldPanel board; DuckCustom custom; PlayerDuck pd;
+        WorldPanel board, prompt; DuckCustom custom; PlayerDuck pd;
+        InputAction openA;
+        /// <summary>The board is out (X near the mirror, or the first-run tutorial); otherwise only the "PRESS X" prompt shows.</summary>
+        public bool BoardOpen { get; private set; }
+        /// <summary>You are standing at the mirror: X opens the board here instead of dancing.</summary>
+        public static bool InZone { get; private set; }
+        // the reflection is sharp enough to read your colours at the stand (about 20 px a degree in the headset)
+        const int RtW = 1536, RtH = 3584;
         readonly System.Random rng = new System.Random();
         string paintPart = "";
 
@@ -60,7 +68,7 @@ namespace MicroduckVR.Custom
             var col = frame.gameObject.AddComponent<BoxCollider>(); col.size = new Vector3(W + 0.16f, H + 0.16f, 0.06f);
 
             // the glass: a quad whose UVs map straight onto the mirror camera's fitted frustum
-            rt = new RenderTexture(768, 1792, 24) { antiAliasing = 4, name = "MirrorRT" };
+            rt = new RenderTexture(RtW, RtH, 24) { antiAliasing = 2, name = "MirrorRT", filterMode = FilterMode.Trilinear, useMipMap = true, autoGenerateMips = true, anisoLevel = 4 };
             var g = new GameObject("Mirror glass"); g.transform.SetParent(transform, false); g.transform.position = MirrorCentre + new Vector3(0f, 0f, 0.0f);
             var mesh = new Mesh { name = "mirror quad" };
             float x0 = -W / 2f, x1 = W / 2f, y0 = -H / 2f, y1 = H / 2f;
@@ -87,6 +95,9 @@ namespace MicroduckVR.Custom
             var urp = cg.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>(); urp.renderPostProcessing = false;
 
             BuildBoard(font);
+            BuildPrompt(font);
+            openA = new InputAction("MirrorOpen", InputActionType.Button);
+            openA.AddBinding("<XRController>{LeftHand}/{PrimaryButton}"); openA.AddBinding("<Keyboard>/x"); openA.Enable();
             Sign(font, "MAKE YOUR DUCK!", new Vector3(MirrorCentre.x - W / 2f - 0.57f, 0.82f, MirrorCentre.z + 0.03f), Quaternion.LookRotation(Vector3.back, Vector3.up), 1.5f, "#FFC43D");
         }
 
@@ -114,7 +125,7 @@ namespace MicroduckVR.Custom
             var bag = pd.GetComponent<BagMenu>(); if (bag != null) board.rightHand = bag.rightHand;
             // everything on the board is sized to read from where it floats (see WorldPanel.follow): about 1.3 degrees of
             // letter height on the buttons, more on the title and the two big buttons
-            const float bw = 0.4f, bh = 0.32f, lx = -bw / 2f + 0.05f, x0 = -0.085f, dx = 0.072f;
+            const float bw = 0.4f, bh = 0.36f, lx = -bw / 2f + 0.05f, x0 = -0.085f, dx = 0.072f;
             board.follow = true; board.focus = MirrorCentre; board.readDist = 0.42f; board.sideDeg = 38f; board.minY = StandPos.y + bh / 2f + 0.03f;
             board.panelRect = new Rect(-bw / 2f, -bh / 2f, bw, bh);
             board.Slab(new Vector2(bw, bh), "#FFFDF5", new Vector3(0f, 0f, 0.003f), 0.12f);
@@ -135,8 +146,31 @@ namespace MicroduckVR.Custom
             for (int i = 0; i < 4; i++) { int v = i; board.Add("voice_" + v, DuckCustom.Voices[v].name, new Vector2(x0 + v * dx, y), new Vector2(0.068f, 0.034f), "#C9F0E2", () => { custom.voice = v; Apply(); }, 0.15f); }
             y -= 0.062f;
             board.Add("random", "RANDOM!", new Vector2(-0.095f, y), new Vector2(0.17f, 0.048f), "#E5CCF5", () => { custom.Randomise(rng); Apply(); }, 0.25f);
-            board.Add("save", "DONE!", new Vector2(0.095f, y), new Vector2(0.17f, 0.048f), "#8FD35A", () => { custom.Save(); SaveCount++; MicroduckVR.Games.GameHud.Get().Big("LOOKING GOOD!", "#FF5D73", 1.2f); pd.Body.PlayEmote("dance"); }, 0.26f);
+            board.Label("POINT YOUR RIGHT HAND + TRIGGER TO PICK.  DONE! WHEN YOU LIKE IT", new Vector3(0f, -bh / 2f + 0.026f, -0.004f), 0.1f, "#6B6480", bw - 0.03f);
+            board.Add("save", "DONE!", new Vector2(0.095f, y), new Vector2(0.17f, 0.048f), "#8FD35A", () => { custom.Save(); SaveCount++; OpenBoard(false); MicroduckVR.Games.GameHud.Get().Big("LOOKING GOOD!", "#FF5D73", 1.2f); pd.Body.PlayEmote("dance"); }, 0.26f);
             Refresh();
+        }
+
+        /// <summary>The little card that floats where the board would be: which button opens the board.</summary>
+        void BuildPrompt(TMP_FontAsset font)
+        {
+            var go = new GameObject("Mirror prompt"); go.transform.SetParent(transform, false);
+            prompt = go.AddComponent<WorldPanel>(); prompt.font = font; prompt.cam = pd.cam; prompt.reach = 0f;
+            prompt.follow = true; prompt.focus = MirrorCentre; prompt.readDist = 0.42f; prompt.sideDeg = 30f; prompt.drop = 0.04f; prompt.minY = StandPos.y + 0.08f;
+            prompt.panelRect = new Rect(0f, 0f, 0f, 0f);
+            prompt.Slab(new Vector2(0.27f, 0.1f), "#FFFDF5", new Vector3(0f, 0f, 0.003f), 0.3f);
+            prompt.Slab(new Vector2(0.27f, 0.018f), "#FFC43D", new Vector3(0f, 0.041f, 0.001f), 0.4f);
+            prompt.Slab(new Vector2(0.05f, 0.05f), "#1B1430", new Vector3(-0.09f, -0.008f, -0.002f), 1f);
+            prompt.Label("X", new Vector3(-0.09f, -0.008f, -0.005f), 0.3f, "#FFFFFF", 0.05f);
+            prompt.Label("PRESS TO\nMAKE YOUR DUCK", new Vector3(0.03f, -0.008f, -0.004f), 0.19f, "#1B1430", 0.18f);
+            go.SetActive(false);
+        }
+
+        /// <summary>Bring the board out (or put it away); the first-run tutorial opens it for you.</summary>
+        public void OpenBoard(bool on)
+        {
+            BoardOpen = on;
+            if (on) { custom = DuckCustom.Load(); Refresh(); }
         }
 
         void Swatch(string id, Vector2 at, string skin, System.Action click, Vector2 size)
@@ -170,7 +204,14 @@ namespace MicroduckVR.Custom
             var eye = vc.transform.position;
             var toEye = eye - MirrorCentre;
             bool near = toEye.magnitude < 2.6f && toEye.z > 0.02f && Vector3.Dot(vc.transform.forward, -toEye.normalized) > 0.1f;
-            board.gameObject.SetActive((pd.cam.transform.position - MirrorCentre).magnitude < 1.5f);
+            // at the mirror: a prompt for X; X brings the board out (and puts it away), walking off puts it away
+            var me = pd.cam.transform.position - MirrorCentre;
+            bool zone = me.magnitude < 1.1f && me.z > 0.05f;
+            InZone = zone;
+            if (zone && openA.WasPressedThisFrame() && !BagMenu.Busy) OpenBoard(!BoardOpen);
+            if (!zone && BoardOpen && me.magnitude > 1.4f) OpenBoard(false);
+            board.gameObject.SetActive(BoardOpen && me.magnitude < 1.5f);
+            prompt.gameObject.SetActive(zone && !BoardOpen && !BagMenu.Busy);
             if (!near) return;
             // the eye reflected through the glass plane (z = const), looking into the room through the mirror's rectangle
             float zPlane = MirrorCentre.z + 0.012f;
@@ -186,6 +227,9 @@ namespace MicroduckVR.Custom
             // ... nor the comfort vignette that rides on your head: in the mirror it showed up as a dark box round the head
             hidden.Clear();
             foreach (var v in FindObjectsByType<ComfortVignette>(FindObjectsSortMode.None)) { var vr = v.GetComponent<Renderer>(); if (vr != null && vr.enabled) { vr.enabled = false; hidden.Add(vr); } }
+            // ... nor the boards, cards and captions floating in front of your eyes: the glass showed their backs
+            foreach (var root in UiRoots()) if (root != null && root.gameObject.activeInHierarchy)
+                foreach (var ur in root.GetComponentsInChildren<Renderer>()) if (ur.enabled) { ur.enabled = false; hidden.Add(ur); }
             // the ink line is measured against the picture it is drawn into; in the glass it has to match the weight of the
             // lines round it on screen, however much of the mirror the viewer's eye takes in
             float seen = 2f * Mathf.Abs(eye.z - zPlane) * Mathf.Tan(vc.fieldOfView * 0.5f * Mathf.Deg2Rad);
@@ -199,11 +243,20 @@ namespace MicroduckVR.Custom
         /// <summary>Filming: a sharper reflection (a multiple of the game's own resolution; 1 puts it back).</summary>
         public void Sharpen(int factor)
         {
-            int w = 768 * Mathf.Clamp(factor, 1, 4), h = 1792 * Mathf.Clamp(factor, 1, 4);
+            int k = Mathf.Clamp(factor, 1, 2), w = RtW * k, h = RtH * k;
             if (rt == null || rt.width == w) return;
             rt.Release(); rt.width = w; rt.height = h; rt.Create();
         }
 
-        void OnDestroy() { if (rt != null) rt.Release(); if (Instance == this) Instance = null; }
+        System.Collections.Generic.IEnumerable<Transform> UiRoots()
+        {
+            yield return board.transform; yield return prompt.transform;
+            if (MicroduckVR.Custom.Garage.Instance != null && MicroduckVR.Custom.Garage.Instance.Board != null) yield return MicroduckVR.Custom.Garage.Instance.Board.transform;
+            if (TutorialCoach.Root != null) yield return TutorialCoach.Root;
+            if (MicroduckVR.Games.GameHud.Root != null) yield return MicroduckVR.Games.GameHud.Root;
+            if (BagMenu.Root != null) yield return BagMenu.Root;
+        }
+
+        void OnDestroy() { openA?.Disable(); if (rt != null) rt.Release(); if (Instance == this) Instance = null; InZone = false; }
     }
 }

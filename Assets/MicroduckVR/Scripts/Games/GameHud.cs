@@ -64,6 +64,8 @@ namespace MicroduckVR.Games
         }
 
         public TMP_FontAsset Font => font;
+        /// <summary>The HUD (kept out of the mirror's reflection).</summary>
+        public static Transform Root => inst != null ? inst.root : null;
         /// <summary>Filming: keep the HUD out of cinematic shots.</summary>
         public static bool Hidden;
         public void Caption(string s) { capText = s ?? ""; card.gameObject.SetActive(capText.Length > 0); caption.text = capText; }

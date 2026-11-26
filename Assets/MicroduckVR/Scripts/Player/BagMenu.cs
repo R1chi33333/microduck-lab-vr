@@ -35,6 +35,8 @@ namespace MicroduckVR.Player
 
         InputAction menuA, selectA, navA;
         Transform panel; TextMeshPro footer, netLine;
+        /// <summary>The bag's panel (kept out of the mirror's reflection).</summary>
+        public static Transform Root { get; private set; }
         readonly Dictionary<string, TextMeshPro> actionLabels = new Dictionary<string, TextMeshPro>();
         const float NetRow = 0.018f;                                    // the playing-together status line under the footer
         readonly List<(Transform tile, Transform model, string kind)> tiles = new List<(Transform, Transform, string)>();
@@ -85,7 +87,7 @@ namespace MicroduckVR.Player
         // ------------------------------------------------------------------ building
         void BuildPanel()
         {
-            panel = new GameObject("Bag panel").transform;
+            panel = new GameObject("Bag panel").transform; Root = panel;
             var entries = ToyCatalog.All;
             // toys, then the bin and help, then one row of actions (games, emotes, swap, view)
             // toys and the bin as picture tiles; under them the word buttons (games, emotes, ducks, help)
@@ -226,7 +228,7 @@ namespace MicroduckVR.Player
                 case "help": TutorialCoach.ShowHelp(); break;
                 case "addduck": if (!MicroduckVR.Net.NetSession.RequestAddDuck()) MicroduckVR.Flock.FlockSpawner.Add(); break;           // joined: the host adds it
                 case "removeduck": if (!MicroduckVR.Net.NetSession.RequestRemoveDuck()) MicroduckVR.Flock.FlockSpawner.Remove(); break;
-                case "mirror": if (pd != null) { pd.SetThirdPerson(false); pd.Teleport(MicroduckVR.Custom.MirrorStation.StandPos, Mathf.PI); pd.FaceView(Mathf.PI); } break;
+                case "mirror": if (pd != null) { pd.SetThirdPerson(false); pd.Teleport(MicroduckVR.Custom.MirrorStation.StandPos, Mathf.PI); pd.FaceView(Mathf.PI); if (MicroduckVR.Custom.MirrorStation.Instance != null) MicroduckVR.Custom.MirrorStation.Instance.OpenBoard(true); } break;
                 case "tutorial": TutorialCoach.Restart(); break;
                 case "credits": TutorialCoach.ShowSheet("CREDITS", TutorialCoach.CreditsText, "Y TO CLOSE"); break;
                 default: if (pd != null) pd.Body.PlayEmote(kind); break;
