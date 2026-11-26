@@ -16,7 +16,7 @@ namespace MicroduckVR.Flock
     /// </summary>
     [DefaultExecutionOrder(10)]
     [RequireComponent(typeof(DuckSetup))]
-    public class DuckBrain : MonoBehaviour
+    public class DuckBrain : MonoBehaviour, IDuckEventSource
     {
         public static readonly List<DuckBrain> All = new List<DuckBrain>();
 
@@ -38,6 +38,10 @@ namespace MicroduckVR.Flock
         public AiState State { get; private set; } = AiState.Idle;
         public string Context { get; private set; } = "";        // room name, toy label...
         public event Action<DuckBrain, DuckEventKind, string> OnEvent;  // (duck, kind, context)
+        /// <summary>The same events for the duck's own sounds (IDuckEventSource), raised right after OnEvent.</summary>
+        public event Action<DuckEventKind, string> DuckEvent;
+        bool IDuckEventSource.IsBrain => true;
+        void RaiseEvent(DuckEventKind kind, string context) { OnEvent?.Invoke(this, kind, context); DuckEvent?.Invoke(kind, context); }
         public DuckBody Body => body;
         public Vector3 Pos => mover != null ? mover.transform.position : transform.position;
         public float Speed { get; private set; }
@@ -94,7 +98,7 @@ namespace MicroduckVR.Flock
         /// <summary>What the host's brain says this duck is doing (the thought bubbles read it).</summary>
         public void PuppetState(AiState state, string context) { State = state; Context = context ?? ""; }
         /// <summary>A toy event the host's duck had (got, drop): bubbles and chirps here too.</summary>
-        public void PuppetEvent(DuckEventKind kind, string context) => OnEvent?.Invoke(this, kind, context);
+        public void PuppetEvent(DuckEventKind kind, string context) => RaiseEvent(kind, context);
 
         /// <summary>Pose the puppet: the body walks to the host's pose; the floor under it is looked up here (splashes, boings).</summary>
         public void PuppetStep(float dt, Vector3 p, float yawRad, Vector3 v, float w)
@@ -102,7 +106,7 @@ namespace MicroduckVR.Flock
             if (body == null) return;
             var surf = SurfaceTag.At(p);
             SurfaceType st = surf != null ? surf.Kind : SurfaceType.Wood;
-            if (st != Surface) { Surface = st; if (st == SurfaceType.Bed || st == SurfaceType.Water || st == SurfaceType.Tile) OnEvent?.Invoke(this, SurfaceEvent(st), ""); }
+            if (st != Surface) { Surface = st; if (st == SurfaceType.Bed || st == SurfaceType.Water || st == SurfaceType.Tile) RaiseEvent(SurfaceEvent(st), ""); }
             if (mover != null) mover.transform.position = p;
             Speed = Flat(p - lastPos).magnitude / Mathf.Max(dt, 1e-4f);
             lastPos = p; yaw = yawRad; yawRate = w;
@@ -137,7 +141,7 @@ namespace MicroduckVR.Flock
         static DuckEventKind SurfaceEvent(SurfaceType s) => s == SurfaceType.Bed ? DuckEventKind.Bed : s == SurfaceType.Water ? DuckEventKind.Water : DuckEventKind.Tile;
 
         void Mode(AiState s) { if (State != s) { State = s; Context = ""; } }
-        void DropHeld() { if (held != null) { held.Release(Vector3.zero); OnEvent?.Invoke(this, DuckEventKind.Drop, held.label); held = null; } toy = null; taskPhase = TaskPhase.None; body.ReachState.weight = 0f; body.JawTarget = 0f; body.JawStop = 0f; }
+        void DropHeld() { if (held != null) { held.Release(Vector3.zero); RaiseEvent(DuckEventKind.Drop, held.label); held = null; } toy = null; taskPhase = TaskPhase.None; body.ReachState.weight = 0f; body.JawTarget = 0f; body.JawStop = 0f; }
 
         // ------------------------------------------------------------------ games (they take over from the normal life)
         float lastKick = -9f, lastPounce = -9f, pounceT = -1f; bool cheered;
@@ -198,7 +202,7 @@ namespace MicroduckVR.Flock
             pounceT += dt; float u = pounceT / 0.6f;
             body.CrouchTarget = u < 0.35f;
             body.Hop = u > 0.35f && u < 1f ? Mathf.Sin(Mathf.PI * (u - 0.35f) / 0.65f) * 0.03f : 0f;
-            if (u >= 1f) { pounceT = -1f; body.Hop = 0f; body.CrouchTarget = false; body.HappyWiggle = 1f; OnEvent?.Invoke(this, DuckEventKind.Got, "dot"); }
+            if (u >= 1f) { pounceT = -1f; body.Hop = 0f; body.CrouchTarget = false; body.HappyWiggle = 1f; RaiseEvent(DuckEventKind.Got, "dot"); }
             return (u > 0.35f && u < 0.9f ? 0.26f : 0f, 0f);
         }
 
@@ -296,7 +300,7 @@ namespace MicroduckVR.Flock
                     body.JawStop = 0f; body.JawTarget = 0.5f;
                     if (taskT > 0.25f)
                     {
-                        held.Release(Vector3.zero); OnEvent?.Invoke(this, DuckEventKind.Drop, held.label); held = null; body.JawTarget = 0f;
+                        held.Release(Vector3.zero); RaiseEvent(DuckEventKind.Drop, held.label); held = null; body.JawTarget = 0f;
                         Pick(R() < 0.5f ? AiState.Idle : AiState.Wander);
                     }
                     return (0f, 0f);
@@ -318,7 +322,7 @@ namespace MicroduckVR.Flock
                 body.ReachState.target = tp; body.ReachState.weight = 1f; body.JawTarget = 0.5f;
                 if (Vector3.Distance(body.BeakGap(), tp) < 0.03f && taskT > 0.5f)
                 {
-                    if (toy.TryHold(this)) { held = toy; toy = null; body.JawTarget = 0f; body.JawStop = 0.12f; body.ReachState.weight = 0f; taskPhase = TaskPhase.Carry; taskT = 0f; target = null; OnEvent?.Invoke(this, DuckEventKind.Got, held.label); }
+                    if (toy.TryHold(this)) { held = toy; toy = null; body.JawTarget = 0f; body.JawStop = 0.12f; body.ReachState.weight = 0f; taskPhase = TaskPhase.Carry; taskT = 0f; target = null; RaiseEvent(DuckEventKind.Got, held.label); }
                 }
                 else if (taskT > 3f) { taskPhase = TaskPhase.Approach; taskT = 0f; body.ReachState.weight = 0f; }
                 return (0f, 0f);
@@ -369,7 +373,7 @@ namespace MicroduckVR.Flock
             // surface: slippery tiles, slow water, bouncy bed
             var surf = SurfaceTag.At(Pos);
             SurfaceType st = surf != null ? surf.Kind : SurfaceType.Wood;
-            if (st != Surface) { var prevS = Surface; Surface = st; if (st == SurfaceType.Bed || st == SurfaceType.Water || st == SurfaceType.Tile) OnEvent?.Invoke(this, SurfaceEvent(st), ""); if (st == SurfaceType.Bed) boing = 1f; }
+            if (st != Surface) { var prevS = Surface; Surface = st; if (st == SurfaceType.Bed || st == SurfaceType.Water || st == SurfaceType.Tile) RaiseEvent(SurfaceEvent(st), ""); if (st == SurfaceType.Bed) boing = 1f; }
             if (st == SurfaceType.Water) v *= 0.55f;
             float grip = surf != null ? Mathf.Lerp(0.18f, 1f, Mathf.InverseLerp(0.15f, 0.7f, surf.Friction)) : 1f;
             yaw += w * dt;
