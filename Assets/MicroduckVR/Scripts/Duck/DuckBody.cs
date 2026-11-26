@@ -23,90 +23,146 @@ namespace MicroduckVR.Duck
             public float min, max, stand;
         }
 
+        /// <summary>A foot's planting state: where it stands, where its step started, and its pose.</summary>
         public class Foot
         {
+            /// <summary>Planted position, and the position the current step started from.</summary>
             public Vector3 pos, from;
+            /// <summary>Foot yaw and pitch, the step's start values and target height, and its side sign.</summary>
             public float yaw, fromYaw, fromGroundY, toY, pitch, s = 1f;
+            /// <summary>The foot is on the floor; it touched down this frame.</summary>
             public bool planted = true, justLanded;
         }
 
+        /// <summary>One leg: its joints, rig nodes, neutral foot position and foot.</summary>
         public class Leg
         {
+            /// <summary>"left" or "right" (also the joint-name prefix).</summary>
             public string side;
-            public float s;                       // Unity side sign: left = -1, right = +1
+            /// <summary>Unity side sign: left = -1, right = +1.</summary>
+            public float s;
+            /// <summary>The leg's joint names, hip to ankle.</summary>
             public string yawJ, rollJ, pitchJ, kneeJ, ankleJ;
+            /// <summary>Rig nodes: the top of the leg, the sole marker and the ankle.</summary>
             public Transform top, sole, ankle;
-            public Vector3 fLocal;                // ankle-local forward
+            /// <summary>Ankle-local forward.</summary>
+            public Vector3 fLocal;
+            /// <summary>Sign that bends the knee the right way.</summary>
             public float kneeSign;
-            public Vector3 neutral;               // root-local at yaw 0
+            /// <summary>Root-local foot position at yaw 0.</summary>
+            public Vector3 neutral;
+            /// <summary>The leg's foot.</summary>
             public Foot foot = new Foot();
+            /// <summary>How far the sole missed its target in the last solve (m).</summary>
             public float err;
         }
 
         /// <summary>Stage of a fall: tipping over, tumbling (thrown), lying, getting up.</summary>
         public enum FallPhase { Tip, Tumble, Lie, GetUp }
 
+        /// <summary>A fall in progress: its phase, rotation axis and pivot, and the pose it started from.</summary>
         public class Fall
         {
+            /// <summary>Where in the fall the duck is.</summary>
             public FallPhase phase;
+            /// <summary>Rotation axis and pivot of the fall, in the duck's own space.</summary>
             public Vector3 axis, pivot;
+            /// <summary>The fall's angle and spin, its resting angle, timers and lift.</summary>
             public float angle, angVel, rest, t, lift, getFrom, lieTime = 1.1f;
+            /// <summary>The joint angles when the fall started.</summary>
             public Dictionary<string, float> from;
+            /// <summary>A tumble has touched down.</summary>
             public bool landed;
         }
 
+        /// <summary>The emote playing now: its kind, time and length.</summary>
         public class Emote { public EmoteKind kind; public float t, dur; }
 
+        /// <summary>Head look: a target or gaze direction and how strongly to follow it.</summary>
         public class Look { public Vector3? target; public float weight; public float pitchDown = 0.26f; public float yawBias; public Vector3? gazeDir; }
+        /// <summary>Beak reach: a target point, its weight, and the crouch and bow allowed to get there.</summary>
         public class Reach { public Vector3? target; public float weight, w, err, crouch = 0.034f, bow = 0.62f; public Dictionary<string, float> sol; }
 
         // ------------------------------------------------------------------ config + state
+        /// <summary>Floor height at (x, z); the setup points it at the world.</summary>
         public Func<float, float, float> Ground = (x, z) => 0f;
+        /// <summary>Body sounds (sit, crouch, foot plant, fall hit, get up) for the duck's audio.</summary>
         public Action<BodySound, object> OnSound;
+        /// <summary>The duck is back on its feet after a fall.</summary>
         public Action OnGotUp;
         /// <summary>An emote started (kind, duration) and a tip-over started (direction): the network session passes them on.</summary>
         public Action<EmoteKind, float> OnEmote;
+        /// <summary>A tip-over started (direction).</summary>
         public Action<Vector3> OnFall;
 
+        /// <summary>The node that tilts the whole body (falls, skate lean).</summary>
         public Transform Tilt { get; private set; }
+        /// <summary>The model under Tilt.</summary>
         public Transform Model { get; private set; }
+        /// <summary>The rig's trunk node (body_trunk).</summary>
         public Transform Trunk { get; private set; }
+        /// <summary>The head node.</summary>
         public Transform HeadNode { get; private set; }
+        /// <summary>Rig nodes by name.</summary>
         public readonly Dictionary<string, Transform> Nodes = new Dictionary<string, Transform>();
+        /// <summary>The legs by side ("left", "right").</summary>
         public readonly Dictionary<string, Leg> Legs = new Dictionary<string, Leg>();
+        /// <summary>Current joint angles by joint name (radians).</summary>
         public readonly Dictionary<string, float> Q = new Dictionary<string, float>();
         readonly Dictionary<string, JointState> joints = new Dictionary<string, JointState>();
         Dictionary<string, float> limp;
 
         Vector3 trunkBase;
         Vector3 headF, headLeft;
+        /// <summary>Rig markers: beak halves, eye camera, beak sensor and mouth.</summary>
         public Transform MarkerUpper, MarkerLower, MarkerCam, MarkerTof, MarkerMouth;
         Renderer[] renderers = Array.Empty<Renderer>();
+        /// <summary>Height of the trunk above the floor when standing.</summary>
         public float StandHeight { get; private set; }
+        /// <summary>How far the body drops when sitting (m).</summary>
         public float SitDrop { get; private set; } = 0.05f;
 
+        /// <summary>Ground point of the duck (the mover's position).</summary>
         public Vector3 Pos;
-        public float Yaw;                              // Unity convention, radians
+        /// <summary>Heading, Unity convention, radians.</summary>
+        public float Yaw;
+        /// <summary>Velocity on the floor.</summary>
         public Vector3 Vel;
+        /// <summary>Turn rate (rad/s).</summary>
         public float YawRate;
+        /// <summary>Smoothed floor height, gait phase (0..1) and step rate (Hz).</summary>
         public float BaseY, Phase, CycleHz = 2.2f;
+        /// <summary>The legs are stepping.</summary>
         public bool Stepping;
         Vector3 trunkOff, prevVel;
         float lean, gw, idleTilt, time;
+        /// <summary>Jaw opening now, the wanted opening, and the least opening (something in the beak).</summary>
         public float Jaw, JawTarget, JawStop;
+        /// <summary>Where the head looks.</summary>
         public readonly Look LookAt = new Look();
+        /// <summary>Where the beak reaches.</summary>
         public readonly Reach ReachState = new Reach();
+        /// <summary>Extra crouch (m) and body pitch (rad) on top of the gait.</summary>
         public float CrouchExtra, PitchExtra;
+        /// <summary>Leg IK on; off leaves the legs where they are.</summary>
         [System.NonSerialized] public Fall FallState;
         public bool EnabledIK = true;
+        /// <summary>Solver iterations for the leg and beak IK.</summary>
         public int Iters = 3;
+        /// <summary>Asked to sit or to crouch.</summary>
         public bool SitTarget, CrouchTarget;
+        /// <summary>How far into the sit and crouch the body is (0..1).</summary>
         public float SitW, CrouchW;
+        /// <summary>Wearing skates: the legs glide instead of stepping.</summary>
         public bool Skating;
+        /// <summary>Skates: lift off the floor, blend, push stroke phase and side, and wobble.</summary>
         public float SkateLift = 0.022f, SkateW, Stroke, StrokeSide = 1f, Wobble;
-        public float SkateLean, LeanW;                 // body roll on skates (Unity roll convention)
+        /// <summary>Body roll on skates, wanted and smoothed (Unity roll convention).</summary>
+        public float SkateLean, LeanW;
+        /// <summary>Hop height, gaze offsets from emotes, and the happy wiggle after a catch.</summary>
         [System.NonSerialized] public Emote CurrentEmote;
         public float Hop, GazeYawOff, GazePitchOff, HappyWiggle;
+        /// <summary>The duck is falling, lying or getting up.</summary>
         public bool Fallen => FallState != null;
 
         static readonly (string side, float s, string yaw, string roll, string pitch, string knee, string ankle, string sole)[] LegNodes =
@@ -212,20 +268,27 @@ namespace MicroduckVR.Duck
         static Quaternion YawRot(float yaw) => Quaternion.AngleAxis(yaw * Mathf.Rad2Deg, Vector3.up);
 
         // ------------------------------------------------------------------ joints
+        /// <summary>The rig has this joint.</summary>
         public bool HasJoint(string name) => joints.ContainsKey(name);
+        /// <summary>The joint's standing angle (radians).</summary>
         public float JointStand(string name) => joints[name].stand;
+        /// <summary>Sets a joint angle, clamped to its limits (not applied until ApplyJoint).</summary>
         public void SetQ(string name, float theta) { if (joints.TryGetValue(name, out var j)) Q[name] = Clamp(theta, j.min, j.max); }
+        /// <summary>Poses a joint's node from its current angle.</summary>
         public void ApplyJoint(string name)
         {
             if (!joints.TryGetValue(name, out var j)) return;
             j.node.localRotation = j.zero * Quaternion.AngleAxis(Q[name] * Mathf.Rad2Deg, j.axis);
         }
+        /// <summary>Poses every joint.</summary>
         public void ApplyAll() { foreach (var k in joints.Keys) ApplyJoint(k); }
+        /// <summary>A joint's hinge axis in world space.</summary>
         public Vector3 Axis(string name)
         {
             var j = joints[name];
             return (j.node.parent.rotation * j.zero * j.axis).normalized;
         }
+        /// <summary>A joint's pivot in world space.</summary>
         public Vector3 Pivot(string name) => joints[name].node.position;
         void Rot(string name, float delta) { SetQ(name, Q[name] + delta); ApplyJoint(name); }
 
@@ -369,6 +432,7 @@ namespace MicroduckVR.Duck
             UpdateJaw(dt);
         }
 
+        /// <summary>Puts the body somewhere at once: clears motion and any fall, and resets the feet.</summary>
         public void Teleport(Vector3 pos, float yaw)
         {
             Pos = pos; Yaw = yaw; BaseY = Ground(pos.x, pos.z); Vel = Vector3.zero; YawRate = 0f;

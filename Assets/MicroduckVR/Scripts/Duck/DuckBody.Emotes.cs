@@ -5,6 +5,7 @@ namespace MicroduckVR.Duck
     public partial class DuckBody
     {
         // ------------------------------------------------------------------ emotes
+        /// <summary>Starts an emote; a duration of 0 uses the emote's own length.</summary>
         public void PlayEmote(EmoteKind kind, float dur = 0f)
         {
             if (dur <= 0f) dur = kind switch { EmoteKind.Nod => 1.1f, EmoteKind.Shake => 1.1f, EmoteKind.Look => 2.6f, EmoteKind.Dance => 2.4f, _ => 1.2f };

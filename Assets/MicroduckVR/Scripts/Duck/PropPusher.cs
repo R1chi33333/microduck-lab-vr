@@ -10,8 +10,10 @@ namespace MicroduckVR.Duck
     [RequireComponent(typeof(CharacterController))]
     public class PropPusher : MonoBehaviour
     {
-        public float pushForce = 0.5f;       // newtons the duck leans into a toy with
-        public float speedFactor = 1.3f;     // a pushed toy tops out a bit faster than the duck walks
+        /// <summary>Newtons the duck leans into a toy with.</summary>
+        public float pushForce = 0.5f;
+        /// <summary>A pushed toy tops out a bit faster than the duck walks.</summary>
+        public float speedFactor = 1.3f;
         CharacterController cc;
 
         void Awake() { cc = GetComponent<CharacterController>(); }
