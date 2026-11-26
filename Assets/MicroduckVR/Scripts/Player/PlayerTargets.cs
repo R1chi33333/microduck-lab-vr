@@ -41,6 +41,7 @@ namespace MicroduckVR.Player
             foreach (var r in Remote) if (Live(r) && r.Body != null) into.Add(r.Body.Pos);
         }
 
+        /// <summary>How many players there are (you and the remote ones).</summary>
         public static int Count
         {
             get

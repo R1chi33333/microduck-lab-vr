@@ -10,8 +10,11 @@ namespace MicroduckVR.Player
         /// <summary>Comic speed lines round the edge of the view when skating fast (a comfort option: off shows none).</summary>
         public static bool SpeedLinesOn = true;
 
+        /// <summary>How strong the vignette should be (0..1), set by the player each frame.</summary>
         public float Target;
-        public float SpeedLines;                   // 0..1, set by the player each frame
+        /// <summary>Speed lines, 0..1, set by the player each frame.</summary>
+        public float SpeedLines;
+        /// <summary>How fast the vignette tightens and eases off again (per second).</summary>
         public float riseRate = 4f, fallRate = 2f;
         float current, pulse, lines;
         Material mat; MeshRenderer mr;
@@ -19,6 +22,7 @@ namespace MicroduckVR.Player
 
         void Awake() { mr = GetComponent<MeshRenderer>(); mat = mr.material; }
 
+        /// <summary>A short squeeze of the vignette (a bump, a fall).</summary>
         public void Pulse(float amount) { pulse = Mathf.Max(pulse, amount); }
 
         void LateUpdate()

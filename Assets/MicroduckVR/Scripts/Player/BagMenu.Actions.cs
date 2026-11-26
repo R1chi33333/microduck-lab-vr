@@ -51,6 +51,7 @@ namespace MicroduckVR.Player
             BagActions.Dance => EmoteKind.Dance, BagActions.Nod => EmoteKind.Nod, BagActions.Shake => EmoteKind.Shake, BagActions.Look => EmoteKind.Look, _ => EmoteKind.None,
         };
 
+        /// <summary>Picks a bag tile by id, as a press on it would: a toy to place, or an action (editor tests use it too).</summary>
         public void Choose(string kind)
         {
             if (IsAction(kind)) { DoAction(kind); return; }

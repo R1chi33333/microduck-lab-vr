@@ -21,28 +21,42 @@ namespace MicroduckVR.Player
     [RequireComponent(typeof(DuckSetup))]
     public class PlayerDuck : MonoBehaviour, ILocalPlayer
     {
+        /// <summary>The XR Origin the camera rig sits under.</summary>
         [Header("Rig")]
         public Transform xrOrigin;
+        /// <summary>The player's camera.</summary>
         public Camera cam;
+        /// <summary>The comfort vignette in front of the camera.</summary>
         public ComfortVignette vignette;
 
+        /// <summary>How the right stick turns the view.</summary>
         [Header("Feel")]
         [Range(0.08f, 0.3f)] public float worldScale = 0.15f;     // XR Origin scale: smaller = bigger world
         public enum TurnMode { Smooth, Snap }
-        public TurnMode turnMode = TurnMode.Snap;        // snap is the comfortable default; smooth is optional
+        /// <summary>Snap is the comfortable default; smooth is optional.</summary>
+        public TurnMode turnMode = TurnMode.Snap;
+        /// <summary>Smooth turn speed (degrees per second).</summary>
         public float smoothTurnDegPerSec = 110f;
+        /// <summary>Snap turn step (degrees).</summary>
         public float snapDegrees = 30f;
+        /// <summary>Walking speed multiplier.</summary>
         public float speedScale = 1f;
-        public float bodyFollowDeg = 55f;                          // body turns to face where you look past this
+        /// <summary>The body turns to face where you look past this many degrees.</summary>
+        public float bodyFollowDeg = 55f;
 
+        /// <summary>Third-person view; left stick click or V toggles it.</summary>
         [Header("Third person")]
-        public bool thirdPerson;                                   // left stick click / V toggles
-        public float thirdBack = 0.42f, thirdUp = 0.2f;            // camera offset behind and above the duck (duck-scale m)
-        public float thirdLag = 0.25f;                             // follow smoothing (s); the view never rotates by itself
+        public bool thirdPerson;
+        /// <summary>Camera offset behind and above the duck (duck-scale m).</summary>
+        public float thirdBack = 0.42f, thirdUp = 0.2f;
+        /// <summary>Follow smoothing (s); the view never rotates by itself.</summary>
+        public float thirdLag = 0.25f;
         Vector3 thirdPos, thirdVel; bool thirdSnap = true; Vector2 headAim;
 
         // what the player has done (the tutorial watches these)
+        /// <summary>What the player has done so far (the tutorial watches these).</summary>
         public int SnapCount, ChirpCount, GrabCount, DropCount, ViewToggles; public float Walked, Turned;
+        /// <summary>How far the right stick is aiming the head (0..1).</summary>
         public float HeadAimAmount => headAim.magnitude;
         /// <summary>Turn the view (not the duck) to face a heading, in one step.</summary>
         public void FaceView(float yawRad) { if (cam != null) originYaw += Mathf.DeltaAngle(cam.transform.eulerAngles.y, yawRad * Mathf.Rad2Deg); }
@@ -53,6 +67,7 @@ namespace MicroduckVR.Player
         CharacterController mover;
         DuckInput input;
         PlayerSkates skates;
+        /// <summary>The skates.</summary>
         public PlayerSkates Skates => skates;
         float yaw, yawRate, eyeHeight, eyeY, eyeYVel, vy;
         Vector3 vel, headBaseline;
@@ -62,6 +77,7 @@ namespace MicroduckVR.Player
         bool beakWasOpen;
         float chirpT, bedT;
 
+        /// <summary>The player's duck, once it exists.</summary>
         public static PlayerDuck Instance { get; private set; }
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { Instance = null; }
@@ -77,10 +93,15 @@ namespace MicroduckVR.Player
         bool ILocalPlayer.ThirdPerson => thirdPerson;
         /// <summary>Debug only: when set, the duck walks this world direction at full speed (used by editor tests).</summary>
         public static Vector3? DebugWalk;
-        public static float? DebugBeak;                    // editor tests and filming: the beak trigger
+        /// <summary>Editor tests and filming: the beak trigger.</summary>
+        public static float? DebugBeak;
+        /// <summary>Editor tests: chirp once.</summary>
         public static bool DebugChirp;
+        /// <summary>Walking speed on the floor (m/s).</summary>
         public float Speed => new Vector2(vel.x, vel.z).magnitude;
+        /// <summary>The duck's body.</summary>
         public DuckBody Body => body;
+        /// <summary>The toy in the beak, or null.</summary>
         public Grabbable Held => held;
         /// <summary>Let go of whatever is in the beak, right now.</summary>
         public void DropHeld() { if (held != null) { held.Release(Vector3.zero); held = null; DropCount++; body.JawStop = 0f; } }
@@ -146,6 +167,7 @@ namespace MicroduckVR.Player
             if (skating) skates.Toggle(yaw, Vector3.zero);
         }
 
+        /// <summary>Switches between the first-person and the third-person view.</summary>
         public void SetThirdPerson(bool on)
         {
             thirdPerson = on; thirdSnap = true; ViewToggles++; headAim = Vector2.zero;

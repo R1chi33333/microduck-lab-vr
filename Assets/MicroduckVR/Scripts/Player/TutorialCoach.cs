@@ -18,7 +18,9 @@ namespace MicroduckVR.Player
     /// </summary>
     public class TutorialCoach : MonoBehaviour
     {
+        /// <summary>The player's camera.</summary>
         public Camera cam;
+        /// <summary>The card font.</summary>
         public Font font;
         const string DoneKey = PrefKeys.TutorialDone;
         const string PictureFolder = "Tutorial/";                 // Resources/Tutorial/*.png
@@ -45,8 +47,11 @@ namespace MicroduckVR.Player
         InputAction skipA, skipHoldA;
 
         static TutorialCoach inst;
+        /// <summary>Opens the help sheet.</summary>
         public static void ShowHelp() { if (inst != null) inst.OpenHelp(); }
+        /// <summary>Shows a sheet with a title, text and footer (help, credits).</summary>
         public static void ShowSheet(string title, string text, string footer) { if (inst != null) { inst.index = -1; inst.help = true; inst.Show(title, text, footer); } }
+        /// <summary>The credits sheet text.</summary>
         public const string CreditsText =
             "MICRODUCK LAB VR\nMADE BY YUTONG JIN\n\n" +
             "ROBOT: POLLEN ROBOTICS\n(CC BY-NC-SA 4.0)\n" +
@@ -54,13 +59,16 @@ namespace MicroduckVR.Player
             "BUILT WITH UNITY, URP, OPENXR\n" +
             "HOUSE, TOYS AND SOUNDS: MADE IN CODE\n" +
             "THANKS FOR PLAYING!";
+        /// <summary>Editor checks: the card on show and its counter, or "(none)".</summary>
         public static string DebugTitle => inst == null ? "(none)" : inst.card.gameObject.activeSelf ? inst.title.text + " [" + inst.counter.text + "]"
             : inst.index >= 0 && inst.index < inst.steps.Length && inst.steps[inst.index].silent ? inst.steps[inst.index].title + " [board]" : "(none)";
+        /// <summary>Starts the tutorial again from the first step.</summary>
         public static void Restart() { if (inst != null) inst.Begin(); }
         /// <summary>Editor checks: jump straight to a step.</summary>
         public static void DebugGo(int i) { if (inst != null) { inst.help = false; inst.Go(i); } }
         /// <summary>The card (kept out of the mirror's reflection).</summary>
         public static Transform Root => inst != null ? inst.root : null;
+        /// <summary>Hides the card and the help sheet.</summary>
         public static void HideAll() { if (inst != null) { inst.help = false; inst.index = -1; inst.card.gameObject.SetActive(false); } }
 
         void Start()
@@ -120,6 +128,7 @@ namespace MicroduckVR.Player
 
         void OnDestroy() { skipA?.Disable(); skipHoldA?.Disable(); if (inst == this) inst = null; }
 
+        /// <summary>Starts the tutorial from the first step.</summary>
         public void Begin() { help = false; Go(0); }
 
         void Go(int i)

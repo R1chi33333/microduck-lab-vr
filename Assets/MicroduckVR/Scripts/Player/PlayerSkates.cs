@@ -35,14 +35,21 @@ namespace MicroduckVR.Player
 
         [Range(0.5f, 1f)] public float comfortScale = 0.85f;      // caps top speed and boost in VR
 
+        /// <summary>The skates are on.</summary>
         public bool On { get; private set; }
-        public static float? DebugDrift, DebugBoost;          // editor tests
+        /// <summary>Editor tests: the drift and boost inputs.</summary>
+        public static float? DebugDrift, DebugBoost;
         float DriftIn => DebugDrift ?? driftA.ReadValue<float>();
         float BoostIn => DebugBoost ?? boostA.ReadValue<float>();
+        /// <summary>Speed on the floor (m/s).</summary>
         public float Speed => sv.magnitude;
+        /// <summary>Top speed after the comfort cap.</summary>
         public float TopSpeed => MaxSpeed * comfortScale;
+        /// <summary>The drift button is held while turning.</summary>
         public bool Drifting => drifting;
+        /// <summary>A boost or slingshot is running.</summary>
         public bool Boosting => boostT > 0f;
+        /// <summary>Skating velocity.</summary>
         public Vector3 Velocity => sv;
 
         DuckBody body;
@@ -59,6 +66,7 @@ namespace MicroduckVR.Player
         readonly Vector3?[] lastSkid = new Vector3?[2];
         AudioSource rollSrc, sfxSrc; AudioClip boostClip, pushClip, clackClip;
 
+        /// <summary>Sets the skates up for a body: the pair, the drift and boost inputs and the sounds.</summary>
         public void Init(DuckBody b)
         {
             body = b;
@@ -79,6 +87,7 @@ namespace MicroduckVR.Player
         void OnDestroy() { driftA?.Disable(); boostA?.Disable(); }
 
         // ------------------------------------------------------------------ equip
+        /// <summary>Puts the skates on or takes them off (not while fallen); going on keeps the walking velocity.</summary>
         public void Toggle(float yaw, Vector3 walkVel)
         {
             if (body.Fallen) return;

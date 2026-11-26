@@ -19,16 +19,26 @@ namespace MicroduckVR.Player
     [DefaultExecutionOrder(20)]
     public partial class BagMenu : MonoBehaviour
     {
+        /// <summary>The player's camera.</summary>
         public Camera cam;
-        public Transform rightHand;          // tracked aim pose (under the XR Origin); the camera is used without controllers
+        /// <summary>Tracked aim pose (under the XR Origin); the camera is used without controllers.</summary>
+        public Transform rightHand;
+        /// <summary>The bag's text font.</summary>
         public Font font;
 
+        /// <summary>The bag is open, placing a toy or binning: other pointers stand down.</summary>
         public static bool Busy { get; private set; }
+        /// <summary>What the bag is doing: closed, panel open, placing a toy, binning toys.</summary>
         public enum Mode { Closed, Panel, Place, Trash }
+        /// <summary>What the bag is doing now.</summary>
         public Mode State { get; private set; } = Mode.Closed;
+        /// <summary>Toys placed from the bag so far (the tutorial counts them).</summary>
         public int PlacedCount { get; private set; }
+        /// <summary>Where the bag panel is.</summary>
         public Vector3 PanelPos => panel.position;
+        /// <summary>Where a tile is on the panel (the panel's centre if there is no such tile).</summary>
         public Vector3 TileWorld(string kind) { foreach (var t in tiles) if (t.kind == kind) return t.tile.position; return panel.position; }
+        /// <summary>The toy kind being placed, or null.</summary>
         public string Selected { get; private set; }
 
         const int Cols = 8; const float Tile = 0.03f, Gap = 0.004f, Dist = 0.32f, Reach = 3f;
@@ -86,6 +96,7 @@ namespace MicroduckVR.Player
         }
 
         // ------------------------------------------------------------------ public control (also used by editor tests)
+        /// <summary>Opens the bag panel in front of the player, closer if a wall is in the way.</summary>
         public void Open()
         {
             var eye = cam.transform.position; var f = cam.transform.forward; f.y = 0f;
@@ -101,8 +112,11 @@ namespace MicroduckVR.Player
             SetMode(Mode.Panel);
             Play(clickClip);
         }
+        /// <summary>Closes the bag and drops any toy being placed.</summary>
         public void Close() { panel.gameObject.SetActive(false); DropGhost(); SetMode(Mode.Closed); }
+        /// <summary>Editor tests: aim along this ray instead of the controller (null to stop).</summary>
         public void SetDebugAim(Ray? r) => debugAim = r;
+        /// <summary>Editor tests: press the trigger once.</summary>
         public void DebugPress() => debugPress = true;
         bool debugPress;
 
