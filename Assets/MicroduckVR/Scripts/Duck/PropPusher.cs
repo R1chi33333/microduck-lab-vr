@@ -1,7 +1,7 @@
 using MicroduckVR.Core;
 using UnityEngine;
 
-namespace MicroduckVR.World
+namespace MicroduckVR.Duck
 {
     /// <summary>
     /// On a duck's mover capsule: walking into a loose toy nudges it along. The duck has a small, steady push, so

@@ -35,7 +35,7 @@ namespace MicroduckVR.Duck
             m.transform.position = start;
             Mover = m.AddComponent<CharacterController>();
             Mover.radius = 0.05f; Mover.height = 0.2f; Mover.center = new Vector3(0f, 0.105f, 0f);
-            m.AddComponent<MicroduckVR.World.PropPusher>();              // walking into loose toys nudges them along
+            m.AddComponent<PropPusher>();                                // walking into loose toys nudges them along
             Mover.stepOffset = 0.03f; Mover.slopeLimit = 50f; Mover.skinWidth = 0.004f; Mover.minMoveDistance = 0f;
             Body.Teleport(new Vector3(start.x, WorldQueries.GroundNear(start.x, start.z, start.y), start.z), yaw);
             // feet and body look for the surface just above where the capsule actually stands (it follows ramps
