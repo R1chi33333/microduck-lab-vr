@@ -51,7 +51,7 @@ namespace MicroduckVR.EditorTools
                     b.CrouchTarget = on && u < 0.2f;
                     b.Hop = on && u >= 0.2f ? Mathf.Sin(Mathf.PI * (u - 0.2f) / 0.4f) * 0.03f : 0f;
                 } },
-            new Move { id = "Bite", title = "REACH AND BITE", warm = 0.3f, len = 3.0f, drive = (t, b, c) =>
+            new Move { id = "Bite", title = "REACH AND BITE", warm = 0.3f, len = 3.0f, camAngle = 80f, drive = (t, b, c) =>
                 {
                     Vector3 toy = b.Pos + GltfSpace.Forward(b.Yaw) * 0.1f; toy.y = 0.012f;
                     bool reach = t > 0.1f && t < 2.0f;
@@ -62,7 +62,7 @@ namespace MicroduckVR.EditorTools
             Emote("Nod", "NOD", 1.6f), Emote("Shake", "SHAKE", 1.6f), Emote("Look", "LOOK AROUND", 3.1f), Emote("Dance", "DANCE", 2.9f),
             new Move { id = "Wiggle", title = "HAPPY WIGGLE", warm = 0.3f, len = 1.8f, drive = (t, b, c) => { if (t < 0.05f) b.HappyWiggle = 1f; } },
             new Move { id = "FallGetUp", title = "FALL AND GET UP", warm = 0.3f, len = 4.2f, camAngle = 50f, drive = (t, b, c) =>
-                { if (t >= 0.2f && t < 0.2f + 1f / Fps && !b.Fallen) b.StartTip(new Vector3(1f, 0f, 0.35f)); } },
+                { if (t >= 0.2f && t < 0.2f + 1f / Fps && !b.Fallen) b.StartTip(new Vector3(0.64f, 0f, -0.77f));          // sideways across the picture } },
         };
 
         static Move Emote(string id, string title, float len) => new Move
@@ -228,9 +228,9 @@ namespace MicroduckVR.EditorTools
                         lp[i].Add(p); lr[i].Add(r);
                     }
                     // the picture: the camera follows the duck
-                    Vector3 at = new Vector3(pos.x, m.id == "FallGetUp" ? 0.07f : 0.105f, pos.z);
+                    Vector3 at = new Vector3(pos.x, m.id == "FallGetUp" ? 0.09f : 0.125f, pos.z);
                     float ang = (startYaw * Mathf.Rad2Deg + m.camAngle) * Mathf.Deg2Rad;
-                    cam.transform.position = at + new Vector3(Mathf.Sin(ang), 0.42f, Mathf.Cos(ang)).normalized * 0.78f;
+                    cam.transform.position = at + new Vector3(Mathf.Sin(ang), 0.42f, Mathf.Cos(ang)).normalized * 1.0f;
                     cam.transform.LookAt(at);
                     cam.Render();
                     RenderTexture.active = rt;
@@ -242,7 +242,7 @@ namespace MicroduckVR.EditorTools
                     tex.Apply();
                     File.WriteAllBytes(Path.Combine(dir, $"f{frame:D4}.png"), tex.EncodeToPNG());
                     frame++; recT += dt;
-                    bool done = m.len > 0f ? recT >= m.len - 1e-4f : wraps >= 2;
+                    bool done = m.len > 0f ? recT >= m.len - 1e-4f : wraps >= 4;
                     if (done) break;
                 }
                 time += dt;
