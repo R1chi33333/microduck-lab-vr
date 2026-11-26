@@ -345,5 +345,46 @@ namespace MicroduckVR.EditorTools
             }
             finally { Object.DestroyImmediate(inst); }
         }
+
+        /// <summary>Check: poses "Duck (animated)" from its own clips (not from the duck code) and draws them to Logs/motion_check.png.</summary>
+        public static void CheckDuckClips()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(AnimDir + "/Duck (animated).prefab");
+            if (prefab == null) { Debug.LogError("[Microduck] no animated duck; run Bake Duck Moves"); return; }
+            var shots = new[] { ("Walk", 0.3f), ("Sit", 1.6f), ("Bite", 1.2f), ("Dance", 1.2f), ("FallGetUp", 1.2f), ("Turn", 0.75f), ("Hop", 0.45f), ("Idle", 0f) };
+            const int S = 240;
+            var sheet = new Texture2D(S * 4, S * 2, TextureFormat.RGB24, false);
+            var temp = OpenTemp(); RenderTexture rt = null;
+            try
+            {
+                var sun = new GameObject("sun").AddComponent<Light>(); sun.transform.SetParent(temp.root, false);
+                sun.type = LightType.Directional; sun.cullingMask = 1 << CatalogLayer; sun.transform.rotation = Quaternion.Euler(55f, 150f, 0f);
+                var cam = new GameObject("cam").AddComponent<Camera>(); cam.transform.SetParent(temp.root, false);
+                cam.enabled = false; cam.fieldOfView = 30f; cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = CategoryColour("Ducks");
+                cam.cullingMask = 1 << CatalogLayer; cam.nearClipPlane = 0.02f;
+                cam.gameObject.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>().renderPostProcessing = false;
+                rt = new RenderTexture(S, S, 24) { antiAliasing = 4 }; cam.targetTexture = rt;
+                for (int i = 0; i < shots.Length; i++)
+                {
+                    var (id, time) = shots[i];
+                    var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{AnimDir}/Duck_{id}.anim");
+                    var inst = PrefabUtility.InstantiatePrefab(prefab, temp.scene) as GameObject;
+                    foreach (var t in inst.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = CatalogLayer;
+                    if (clip != null) clip.SampleAnimation(inst, time);
+                    Vector3 at = new Vector3(0f, 0.11f, 0f); float ang = 40f * Mathf.Deg2Rad;
+                    cam.transform.position = at + new Vector3(Mathf.Sin(ang), 0.42f, Mathf.Cos(ang)).normalized * 1.1f; cam.transform.LookAt(at);
+                    cam.Render();
+                    RenderTexture.active = rt; sheet.ReadPixels(new Rect(0, 0, S, S), (i % 4) * S, (1 - i / 4) * S, false); RenderTexture.active = null;
+                    DrawText(sheet, (i % 4) * S + 6, (2 - i / 4) * S - 6, id + (clip == null ? " MISSING" : ""), ComicLook.Ink, 2, S - 12);
+                    Object.DestroyImmediate(inst);
+                }
+                sheet.Apply();
+                Directory.CreateDirectory("Logs");
+                File.WriteAllBytes("Logs/motion_check.png", sheet.EncodeToPNG());
+                cam.targetTexture = null;
+            }
+            finally { if (rt != null) { rt.Release(); Object.DestroyImmediate(rt); } Object.DestroyImmediate(sheet); CloseTemp(temp); }
+            Debug.Log("[Microduck] Check Duck Clips: Logs/motion_check.png");
+        }
     }
 }
