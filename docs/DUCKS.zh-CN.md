@@ -2,9 +2,27 @@
 
 [English](../README.md#how-the-ducks-work)
 
-鸭子**没有动画片段，也没有 Animator**。每个动作都是代码每一帧根据机器人的 15 个关节实时算出来的，和网页版的做法一样。这 15 个关节是：左右腿各 5 个（`hip_yaw`、`hip_roll`、`hip_pitch`、`knee`、`ankle`），加上 `neck_pitch`、`head_pitch`、`head_yaw`、`head_roll` 和 `jaw`（嘴）。
+在游戏里，鸭子**不用动画片段，也不用 Animator**。每个动作都是代码每一帧根据机器人的 15 个关节实时算出来的，和网页版的做法一样。这 15 个关节是：左右腿各 5 个（`hip_yaw`、`hip_roll`、`hip_pitch`、`knee`、`ankle`），加上 `neck_pitch`、`head_pitch`、`head_yaw`、`head_roll` 和 `jaw`（嘴）。
 
 你自己的鸭子和 AI 鸭子用的是同一套身体代码，区别只在于由谁来控制：你的手柄，或者 AI 大脑。
+
+## 所有动作
+
+下面都是用游戏里鸭子自己的代码录下来的。每个下面的名字，就是它的动画片段名（`Duck_<名字>.anim`），也是 Animator 里触发它用的名字。
+
+<table>
+<tr><td align="center"><img src="images/moves/duck_walk.gif" width="200" alt="Walk"><br><code>Walk</code></td><td align="center"><img src="images/moves/duck_turn.gif" width="200" alt="Turn on the spot"><br><code>Turn</code></td><td align="center"><img src="images/moves/duck_idle.gif" width="200" alt="Idle"><br><code>Idle</code></td><td align="center"><img src="images/moves/duck_sit.gif" width="200" alt="Sit"><br><code>Sit</code></td></tr>
+<tr><td align="center"><img src="images/moves/duck_crouch.gif" width="200" alt="Crouch"><br><code>Crouch</code></td><td align="center"><img src="images/moves/duck_hop.gif" width="200" alt="Hop"><br><code>Hop</code></td><td align="center"><img src="images/moves/duck_bite.gif" width="200" alt="Reach and bite"><br><code>Bite</code></td><td align="center"><img src="images/moves/duck_nod.gif" width="200" alt="Nod"><br><code>Nod</code></td></tr>
+<tr><td align="center"><img src="images/moves/duck_shake.gif" width="200" alt="Shake"><br><code>Shake</code></td><td align="center"><img src="images/moves/duck_look.gif" width="200" alt="Look around"><br><code>Look</code></td><td align="center"><img src="images/moves/duck_dance.gif" width="200" alt="Dance"><br><code>Dance</code></td><td align="center"><img src="images/moves/duck_wiggle.gif" width="200" alt="Happy wiggle"><br><code>Wiggle</code></td></tr>
+<tr><td align="center"><img src="images/moves/duck_fallgetup.gif" width="200" alt="Fall and get up"><br><code>FallGetUp</code></td></tr>
+</table>
+
+这些动作也做成了 **Unity 动画**，在 `Assets/MicroduckVR/Prefabs/Ducks/Animations/` 里（`.unitypackage` 里也有）：
+
+- `Duck (animated).prefab`：带 Animator 的鸭子，直接拖进场景就能用。默认在发呆；调用 `animator.SetTrigger("Dance")` 这样的触发器就会做对应动作，一次性的动作做完会自己回到发呆。
+- `Duck.controller`（每个动作一个状态、一个触发器）和 13 个动画片段 `Duck_*.anim`（30 帧每秒；发呆、走路、转身是循环的）。走路是原地走，要走起来得自己移动鸭子。
+
+这些是"录下来的"动画，游戏本身还是用代码实时驱动鸭子。在 `DuckBody.cs` 里改了动作之后，用菜单 **Microduck > Assets > Bake Duck Moves** 重新录一遍即可（GIF 是用它输出到 `Logs/motion/` 的帧做的）。
 
 ## 代码在哪里
 
@@ -73,6 +91,7 @@
 2. 想让 AI 鸭子也做：在 `DuckBrain.cs` 的表情列表里加上 `"bow"`。一处在 `Pick` 里（发呆时），一处在 `wander` 分支里（走到目的地时）。
 3. 想让玩家也能做：在 `Scripts/Player/BagMenu.cs` 的 `Actions` 里加一个按钮。现在 4 × 4 已经满了，要替换一个或加一行。
 4. 联机不用另外改：表情是按名字通过网络发送的。两台电脑都要用新版本。
+5. 想把它也做成动画片段和 GIF：加到 `Editor/MotionBake.cs` 的 `Moves()` 里，再运行 **Bake Duck Moves**。
 
 ### 加一个新行为（比如 `"nap"` 睡觉）
 

@@ -52,10 +52,33 @@ see [docs/MULTIPLAYER.md](docs/MULTIPLAYER.md).
 
 [中文说明](docs/DUCKS.zh-CN.md)
 
-The ducks have **no animation clips and no Animator**. Every move is computed in code each frame from the robot's
+In the game the ducks use **no animation clips and no Animator**: every move is computed in code each frame from the robot's
 15 joints (left and right `hip_yaw`, `hip_roll`, `hip_pitch`, `knee`, `ankle`, plus `neck_pitch`, `head_pitch`,
 `head_yaw`, `head_roll` and `jaw`), the same way the browser version does it. Your duck and the AI ducks share the
 same body code; only the thing that steers it differs (your controllers, or the AI brain).
+
+### Every move
+
+All recorded from the game's own duck code. The name under each one is its animation clip (`Duck_<name>.anim`) and
+its Animator trigger.
+
+<table>
+<tr><td align="center"><img src="docs/images/moves/duck_walk.gif" width="200" alt="Walk"><br><code>Walk</code></td><td align="center"><img src="docs/images/moves/duck_turn.gif" width="200" alt="Turn on the spot"><br><code>Turn</code></td><td align="center"><img src="docs/images/moves/duck_idle.gif" width="200" alt="Idle"><br><code>Idle</code></td><td align="center"><img src="docs/images/moves/duck_sit.gif" width="200" alt="Sit"><br><code>Sit</code></td></tr>
+<tr><td align="center"><img src="docs/images/moves/duck_crouch.gif" width="200" alt="Crouch"><br><code>Crouch</code></td><td align="center"><img src="docs/images/moves/duck_hop.gif" width="200" alt="Hop"><br><code>Hop</code></td><td align="center"><img src="docs/images/moves/duck_bite.gif" width="200" alt="Reach and bite"><br><code>Bite</code></td><td align="center"><img src="docs/images/moves/duck_nod.gif" width="200" alt="Nod"><br><code>Nod</code></td></tr>
+<tr><td align="center"><img src="docs/images/moves/duck_shake.gif" width="200" alt="Shake"><br><code>Shake</code></td><td align="center"><img src="docs/images/moves/duck_look.gif" width="200" alt="Look around"><br><code>Look</code></td><td align="center"><img src="docs/images/moves/duck_dance.gif" width="200" alt="Dance"><br><code>Dance</code></td><td align="center"><img src="docs/images/moves/duck_wiggle.gif" width="200" alt="Happy wiggle"><br><code>Wiggle</code></td></tr>
+<tr><td align="center"><img src="docs/images/moves/duck_fallgetup.gif" width="200" alt="Fall and get up"><br><code>FallGetUp</code></td></tr>
+</table>
+
+The same moves are also **Unity animation clips**, in `Assets/MicroduckVR/Prefabs/Ducks/Animations/` (and in the
+`.unitypackage`):
+
+- `Duck (animated).prefab`: the duck with an Animator, ready to drop into a scene. It idles; fire a trigger
+  (`animator.SetTrigger("Dance")`) to play a move, and the one-off moves go back to idle by themselves.
+- `Duck.controller` (one state and one trigger per move) and the 13 clips `Duck_*.anim` (30 fps; Idle, Walk and Turn
+  loop). Walk is in place: move the duck yourself while it plays.
+
+These are recordings: the game keeps moving its ducks in code. After changing a move in `DuckBody.cs`, record them
+again with **Microduck > Assets > Bake Duck Moves** (the GIFs are made from the frames it writes to `Logs/motion/`).
 
 ### Where the code is
 
@@ -123,6 +146,7 @@ water and bounce on the bed. They tell the bubbles and the voice what happened: 
 3. To let the player use it: add a button to `Actions` in `Scripts/Player/BagMenu.cs` (the grid is full at 4 × 4, so
    swap one out or add a row).
 4. Co-op needs nothing more: emotes go over the network by name. Both PCs need the new version.
+5. To get it as a clip and a GIF too: add it to `Moves()` in `Editor/MotionBake.cs` and run **Bake Duck Moves**.
 
 **A new behaviour** (for example `"nap"`):
 
