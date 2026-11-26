@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using MicroduckVR.Duck;
 using MicroduckVR.Games;
-using MicroduckVR.Player;
 using UnityEngine;
 
-namespace MicroduckVR.Net
+namespace MicroduckVR.Player
 {
     /// <summary>
     /// Every player duck the flock should care about: your own duck (PlayerDuck.Instance) first, then the other
@@ -14,19 +13,22 @@ namespace MicroduckVR.Net
     public static class PlayerTargets
     {
         /// <summary>The other players' ducks in this house (filled by the network session).</summary>
-        public static readonly List<RemotePlayer> Remote = new List<RemotePlayer>();
+        public static readonly List<IPlayerTarget> Remote = new List<IPlayerTarget>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { Remote.Clear(); }
 
         static bool HasLocal => PlayerDuck.Instance != null && PlayerDuck.Instance.Body != null;
 
+        /// <summary>The null test the entries had as RemotePlayer: a destroyed component counts as null.</summary>
+        static bool Live(IPlayerTarget r) => r is Object o ? o != null : r != null;
+
         public static int Count
         {
             get
             {
                 int n = HasLocal ? 1 : 0;
-                foreach (var r in Remote) if (r != null && r.Body != null) n++;
+                foreach (var r in Remote) if (Live(r) && r.Body != null) n++;
                 return n;
             }
         }
@@ -37,7 +39,7 @@ namespace MicroduckVR.Net
             if (HasLocal) { if (i == 0) return PlayerDuck.Instance.Body; i--; }
             foreach (var r in Remote)
             {
-                if (r == null || r.Body == null) continue;
+                if (!Live(r) || r.Body == null) continue;
                 if (i == 0) return r.Body;
                 i--;
             }
@@ -56,7 +58,7 @@ namespace MicroduckVR.Net
         public static bool NearRemote(Vector3 p, float range)
         {
             foreach (var r in Remote)
-                if (r != null && r.Body != null && (r.Body.Pos - p).sqrMagnitude < range * range) return true;
+                if (Live(r) && r.Body != null && (r.Body.Pos - p).sqrMagnitude < range * range) return true;
             return false;
         }
 
@@ -67,7 +69,7 @@ namespace MicroduckVR.Net
             if (LaserPointer.Active) { point = LaserPointer.Point; best = Flat(point - from); found = true; }
             foreach (var r in Remote)
             {
-                if (r == null || !r.LaserOn) continue;
+                if (!Live(r) || !r.LaserOn) continue;
                 float d = Flat(r.LaserPoint - from);
                 if (d < best) { best = d; point = r.LaserPoint; found = true; }
             }

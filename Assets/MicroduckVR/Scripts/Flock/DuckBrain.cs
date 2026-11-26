@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using MicroduckVR.Core;
 using MicroduckVR.Duck;
-using MicroduckVR.Net;
 using MicroduckVR.Player;
 using MicroduckVR.World;
 using UnityEngine;

@@ -65,7 +65,7 @@ namespace MicroduckVR.Player
             {
                 scanT = 1.5f; props.Clear(); speeds.Clear();
                 foreach (var rb in FindObjectsByType<Rigidbody>())
-                    if (rb.gameObject.layer == Layers.Prop && !rb.isKinematic && ((rb.position - pd.Body.Pos).sqrMagnitude < 9f || MicroduckVR.Net.PlayerTargets.NearRemote(rb.position, 3f))) { props.Add(rb); speeds[rb] = rb.linearVelocity.magnitude; }
+                    if (rb.gameObject.layer == Layers.Prop && !rb.isKinematic && ((rb.position - pd.Body.Pos).sqrMagnitude < 9f || PlayerTargets.NearRemote(rb.position, 3f))) { props.Add(rb); speeds[rb] = rb.linearVelocity.magnitude; }
             }
             foreach (var rb in props)
             {
