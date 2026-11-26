@@ -23,7 +23,8 @@ namespace MicroduckVR.Player
         // web SKATE constants (duck-scale metres and seconds), read from the tuning; its defaults are the web numbers
         /// <summary>Optional feel settings. Left empty, Init looks for Resources/SkateTuning, then uses SkateTuning.Defaults.</summary>
         public SkateTuning tuning;
-        SkateTuning Tuning => tuning != null ? tuning : SkateTuning.Defaults;
+        SkateTuning resolved;                                       // picked once: about 20 reads a frame skip the Unity null check
+        SkateTuning Tuning { get { if (resolved is null) resolved = tuning != null ? tuning : SkateTuning.Defaults; return resolved; } }
         float Accel => Tuning.accel; float MaxSpeed => Tuning.maxSpeed; float Friction => Tuning.friction; float Brake => Tuning.brake;
         float Grip => Tuning.grip; float Turn => Tuning.turn; float StrokeHz => Tuning.strokeHz;
         float BoostMult => Tuning.boostMult; float BoostTime => Tuning.boostTime; float BoostCooldown => Tuning.boostCooldown;

@@ -144,8 +144,9 @@ namespace MicroduckVR.Duck
         public readonly Reach ReachState = new Reach();
         /// <summary>Extra crouch (m) and body pitch (rad) on top of the gait.</summary>
         public float CrouchExtra, PitchExtra;
-        /// <summary>Leg IK on; off leaves the legs where they are.</summary>
+        /// <summary>The fall in progress (tip, tumble, lie, get up), or null while standing.</summary>
         [System.NonSerialized] public Fall FallState;
+        /// <summary>Leg IK on; off leaves the legs where they are.</summary>
         public bool EnabledIK = true;
         /// <summary>Solver iterations for the leg and beak IK.</summary>
         public int Iters = 3;
@@ -159,8 +160,9 @@ namespace MicroduckVR.Duck
         public float SkateLift = 0.022f, SkateW, Stroke, StrokeSide = 1f, Wobble;
         /// <summary>Body roll on skates, wanted and smoothed (Unity roll convention).</summary>
         public float SkateLean, LeanW;
-        /// <summary>Hop height, gaze offsets from emotes, and the happy wiggle after a catch.</summary>
+        /// <summary>The emote playing now, or null.</summary>
         [System.NonSerialized] public Emote CurrentEmote;
+        /// <summary>Hop height, gaze offsets from emotes, and the happy wiggle after a catch.</summary>
         public float Hop, GazeYawOff, GazePitchOff, HappyWiggle;
         /// <summary>The duck is falling, lying or getting up.</summary>
         public bool Fallen => FallState != null;

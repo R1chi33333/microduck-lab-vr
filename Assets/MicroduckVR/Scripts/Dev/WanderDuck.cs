@@ -56,7 +56,7 @@ namespace MicroduckVR.Dev
                 if (to.magnitude < 0.05f)
                 {
                     target = null; wait = R(1f, 3.5f);
-                    if (rng.NextDouble() < 0.35) body.PlayEmote(Emotes[rng.Next(4)]);
+                    if (rng.NextDouble() < 0.35) body.PlayEmote(Emotes[rng.Next(Emotes.Length)]);
                 }
                 else want = to.normalized * speed;
             }

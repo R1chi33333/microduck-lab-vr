@@ -112,9 +112,11 @@ MicroduckVR.Dev           Scripts/Dev (film rig, WanderDuck)          Core, Worl
   code outside Play mode. See `NetSession.RegisterCoop` and `PlayerDuck.RegisterLocalPlayer`.
 - Small interfaces in the lower layer let it talk to things above without knowing them: `IDuckEventSource` (DuckAudio
   hears DuckBrain), `IPlayerTarget` (the remote player in co-op).
-- Every static that holds scene objects (`DuckBrain.All`, `Grabbable.All`, `*.Instance`) has a reset method marked
-  `[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]` that sets it back to its
-  initial value, so Play mode works with domain reload turned off.
+- Statics that hold scene objects (`DuckBrain.All`, `Grabbable.All`, most `*.Instance`) have a reset method marked
+  `[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]` that sets them back to their
+  initial value. A few self-creating singletons (`NetSession`, `GameHud`, `ComicFX`, `TutorialCoach`, `ComicPop.Viewer`)
+  do not have one yet, so keep domain reload on in Enter Play Mode Options (as it is now) until they do. Add a reset to
+  any new static that holds a scene object.
 
 ## 10. Tuning numbers
 

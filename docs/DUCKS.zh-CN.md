@@ -38,7 +38,7 @@
 | `Scripts/Flock/ThoughtBubbles.cs` | AI 鸭子头上的漫画对话气泡，每种行为、每种事件各有一组台词。 |
 | `Scripts/Audio/DuckAudio.cs` | 每只鸭子自己的叫声和脚步声，对大脑发出的事件做反应。 |
 | `Scripts/Flock/FlockSpawner.cs` | 玩具包里的 ADD DUCK / REMOVE DUCK（1 到 12 只）。 |
-| `Editor/Builders/SceneBuilderHouse.cs` | 开场的 6 只鸭子：站在哪、什么颜色、随机种子（菜单 **Microduck > Build House**）。 |
+| `Editor/Builders/SceneBuilderHouse.cs` | 开场的 6 只鸭子：站在哪、什么颜色、随机种子（菜单 **Microduck > Scenes > Build House (main)**）。 |
 | `Scripts/Net/NetFlock.cs` | 联机：主机的大脑做决定，加入方的鸭子照着做。 |
 | `Scripts/Player/PlayerDuck.cs` | 你自己的鸭子（同一个 `DuckBody`，由手柄控制）。 |
 | `Scripts/Player/PlayerTargets.cs` | 鸭子跟随和避让的玩家（你，联机时还有另一位玩家）。 |
@@ -95,9 +95,9 @@
 2. `Scripts/Duck/DuckBody.Emotes.cs`：在 `PlayEmote` 里给它设时长，在 `EmoteOffsets` 里加一个 `case EmoteKind.Bow:`。可以返回两类偏移，都乘上 `env`，这样动作会平滑开始和结束：
    - 身体的：`ox`、`oy`、`opitch`、`oyaw`、`oroll`；
    - 头的：`gy` 是转头，`gp` 是点头。
-3. 想让 AI 鸭子也做：在 `DuckBrain.cs` 的 `IdleEmotes`（发呆时）或 `PauseEmotes`（走到目的地时）里加上 `EmoteKind.Bow`，并把旁边 `rng.Next(n)` 的数字加一。
+3. 想让 AI 鸭子也做：在 `DuckBrain.cs` 的 `IdleEmotes`（发呆时）或 `PauseEmotes`（走到目的地时）里加上 `EmoteKind.Bow`（随机挑选按数组长度，不用改别处）。
 4. 想让玩家也能做：加一个 `BagActions` 名字，在 `Scripts/Player/BagMenu.Actions.cs` 的 `Actions` 里加一个按钮，并在下面的 switch 里对应到表情。现在 4 × 4 已经满了，要替换一个或加一行。
-5. 联机：表情按一个字节通过网络发送，新值直接可用；两台电脑都要用新版本（改了消息格式就要更新 `NetSession.Version`）。
+5. 联机：表情按一个字节通过网络发送。要把 `NetSession.Version` 升一版，让两台电脑都必须用新版本（旧版本不认识新值，会什么也不做）。
 6. 想把它也做成动画片段和 GIF：加到 `Editor/Assets/AssetExport.MotionBake.cs` 的 `Moves()` 里，再运行 **Bake Duck Moves**。
 
 ### 加一个新行为（比如 `Nap` 睡觉）
@@ -109,7 +109,7 @@
    - 要走到某处，用 `SteerAvoid(目标, 速度, 容差)`；
    - 摆姿势用上面那些身体控制（`SitTarget`、`LookAt`、`PlayEmote` 等）。
 3. `Scripts/Flock/ThoughtBubbles.cs`：在 `StateLines` 里加台词，比如 `{ AiState.Nap, new[] { "Zzz..." } }`。
-4. 要配声音：在 `DuckEventKind` 末尾加一个事件，在大脑里用 `RaiseEvent(事件, 内容)` 发出，再到 `Scripts/Audio/DuckAudio.cs` 里处理；它的气泡台词加在 `EventLines` 里。
+4. 要配声音：在 `DuckEventKind` 末尾加一个事件，在大脑里用 `RaiseEvent(事件, 内容)` 发出，再到 `Scripts/Audio/DuckAudio.cs` 里处理；它的气泡台词加在 `EventLines` 里。联机时只有 `Got` 和 `Drop` 会发给加入方（`NetFlock.Register`），想让对方也看到，要在那里加上新事件。
 5. 要做一个"接管一切"的新玩法（像赛跑那样）：加到 `DuckBrain.cs` 的 `Games()` 里。
 
 ### 加一种新的身体姿势（比如真正的跳跃、用腿的大幅舞蹈）

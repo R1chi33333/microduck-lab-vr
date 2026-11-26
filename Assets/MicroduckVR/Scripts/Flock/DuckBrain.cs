@@ -142,7 +142,7 @@ namespace MicroduckVR.Flock
             if (State == AiState.Follow && PlayerTargets.Count == 0) State = AiState.Wander;
             dur = State switch { AiState.Roam => RoamTime, AiState.Follow => R(FollowMin, FollowMax), AiState.Wander => R(WanderMin, WanderMax), AiState.Toy => ToyTime, AiState.Sit => R(SitMin, SitMax), _ => R(IdleMin, IdleMax) };
             Context = "";
-            if (State == AiState.Idle && R() < 0.5f) body.PlayEmote(IdleEmotes[rng.Next(4)]);
+            if (State == AiState.Idle && R() < 0.5f) body.PlayEmote(IdleEmotes[rng.Next(IdleEmotes.Length)]);
         }
 
         /// <summary>Put the duck somewhere at once (race grid, duck swap): drops what it carries, stops what it was doing.</summary>
@@ -273,7 +273,7 @@ namespace MicroduckVR.Flock
                         if (target.HasValue)
                         {
                             State = AiState.Idle; t = 0f; dur = R(1f, 3f);
-                            if (R() < 0.3f) body.PlayEmote(PauseEmotes[rng.Next(3)]);
+                            if (R() < 0.3f) body.PlayEmote(PauseEmotes[rng.Next(PauseEmotes.Length)]);
                             break;
                         }
                         target = HouseLayout.RandomSpot(Pos, 0.6f, rng);

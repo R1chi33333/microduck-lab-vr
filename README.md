@@ -96,7 +96,7 @@ again with **Microduck > Assets > Bake Duck Moves** (the GIFs are made from the 
 | `Scripts/Flock/ThoughtBubbles.cs` | The comic speech bubbles over the AI ducks: one set of lines per behaviour and per event. |
 | `Scripts/Audio/DuckAudio.cs` | Each duck's own chirping voice and footsteps; reacts to the brain's events. |
 | `Scripts/Flock/FlockSpawner.cs` | ADD DUCK / REMOVE DUCK in the toy bag (1 to 12 ducks). |
-| `Editor/Builders/SceneBuilderHouse.cs` | The starting flock: 6 ducks, where they stand, their colours and random seeds (**Microduck > Build House**). |
+| `Editor/Builders/SceneBuilderHouse.cs` | The starting flock: 6 ducks, where they stand, their colours and random seeds (**Microduck > Scenes > Build House (main)**). |
 | `Scripts/Net/NetFlock.cs` | Co-op: the host's brains decide, the joining PC's ducks copy them. |
 | `Scripts/Player/PlayerDuck.cs` | Your duck (the same `DuckBody`, driven by your controllers). |
 | `Scripts/Player/PlayerTargets.cs` | The players the ducks follow and keep clear of (you, and the other player in co-op). |
@@ -152,11 +152,11 @@ water and bounce on the bed. They tell the bubbles and the voice what happened: 
    Return offsets for the body (`ox`, `oy`, `opitch`, `oyaw`, `oroll`) and the head (`gy` = head turn, `gp` = head
    nod), multiplied by `env` so it eases in and out.
 3. To let the AI ducks use it: add `EmoteKind.Bow` to `IdleEmotes` (idle ducks) or `PauseEmotes` (ducks that have
-   arrived) in `DuckBrain.cs`, and raise the `rng.Next(n)` count next to it.
+   arrived) in `DuckBrain.cs` (the random pick uses the array length).
 4. To let the player use it: add a `BagActions` id, a button to `Actions` in `Scripts/Player/BagMenu.Actions.cs` and
    its emote in the switch below it (the grid is full at 4 × 4, so swap one out or add a row).
-5. Co-op: emotes go over the network as a byte, so the new value just works; both PCs need the new version (bump
-   `NetSession.Version` when a message changes).
+5. Co-op: emotes go over the network as a byte. Bump `NetSession.Version` so both PCs must run the new version (an
+   older PC would not know the new value and would play nothing).
 6. To get it as a clip and a GIF too: add it to `Moves()` in `Editor/Assets/AssetExport.MotionBake.cs` and run **Bake Duck Moves**.
 
 **A new behaviour** (for example `Nap`):
@@ -169,7 +169,8 @@ water and bounce on the bed. They tell the bubbles and the voice what happened: 
 3. `Scripts/Flock/ThoughtBubbles.cs`: add lines for it to `StateLines`, for example
    `{ AiState.Nap, new[] { "Zzz..." } }`.
 4. A sound for an event: add a `DuckEventKind` (at the end), raise it in the brain with `RaiseEvent(kind, context)`
-   and handle it in `Scripts/Audio/DuckAudio.cs`; its bubble lines go in `EventLines`.
+   and handle it in `Scripts/Audio/DuckAudio.cs`; its bubble lines go in `EventLines`. In co-op only `Got` and
+   `Drop` are sent to the joining PC (`NetFlock.Register`): add the new kind there if the other player should see it.
 5. Something that takes over everything (a new game): add it to `Games()` in `DuckBrain.cs`, like the race.
 
 **A new kind of body pose** (for example a real jump or a bigger dance with the legs): add a weight like `SitW` or

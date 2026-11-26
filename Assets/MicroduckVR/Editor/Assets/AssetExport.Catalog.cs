@@ -184,7 +184,7 @@ one item on its own.
 | What | Licence | Commercial use |
 |---|---|---|
 | `Ducks/` (Duck, Duck graphite, Duck lavender, Duck sky, Duck (live)) and their meshes and materials | [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/), adapted from the Microduck robot by [Pollen Robotics](https://github.com/pollen-robotics/microduck_rl) | **No.** Non-commercial only; credit Pollen Robotics; share changes under the same licence |
-| Everything else (toys, furniture, clutter, their meshes, materials, shaders, textures and the two scripts) | MIT, (c) 2026 Yutong Jin (see `LICENSE`) | Yes |
+| Everything else (toys, furniture, clutter, their meshes, materials, shaders, textures and the scripts `Grabbable`, `SurfaceTag` and `SurfaceType` with their assembly definition) | MIT, (c) 2026 Yutong Jin (see `LICENSE`) | Yes |
 
 The toys that the web game took from glTF sample models (toy car, chess pieces, cookie, toast, croissant) are rebuilt
 from simple shapes in code here; no third-party model or font file is in the prefabs or the package. The package
