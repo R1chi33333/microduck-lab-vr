@@ -18,6 +18,7 @@ namespace MicroduckVR.Flock
     [RequireComponent(typeof(DuckSetup))]
     public class DuckBrain : MonoBehaviour, IDuckEventSource
     {
+        /// <summary>Every enabled AI duck.</summary>
         public static readonly List<DuckBrain> All = new List<DuckBrain>();
 
         // ---- a card or board the player is reading: ducks do not stand between it and the player's eyes
@@ -40,19 +41,28 @@ namespace MicroduckVR.Flock
         {
             readZone = Vector3.Lerp(eye, panel, 0.6f); readRadius = Mathf.Max(0.2f, Vector3.Distance(eye, panel) * 0.55f); readUntil = Time.time + 0.25f; readAlways = always;
         }
+        /// <summary>Seeds the duck's choices.</summary>
         public int seed = 1;
+        /// <summary>The duck's place in the flock (follow slot, race pace, which way it bends round things).</summary>
         public int index;
 
+        /// <summary>What the duck is doing now.</summary>
         public AiState State { get; private set; } = AiState.Idle;
-        public string Context { get; private set; } = "";        // room name, toy label...
-        public event Action<DuckBrain, DuckEventKind, string> OnEvent;  // (duck, kind, context)
+        /// <summary>Detail for the thought bubbles: room name, toy label...</summary>
+        public string Context { get; private set; } = "";
+        /// <summary>Toy and floor events for bubbles and the network: (duck, kind, context).</summary>
+        public event Action<DuckBrain, DuckEventKind, string> OnEvent;
         /// <summary>The same events for the duck's own sounds (IDuckEventSource), raised right after OnEvent.</summary>
         public event Action<DuckEventKind, string> DuckEvent;
         bool IDuckEventSource.IsBrain => true;
         void RaiseEvent(DuckEventKind kind, string context) { OnEvent?.Invoke(this, kind, context); DuckEvent?.Invoke(kind, context); }
+        /// <summary>The duck's body.</summary>
         public DuckBody Body => body;
+        /// <summary>Where the duck stands.</summary>
         public Vector3 Pos => mover != null ? mover.transform.position : transform.position;
+        /// <summary>Measured walking speed (m/s).</summary>
         public float Speed { get; private set; }
+        /// <summary>The surface under the duck.</summary>
         public SurfaceType Surface { get; private set; } = SurfaceType.Wood;
 
         DuckBody body; CharacterController mover;
@@ -82,6 +92,7 @@ namespace MicroduckVR.Flock
         /// the host sends (MicroduckVR.Net.NetFlock poses it). Off again, it carries on with a mind of its own.</summary>
         public bool Puppet { get; private set; }
 
+        /// <summary>Turns the duck into a puppet of the host's brain, or back into a duck with a mind of its own.</summary>
         public void SetPuppet(bool on)
         {
             if (body == null || mover == null) { var s = GetComponent<DuckSetup>(); body = s.Body; mover = s.Mover; }

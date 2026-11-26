@@ -14,12 +14,16 @@ namespace MicroduckVR.Dev
     [RequireComponent(typeof(DuckSetup))]
     public class WanderDuck : MonoBehaviour
     {
+        /// <summary>Every enabled wander duck (for keeping them apart).</summary>
         public static readonly List<WanderDuck> All = new List<WanderDuck>();
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { All.Clear(); }
         static readonly EmoteKind[] Emotes = { EmoteKind.Look, EmoteKind.Nod, EmoteKind.Dance, EmoteKind.Shake };
+        /// <summary>The box (x, z) the duck wanders inside.</summary>
         public Vector2 boundsMin = new Vector2(-2.6f, -2.1f), boundsMax = new Vector2(2.6f, 2.1f);
+        /// <summary>Walking speed (m/s).</summary>
         public float speed = 0.1f;
+        /// <summary>Seeds the duck's choices.</summary>
         public int seed = 1;
 
         DuckBody body; CharacterController mover;

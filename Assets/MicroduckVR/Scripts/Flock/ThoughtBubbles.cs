@@ -14,8 +14,11 @@ namespace MicroduckVR.Flock
     /// </summary>
     public class ThoughtBubbles : MonoBehaviour
     {
+        /// <summary>Text font of the bubbles.</summary>
         public Font font;
+        /// <summary>The camera the bubbles face (the player's).</summary>
         public Camera viewer;
+        /// <summary>Bubbles on or off.</summary>
         public bool showThoughts = true;
 
         const float ShowTime = 3.0f, FadeTime = 0.35f, RepeatGap = 8f, MaxRange = 4.0f;
@@ -92,12 +95,14 @@ namespace MicroduckVR.Flock
             return b;
         }
 
+        /// <summary>A line for a duck's new state.</summary>
         public void Say(DuckBrain d, AiState state, string context)
         {
             if (!showThoughts || !StateLines.TryGetValue(state, out var lines)) return;
             Say(d, (int)state, lines, context);
         }
 
+        /// <summary>A line for a duck's event.</summary>
         public void Say(DuckBrain d, DuckEventKind kind, string context)
         {
             if (!showThoughts || !EventLines.TryGetValue(kind, out var lines)) return;

@@ -15,10 +15,13 @@ namespace MicroduckVR.Games
     /// </summary>
     public class RaceGame : MonoBehaviour
     {
+        /// <summary>The race, once made.</summary>
         public static RaceGame Instance { get; private set; }
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { Instance = null; }
+        /// <summary>A race is on (counting down or running).</summary>
         public static bool Active => Instance != null && Instance.active;
+        /// <summary>The countdown: everyone waits on the start line.</summary>
         public static bool Frozen => Active && Instance.frozen;
 
         // web raceHouse with X mirrored: start line, then the checkpoints (centre, radius)
@@ -39,6 +42,7 @@ namespace MicroduckVR.Games
         readonly List<(Transform g, Material m)> gates = new List<(Transform, Material)>();
         Material gateOn, gateOff, gateStart;
 
+        /// <summary>The race, made on first use.</summary>
         public static RaceGame Ensure()
         {
             if (Instance == null) Instance = new GameObject("Race game").AddComponent<RaceGame>();
@@ -111,6 +115,7 @@ namespace MicroduckVR.Games
         }
         Transform beacon;
 
+        /// <summary>Lines everyone up and starts the countdown (stops a match first).</summary>
         public void StartRace()
         {
             if (FootballGame.Active) FootballGame.Instance.StopGame();
@@ -133,11 +138,14 @@ namespace MicroduckVR.Games
             GameHud.Get().Caption("GET READY!");
         }
 
+        /// <summary>Ends the race, hides the gates and clears the HUD.</summary>
         public void StopRace() { active = false; frozen = false; foreach (var (g, _) in gates) g.gameObject.SetActive(false); if (beacon != null) beacon.gameObject.SetActive(false); GameHud.Get().Clear(); }
 
         /// <summary>The gate the player's duck should head for next (filming and tests).</summary>
         public Vector3? PlayerTarget() { var pd = PlayerDuck.Instance; return pd != null && prog.TryGetValue(pd, out var P) && !P.done ? Cps[P.next].p : (Vector3?)null; }
+        /// <summary>The next gate for a duck (its own position once it has finished).</summary>
         public Vector3 TargetFor(DuckBrain d) => prog.TryGetValue(d, out var P) && !P.done ? Cps[P.next].p : d.Pos;
+        /// <summary>The duck has finished.</summary>
         public bool Done(DuckBrain d) => prog.TryGetValue(d, out var P) && P.done;
 
         static Vector3 PosOf(object o) => o is PlayerDuck pd ? pd.Body.Pos : ((DuckBrain)o).Pos;

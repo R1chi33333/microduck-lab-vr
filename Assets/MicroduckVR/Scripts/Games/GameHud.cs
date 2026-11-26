@@ -13,6 +13,7 @@ namespace MicroduckVR.Games
     {
         const string FontResource = "Bangers-Regular";          // Resources.Load name of the comic font
         static GameHud inst;
+        /// <summary>The HUD, made on first use.</summary>
         public static GameHud Get()
         {
             if (inst != null) return inst;
@@ -72,12 +73,15 @@ namespace MicroduckVR.Games
             return t;
         }
 
+        /// <summary>The comic font (Bangers), loaded once.</summary>
         public TMP_FontAsset Font => font;
         /// <summary>The HUD (kept out of the mirror's reflection).</summary>
         public static Transform Root => inst != null ? inst.root : null;
         /// <summary>Filming: keep the HUD out of cinematic shots.</summary>
         public static bool Hidden;
+        /// <summary>Sets the caption card text; empty hides the card.</summary>
         public void Caption(string s) { capText = s ?? ""; card.gameObject.SetActive(capText.Length > 0); caption.text = capText; }
+        /// <summary>Pops a big comic word for a moment.</summary>
         public void Big(string s, string hex = ComicColors.Pink, float dur = 1.1f) 
         {
             // long shouts are set smaller so they never fill the whole view
@@ -88,6 +92,7 @@ namespace MicroduckVR.Games
         }
         /// <summary>Arrows beside the caption: -1 turn left, 1 turn right, 0 none.</summary>
         public void Arrow(int dir) { arrowL.gameObject.SetActive(dir < 0); arrowR.gameObject.SetActive(dir > 0); }
+        /// <summary>Hides the caption, the arrows and the big word.</summary>
         public void Clear() { Caption(""); Arrow(0); bigRoot.gameObject.SetActive(false); }
 
         void LateUpdate()
