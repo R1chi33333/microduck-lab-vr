@@ -84,6 +84,9 @@ namespace MicroduckVR.EditorTools
             EditorSceneManager.SaveScene(scene, ScenePath);
             SceneBuilder.AddToBuild(ScenePath);
             Debug.Log("[Microduck] Built " + ScenePath);
+            // opt-in (Microduck/Assets/Relink House After Build): the house is built from code exactly as before, then its
+            // items are swapped for the exported prefabs they match, so edits made to those prefabs come back
+            if (AssetExport.RelinkAfterBuild) AssetExport.RelinkBuiltHouse(scene);
         }
 
         static ToySpawner.Item T(string kind, float x, float y, float z, float yaw = 0f) => new ToySpawner.Item { kind = kind, pos = new Vector3(x, y, z), yaw = yaw };

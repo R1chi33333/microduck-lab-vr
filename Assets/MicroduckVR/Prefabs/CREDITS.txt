@@ -1,0 +1,79 @@
+MICRODUCK LAB - ITEM PACK
+=========================
+
+Toys, furniture, household clutter and the Microduck robot from the game Microduck Lab
+(https://github.com/R1chi33333/microduck-lab), as separate Unity prefabs.
+
+  Assets/MicroduckVR/Prefabs/Toys        the toy-bag toys (physics, collider, beak-grabbable)
+  Assets/MicroduckVR/Prefabs/Furniture   sofa, tables, chairs, bed, kitchen units, shelves, ...
+  Assets/MicroduckVR/Prefabs/Clutter     books, mugs, plushies, shoes, plants, boxes, ...
+  Assets/MicroduckVR/Prefabs/Ducks       the Microduck robot in four colourways  (NON-COMMERCIAL, see below)
+  Assets/MicroduckVR/Prefabs/Meshes      one mesh file per item
+  Assets/MicroduckVR/Materials, Shaders, Textures   the comic toon materials and shaders they use
+
+
+LICENCES
+--------
+
+1. The ducks: NON-COMMERCIAL ONLY
+
+   Everything under Prefabs/Ducks, Prefabs/Meshes/Ducks and Prefabs/Materials/Ducks is adapted from the
+   Microduck robot by Pollen Robotics:
+       https://github.com/pollen-robotics/microduck_rl
+   licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+   (CC BY-NC-SA 4.0): https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+   Changes made: the robot was assembled into an articulated rig with an added jaw joint, posed standing,
+   recoloured with flat comic materials, small hardware and internal electronics removed, and its meshes
+   re-saved as Unity assets.
+
+   You may share and adapt the ducks only for non-commercial purposes, you must credit Pollen Robotics
+   (for example: "Microduck robot by Pollen Robotics, CC BY-NC-SA 4.0, modified") and you must share your
+   adaptations under the same licence.
+
+2. Everything else: MIT
+
+   The toys, furniture and clutter, their meshes, the materials, the shaders (ToonLit, ComicOutline), the
+   floor textures and the scripts Grabbable.cs and SurfaceTag.cs were made for Microduck Lab and are
+   released under the MIT licence:
+
+   Copyright (c) 2026 Yutong Jin
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+3. Not included
+
+   No third-party model, texture or font file is in this pack. The web version of the game loads a few glTF
+   sample props (Toy Car, chess pieces, Kenney food items); the toy car, chess pawn and knight, cookie, toast
+   and croissant here are new models built from simple shapes and contain none of those files. The game's
+   font (Bangers, SIL Open Font License 1.1) is not part of this pack.
+
+
+USING THE ITEMS
+---------------
+
+- Unity 6 with the Universal Render Pipeline (URP).
+- Units are metres; each item's pivot is at its bottom centre (where it touches the floor), unrotated.
+- The prefabs keep the game's layer numbers: World 6 (furniture), Duck 7, Toy 8 (beak-grabbable toys),
+  Prop 10 (loose props). Name those layers in your project (Project Settings > Tags and Layers) or set your own.
+- Loose props and toys have a Rigidbody and one simple collider; Grabbable marks things a duck can carry
+  in its beak; SurfaceTag tells the game what a surface is made of. Both scripts work on their own.
+- Ink outlines: add a "Full Screen Pass Renderer Feature" to your URP renderer with the pass material
+  Assets/MicroduckVR/Materials/ComicOutline.mat (requirements: Depth and Normal) for the black comic lines.
+  Without it the items still show their flat toon colours.
