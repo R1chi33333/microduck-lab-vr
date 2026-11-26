@@ -4,11 +4,11 @@ using MicroduckVR.Duck;
 using MicroduckVR.World;
 using UnityEngine;
 
-namespace MicroduckVR.Flock
+namespace MicroduckVR.Dev
 {
     /// <summary>
-    /// Placeholder AI for M1: wander to random spots inside a box, pause, sometimes emote, keep apart
-    /// from other ducks. Replaced by the full brain (port of agent.js) in M4.
+    /// Simple standalone wander AI used by the M1 test scene and the exported `Duck (live)` prefab: wander to random
+    /// spots inside a box, pause, sometimes emote, keep apart from other ducks. The game's flock uses DuckBrain.
     /// </summary>
     [DefaultExecutionOrder(10)]
     [RequireComponent(typeof(DuckSetup))]

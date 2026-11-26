@@ -95,7 +95,7 @@ again with **Microduck > Assets > Bake Duck Moves** (the GIFs are made from the 
 | `Editor/Builders/SceneBuilderHouse.cs` | The starting flock: 6 ducks, where they stand, their colours and random seeds (**Microduck > Build House**). |
 | `Scripts/Net/NetFlock.cs` | Co-op: the host's brains decide, the joining PC's ducks copy them. |
 | `Scripts/Player/PlayerDuck.cs` | Your duck (the same `DuckBody`, driven by your controllers). |
-| `Scripts/Flock/WanderDuck.cs` | A very simple brain, used only by the `Duck (live)` prefab for other projects. |
+| `Scripts/Dev/WanderDuck.cs` | A very simple brain, used only by the M1 test scene and the `Duck (live)` prefab for other projects. |
 
 ### What the AI ducks do
 

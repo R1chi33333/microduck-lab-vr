@@ -1,7 +1,7 @@
 using System.IO;
 using MicroduckVR.Core;
+using MicroduckVR.Dev;
 using MicroduckVR.Duck;
-using MicroduckVR.Flock;
 using MicroduckVR.Player;
 using MicroduckVR.World;
 using UnityEditor;
@@ -16,7 +16,7 @@ namespace MicroduckVR.EditorTools
     /// </summary>
     public static class SceneBuilderM1
     {
-        const string Dir = "Assets/MicroduckVR/Scenes";
+        const string Dir = "Assets/MicroduckVR/Scenes/Dev";
         const string MatDir = "Assets/MicroduckVR/Materials/M1";
 
         [MenuItem("Microduck/Scenes/Build M1 Be The Duck")]
@@ -53,9 +53,8 @@ namespace MicroduckVR.EditorTools
             MakeToy("Toy brick", PrimitiveType.Cube, new Vector3(0.05f, 0.01f, 1.1f), new Vector3(0.018f, 0.018f, 0.032f), new Color(0.84f, 0.15f, 0.17f));
             MakeToy("Bead", PrimitiveType.Sphere, new Vector3(0.38f, 0.01f, 1.05f), Vector3.one * 0.02f, new Color(0.39f, 0.82f, 1f));
 
-            string path = Dir + "/M1_BeTheDuck.unity";
+            string path = Dir + "/M1_BeTheDuck.unity";   // a dev scene: it stays out of Build Settings
             EditorSceneManager.SaveScene(scene, path);
-            SceneBuilder.AddToBuild(path);
             Debug.Log("[Microduck] Built " + path);
         }
 

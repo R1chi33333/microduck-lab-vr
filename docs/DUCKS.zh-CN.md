@@ -37,7 +37,7 @@
 | `Editor/Builders/SceneBuilderHouse.cs` | 开场的 6 只鸭子：站在哪、什么颜色、随机种子（菜单 **Microduck > Build House**）。 |
 | `Scripts/Net/NetFlock.cs` | 联机：主机的大脑做决定，加入方的鸭子照着做。 |
 | `Scripts/Player/PlayerDuck.cs` | 你自己的鸭子（同一个 `DuckBody`，由手柄控制）。 |
-| `Scripts/Flock/WanderDuck.cs` | 一个很简单的大脑，只给其他项目用的 `Duck (live)` prefab 用。 |
+| `Scripts/Dev/WanderDuck.cs` | 一个很简单的大脑，只给 M1 测试场景和其他项目用的 `Duck (live)` prefab 用。 |
 
 ## AI 鸭子会做什么
 

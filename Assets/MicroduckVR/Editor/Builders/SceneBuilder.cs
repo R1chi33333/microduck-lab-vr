@@ -11,7 +11,7 @@ namespace MicroduckVR.EditorTools
     /// <summary>Builds scenes in code so they stay reproducible.</summary>
     public static class SceneBuilder
     {
-        const string SceneDir = "Assets/MicroduckVR/Scenes";
+        const string SceneDir = "Assets/MicroduckVR/Scenes/Dev";
 
         [MenuItem("Microduck/Scenes/Build M0 Link Test")]
         public static void BuildM0()
@@ -52,9 +52,8 @@ namespace MicroduckVR.EditorTools
             camGo.AddComponent<AudioListener>();
             AddHeadTracking(camGo);
 
-            string path = SceneDir + "/M0_LinkTest.unity";
+            string path = SceneDir + "/M0_LinkTest.unity";   // a dev scene: it stays out of Build Settings
             EditorSceneManager.SaveScene(scene, path);
-            AddToBuild(path);
             Debug.Log("[Microduck] Built " + path);
         }
 
