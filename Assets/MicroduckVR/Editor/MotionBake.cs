@@ -23,7 +23,7 @@ namespace MicroduckVR.EditorTools
     public static partial class AssetExport
     {
         const string AnimDir = Root + "/Ducks/Animations";
-        const string MotionFrames = "Logs/motion";
+        const string MotionFrames = "Logs/motion", MotionAlpha = "Logs/motion_alpha";
         const float Fps = 30f;
         const int GifSize = 480;
 
@@ -91,7 +91,7 @@ namespace MicroduckVR.EditorTools
             int warnings = 0, frames = 0;
             var temp = OpenTemp();
             var lightsOff = new List<Light>();
-            RenderTexture rt = null; Texture2D tex = null;
+            RenderTexture rt = null; Texture2D tex = null, texA = null;
             try
             {
                 for (int s = 0; s < SceneManager.sceneCount; s++)
@@ -135,12 +135,13 @@ namespace MicroduckVR.EditorTools
                 rt = new RenderTexture(GifSize, GifSize, 24) { antiAliasing = 8 };
                 cam.targetTexture = rt;
                 tex = new Texture2D(GifSize, GifSize, TextureFormat.RGB24, false);
+                texA = new Texture2D(GifSize, GifSize, TextureFormat.RGBA32, false);
 
                 foreach (var m in Moves())
                 {
                     try
                     {
-                        var (clip, n, w) = BakeOne(m, glb, map, temp.root, cam, rt, tex, prefabPaths, tiltOffset);
+                        var (clip, n, w) = BakeOne(m, glb, map, temp.root, cam, rt, tex, texA, floor, prefabPaths, tiltOffset);
                         warnings += w; frames += n;
                         if (clip != null) clips.Add((m, clip));
                     }
@@ -153,6 +154,7 @@ namespace MicroduckVR.EditorTools
                 foreach (var l in lightsOff) if (l != null) l.enabled = true;
                 if (rt != null) { rt.Release(); Object.DestroyImmediate(rt); }
                 if (tex != null) Object.DestroyImmediate(tex);
+                if (texA != null) Object.DestroyImmediate(texA);
                 CloseTemp(temp);
             }
 
@@ -164,7 +166,7 @@ namespace MicroduckVR.EditorTools
         }
 
         static (AnimationClip clip, int frames, int warnings) BakeOne(Move m, GameObject glb, DuckJointMap map, Transform parent, Camera cam,
-            RenderTexture rt, Texture2D tex, HashSet<string> prefabPaths, Vector3 tiltOffset)
+            RenderTexture rt, Texture2D tex, Texture2D texA, GameObject floor, HashSet<string> prefabPaths, Vector3 tiltOffset)
         {
             int warnings = 0;
             float dt = 1f / Fps;
@@ -189,6 +191,9 @@ namespace MicroduckVR.EditorTools
             string dir = Path.Combine(MotionFrames, m.id.ToLowerInvariant());
             if (Directory.Exists(dir)) Directory.Delete(dir, true);
             Directory.CreateDirectory(dir);
+            string dirA = Path.Combine(MotionAlpha, m.id.ToLowerInvariant());
+            if (Directory.Exists(dirA)) Directory.Delete(dirA, true);
+            Directory.CreateDirectory(dirA);
 
             var c = new Ctl();
             float t0 = -m.warm, time = t0;
@@ -242,6 +247,16 @@ namespace MicroduckVR.EditorTools
                     DrawText(tex, 14, GifSize - 8, m.title, ComicLook.Ink, 4, GifSize - 28);
                     tex.Apply();
                     File.WriteAllBytes(Path.Combine(dir, $"f{frame:D4}.png"), tex.EncodeToPNG());
+                    // the same frame with nothing behind the duck (transparent), for sprites and pictures on any background
+                    var bg = cam.backgroundColor;
+                    floor.SetActive(false); cam.backgroundColor = new Color(0f, 0f, 0f, 0f);
+                    cam.Render();
+                    RenderTexture.active = rt;
+                    texA.ReadPixels(new Rect(0, 0, GifSize, GifSize), 0, 0, false);
+                    RenderTexture.active = null;
+                    texA.Apply();
+                    File.WriteAllBytes(Path.Combine(dirA, $"f{frame:D4}.png"), texA.EncodeToPNG());
+                    floor.SetActive(true); cam.backgroundColor = bg;
                     frame++; recT += dt;
                     bool done = m.len > 0f ? recT >= m.len - 1e-4f : wraps >= 4;
                     if (done) break;
