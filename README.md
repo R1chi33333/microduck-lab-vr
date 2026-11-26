@@ -48,6 +48,100 @@ On the desktop without a headset: WASD walk, Q/E turn, Space beak, C chirp, K sk
 Two players on two PCs in the same house (local network, no accounts): **HOST** and **JOIN** in the toy bag,
 see [docs/MULTIPLAYER.md](docs/MULTIPLAYER.md).
 
+## How the ducks work
+
+[中文说明](docs/DUCKS.zh-CN.md)
+
+The ducks have **no animation clips and no Animator**. Every move is computed in code each frame from the robot's
+15 joints (left and right `hip_yaw`, `hip_roll`, `hip_pitch`, `knee`, `ankle`, plus `neck_pitch`, `head_pitch`,
+`head_yaw`, `head_roll` and `jaw`), the same way the browser version does it. Your duck and the AI ducks share the
+same body code; only the thing that steers it differs (your controllers, or the AI brain).
+
+### Where the code is
+
+| File (under `Assets/MicroduckVR/`) | What it does |
+|---|---|
+| `Scripts/Flock/DuckBrain.cs` | **The AI ducks' brain.** Picks what each duck does, steers it round the house, plays the games, fetches toys. |
+| `Scripts/Duck/DuckBody.cs` | **Every animation:** walking, turning, sitting, crouching, hopping, head look, beak reach and jaw, emotes, skating, falling and getting up. |
+| `Scripts/Duck/DuckSetup.cs` | Builds a duck when the game starts from `Models/microduck_rig.glb` and `Models/DuckJointMap.asset` (joint axes, limits, standing pose) and applies its colours. |
+| `Scripts/Flock/ThoughtBubbles.cs` | The comic speech bubbles over the AI ducks: one set of lines per behaviour. |
+| `Scripts/Audio/DuckAudio.cs` | Each duck's own chirping voice and footsteps; reacts to the brain's events. |
+| `Scripts/Flock/FlockSpawner.cs` | ADD DUCK / REMOVE DUCK in the toy bag (1 to 12 ducks). |
+| `Editor/SceneBuilderHouse.cs` | The starting flock: 6 ducks, where they stand, their colours and random seeds (**Microduck > Build House**). |
+| `Scripts/Net/NetFlock.cs` | Co-op: the host's brains decide, the joining PC's ducks copy them. |
+| `Scripts/Player/PlayerDuck.cs` | Your duck (the same `DuckBody`, driven by your controllers). |
+| `Scripts/Flock/WanderDuck.cs` | A very simple brain, used only by the `Duck (live)` prefab for other projects. |
+
+### What the AI ducks do
+
+When its timer runs out, a duck picks its next behaviour at random (`DuckBrain.Pick`):
+
+| Behaviour | Chance | How long | What it looks like |
+|---|---|---|---|
+| `follow` | 30% | 8 to 16 s | Walks behind you in a loose V; with two players, ducks split between them. |
+| `wander` | 24% | 7 to 13 s | Walks to a random spot nearby, sometimes emotes on arrival. |
+| `toy` | 14% | up to 14 s | Finds a toy within 70 cm, walks up, bows, bites it, carries it for about 4.5 s, puts it down. |
+| `roam` | 12% | up to 40 s | Walks to another room through the doorways. |
+| `sit` | 10% | 3 to 6 s | Sits down for a rest. |
+| `idle` | 10% | 1.5 to 3.5 s | Stands about; half the time plays an emote. |
+
+These take over from that normal life while they last (`DuckBrain.Games`):
+
+- **Race:** runs the course, each duck at a slightly different pace, dances at the finish.
+- **Football:** the two ducks nearest the ball on each team chase it and kick it towards the other goal; the rest
+  hold their positions.
+  Everyone on the scoring team dances.
+- **Laser dot:** ducks within 80 cm gather in a ring round the dot, then crouch and pounce on it.
+
+All the time: ducks keep about 19 cm apart (from each other and from you), feel ahead for edges and furniture and
+walk round them, get unstuck, step out of the way of a card or board you are reading, slide on tiles, slow down in
+water and bounce on the bed. They tell the bubbles and the voice what happened: `got`, `drop`, `bed`, `water`, `tile`.
+
+### What the body can do (animations in `DuckBody.cs`)
+
+| Move | How it is driven |
+|---|---|
+| Walking and turning on the spot | Procedural gait: feet are planted and stepped with leg IK, pigeon-toed; the body sways, bobs and leans with speed |
+| Sit, crouch | `SitTarget`, `CrouchTarget` (blended in and out) |
+| Hop | `Hop` (height); used for the bed bounce and the laser pounce |
+| Look at something | `LookAt.target` / `LookAt.weight`; the head also stays steady while walking and tilts when idle |
+| Reach with the beak, open and close it | `ReachState` (neck and head bend until the beak meets the target), `JawTarget` |
+| Happy wiggle | `HappyWiggle` |
+| Emotes | `PlayEmote("nod" / "shake" / "look" / "dance")` |
+| Skating | Push strokes, leaning into turns, a wobble (set by the skates code) |
+| Falling over and getting up | `StartTip(direction)`: tips over, lies a moment, pushes itself up. `StartTumble` / `LandTumble` for a roll. Today only your duck falls (skating into things); the AI ducks never trip. |
+
+### Adding a new move or behaviour
+
+**A new emote** (for example `"bow"` or `"spin"`):
+
+1. `Scripts/Duck/DuckBody.cs`: give it a length in `PlayEmote` and a `case "bow":` in `EmoteOffsets`. Return
+   offsets for the body (`ox`, `oy`, `opitch`, `oyaw`, `oroll`) and the head (`gy` = head turn, `gp` = head nod),
+   multiplied by `env` so it eases in and out.
+2. To let the AI ducks use it: add `"bow"` to the emote lists in `DuckBrain.cs` (in `Pick` for idle ducks, in the
+   `wander` case for ducks that have arrived).
+3. To let the player use it: add a button to `Actions` in `Scripts/Player/BagMenu.cs` (the grid is full at 4 × 4, so
+   swap one out or add a row).
+4. Co-op needs nothing more: emotes go over the network by name. Both PCs need the new version.
+
+**A new behaviour** (for example `"nap"`):
+
+1. `Scripts/Flock/DuckBrain.cs`: add it to the chances and durations in `Pick`, then a `case "nap":` in `Think`
+   that returns how fast to walk and turn, `(speed, turnRate)`, using `SteerAvoid(goal, speed, tolerance)` to walk
+   somewhere and the body's controls above (`SitTarget`, `LookAt`, `PlayEmote`, ...) to pose.
+2. `Scripts/Flock/ThoughtBubbles.cs`: add lines for it to `Lines`, for example `{ "nap", new[] { "Zzz..." } }`.
+3. A sound for an event: fire `OnEvent?.Invoke(this, "kind", context)` in the brain and handle it in
+   `Scripts/Audio/DuckAudio.cs`.
+4. Something that takes over everything (a new game): add it to `Games()` in `DuckBrain.cs`, like the race.
+
+**A new kind of body pose** (for example a real jump or a bigger dance with the legs): add a weight like `SitW` or
+`CrouchW` to `DuckBody.Step` and pose the joints with `SetQ(joint, angle)` + `ApplyJoint(joint)`, or move the feet
+targets before `SolveLeg`. Joint limits and axes are in `Models/DuckJointMap.asset`; keep within them so the
+robot moves the way the real one can.
+
+Two rules to keep: never roll, shake or pitch **your own** camera from code (VR comfort), and keep the numbers in
+metres (the duck is about 25 cm tall).
+
 ## Design sheets and reusable items
 
 Every toy, piece of furniture, bit of household clutter and the duck itself is also a separate Unity prefab
