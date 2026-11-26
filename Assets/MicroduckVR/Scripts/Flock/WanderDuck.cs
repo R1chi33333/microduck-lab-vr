@@ -16,7 +16,7 @@ namespace MicroduckVR.Flock
         public static readonly List<WanderDuck> All = new List<WanderDuck>();
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { All.Clear(); }
-        static readonly string[] Emotes = { "look", "nod", "dance", "shake" };
+        static readonly EmoteKind[] Emotes = { EmoteKind.Look, EmoteKind.Nod, EmoteKind.Dance, EmoteKind.Shake };
         public Vector2 boundsMin = new Vector2(-2.6f, -2.1f), boundsMax = new Vector2(2.6f, 2.1f);
         public float speed = 0.1f;
         public int seed = 1;

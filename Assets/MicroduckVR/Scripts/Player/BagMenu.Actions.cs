@@ -1,4 +1,5 @@
 using MicroduckVR.Comic;
+using MicroduckVR.Duck;
 using MicroduckVR.World;
 using UnityEngine;
 
@@ -39,9 +40,15 @@ namespace MicroduckVR.Player
                 case BagActions.Mirror: if (pd != null) { pd.SetThirdPerson(false); pd.Teleport(MicroduckVR.Custom.MirrorStation.StandPos, Mathf.PI); pd.FaceView(Mathf.PI); if (MicroduckVR.Custom.MirrorStation.Instance != null) MicroduckVR.Custom.MirrorStation.Instance.OpenBoard(true); } break;
                 case BagActions.Tutorial: TutorialCoach.Restart(); break;
                 case BagActions.Credits: TutorialCoach.ShowSheet("CREDITS", TutorialCoach.CreditsText, "Y TO CLOSE"); break;
-                default: if (pd != null) pd.Body.PlayEmote(kind); break;
+                default: if (pd != null) pd.Body.PlayEmote(EmoteFor(kind)); break;
             }
         }
+
+        /// <summary>The emote a tile plays (DANCE, NOD, SHAKE, LOOK).</summary>
+        static EmoteKind EmoteFor(string kind) => kind switch
+        {
+            BagActions.Dance => EmoteKind.Dance, BagActions.Nod => EmoteKind.Nod, BagActions.Shake => EmoteKind.Shake, BagActions.Look => EmoteKind.Look, _ => EmoteKind.None,
+        };
 
         public void Choose(string kind)
         {

@@ -1,4 +1,5 @@
 using MicroduckVR.Comic;
+using MicroduckVR.Duck;
 using MicroduckVR.Player;
 using MicroduckVR.World;
 using TMPro;
@@ -149,7 +150,7 @@ namespace MicroduckVR.Custom
             y -= 0.062f;
             board.Add("random", "RANDOM!", new Vector2(-0.095f, y), new Vector2(0.17f, 0.048f), "#E5CCF5", () => { custom.Randomise(rng); Apply(); }, 0.25f);
             board.Label("POINT YOUR RIGHT HAND + TRIGGER TO PICK.  DONE! WHEN YOU LIKE IT", new Vector3(0f, -bh / 2f + 0.026f, -0.004f), 0.1f, "#6B6480", bw - 0.03f);
-            board.Add("save", "DONE!", new Vector2(0.095f, y), new Vector2(0.17f, 0.048f), ComicColors.Green, () => { custom.Save(); SaveCount++; OpenBoard(false); MicroduckVR.Games.GameHud.Get().Big("LOOKING GOOD!", ComicColors.Pink, 1.2f); pd.Body.PlayEmote("dance"); }, 0.26f);
+            board.Add("save", "DONE!", new Vector2(0.095f, y), new Vector2(0.17f, 0.048f), ComicColors.Green, () => { custom.Save(); SaveCount++; OpenBoard(false); MicroduckVR.Games.GameHud.Get().Big("LOOKING GOOD!", ComicColors.Pink, 1.2f); pd.Body.PlayEmote(EmoteKind.Dance); }, 0.26f);
             Refresh();
         }
 

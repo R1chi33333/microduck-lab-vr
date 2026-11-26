@@ -60,7 +60,7 @@ namespace MicroduckVR.EditorTools
                     b.JawTarget = t > 0.3f && t < 1.3f ? 0.5f : 0f;
                     b.JawStop = t >= 1.3f && t < 2.4f ? 0.12f : 0f;
                 } },
-            Emote("Nod", "NOD", 1.6f), Emote("Shake", "SHAKE", 1.6f), Emote("Look", "LOOK AROUND", 3.1f), Emote("Dance", "DANCE", 2.9f),
+            Emote("Nod", "NOD", 1.6f, EmoteKind.Nod), Emote("Shake", "SHAKE", 1.6f, EmoteKind.Shake), Emote("Look", "LOOK AROUND", 3.1f, EmoteKind.Look), Emote("Dance", "DANCE", 2.9f, EmoteKind.Dance),
             new Move { id = "Wiggle", title = "HAPPY WIGGLE", warm = 0.3f, len = 1.8f, drive = (t, b, c) => { if (t < 0.05f) b.HappyWiggle = 1f; } },
             new Move { id = "Skate", title = "ROLLER SKATES", warm = 1.5f, len = 3.2f, skates = true, camAngle = 75f, drive = (t, b, c) =>
                 {
@@ -76,10 +76,10 @@ namespace MicroduckVR.EditorTools
                 { if (t >= 0.2f && t < 0.2f + 1f / Fps && !b.Fallen) b.StartTip(new Vector3(0.64f, 0f, -0.77f)); } },
         };
 
-        static Move Emote(string id, string title, float len) => new Move
+        static Move Emote(string id, string title, float len, EmoteKind kind) => new Move
         {
             id = id, title = title, warm = 0.3f, len = len,
-            drive = (t, b, c) => { if (t >= 0.1f && t < 0.1f + 1f / Fps) b.PlayEmote(id.ToLowerInvariant()); },
+            drive = (t, b, c) => { if (t >= 0.1f && t < 0.1f + 1f / Fps) b.PlayEmote(kind); },
         };
 
         [MenuItem("Microduck/Assets/Bake Duck Moves")]

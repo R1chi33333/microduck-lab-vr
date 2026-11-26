@@ -1,4 +1,5 @@
 using MicroduckVR.Custom;
+using MicroduckVR.Duck;
 using MicroduckVR.Games;
 using MicroduckVR.Player;
 using UnityEditor;
@@ -65,7 +66,7 @@ namespace MicroduckVR.EditorTools
                 case 22 when t > 31.8: step++; Eye("big", 0f, -6f); FootballGame.Ensure().StopGame(); pd.Teleport(new Vector3(4.3f, 0.05f, -0.2f), Mathf.PI); break;
                 case 23 when t > 33.0: step++; Eye("sign_mirror", 0f, -12f); pd.Teleport(new Vector3(-2.2f, 0f, 2.75f), Mathf.PI); break;
                 case 24 when t > 34.5: step++; Eye("sign_garage", 0f, -10f); pd.Teleport(new Vector3(-0.6f, 0.05f, 1.6f), -Mathf.PI / 2f); break;
-                case 25 when t > 36.0: step++; Eye("sign_garage_room", 0f, -8f); pd.Teleport(new Vector3(1.3f, 0f, 5.7f), 0f); pd.Body.PlayEmote("dance"); MicroduckVR.Comic.ComicPop.Spawn("POW!", new Vector3(1.3f, 0.2f, 8.2f), "#FF8A3D", 1.2f * 2.5f); break;
+                case 25 when t > 36.0: step++; Eye("sign_garage_room", 0f, -8f); pd.Teleport(new Vector3(1.3f, 0f, 5.7f), 0f); pd.Body.PlayEmote(EmoteKind.Dance); MicroduckVR.Comic.ComicPop.Spawn("POW!", new Vector3(1.3f, 0.2f, 8.2f), "#FF8A3D", 1.2f * 2.5f); break;
                 case 26 when t > 36.6: step++; Eye("pop_far", 0f, -5f); pd.Teleport(new Vector3(0.6f, 0.05f, 1.2f), Mathf.PI);
                     EditorApplication.update -= Tick; Debug.Log("[Microduck] ui audit done"); break;
             }

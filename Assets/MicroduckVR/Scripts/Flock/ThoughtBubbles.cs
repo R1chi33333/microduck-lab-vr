@@ -20,23 +20,30 @@ namespace MicroduckVR.Flock
         const float SHOW = 3.0f, FADE = 0.35f, REPEAT = 8f, RANGE = 4.0f;
         const int MAX_ON = 4, POOL = 6;
 
-        static readonly Dictionary<string, string[]> Lines = new Dictionary<string, string[]>
+        static readonly Dictionary<AiState, string[]> StateLines = new Dictionary<AiState, string[]>
         {
-            { "wander",   new[] { "Just exploring...", "What's over here?", "La la, wandering." } },
-            { "roam",     new[] { "Off to the {room}!", "Heading to the {room}!", "Visiting the {room}." } },
-            { "follow",   new[] { "Wait for me!", "Right behind you!", "Coming too!" } },
-            { "toy",      new[] { "Ooh, a {prop}!", "That {prop} is mine!", "Mmm, {prop}!" } },
-            { "got",      new[] { "Got it!", "Gotcha!", "Mine now!" } },
-            { "drop",     new[] { "Here you go!", "For you!", "Ta-da!" } },
-            { "sit",      new[] { "Taking a break.", "Comfy.", "Sitting pretty." } },
-            { "idle",     new[] { "~ la la ~", "Hmm...", "Nice day." } },
-            { "bed",      new[] { "Boing boing!", "Bouncy!", "Wheee, bed!" } },
-            { "water",    new[] { "Splashy!", "Puddle!", "Splish splash!" } },
-            { "tile",     new[] { "Wheee, slippery!", "Sliiide!", "Whoa, tiles!" } },
-            { "race",     new[] { "Zoom zoom!", "Catch me!", "Gotta go fast!" } },
-            { "football", new[] { "Pass it!", "My ball!", "Go team!" } },
-            { "laser",    new[] { "Red dot!", "I'll get it!", "Pounce!" } },
+            { AiState.Wander,   new[] { "Just exploring...", "What's over here?", "La la, wandering." } },
+            { AiState.Roam,     new[] { "Off to the {room}!", "Heading to the {room}!", "Visiting the {room}." } },
+            { AiState.Follow,   new[] { "Wait for me!", "Right behind you!", "Coming too!" } },
+            { AiState.Toy,      new[] { "Ooh, a {prop}!", "That {prop} is mine!", "Mmm, {prop}!" } },
+            { AiState.Sit,      new[] { "Taking a break.", "Comfy.", "Sitting pretty." } },
+            { AiState.Idle,     new[] { "~ la la ~", "Hmm...", "Nice day." } },
+            { AiState.Race,     new[] { "Zoom zoom!", "Catch me!", "Gotta go fast!" } },
+            { AiState.Football, new[] { "Pass it!", "My ball!", "Go team!" } },
+            { AiState.Laser,    new[] { "Red dot!", "I'll get it!", "Pounce!" } },
         };
+
+        static readonly Dictionary<DuckEventKind, string[]> EventLines = new Dictionary<DuckEventKind, string[]>
+        {
+            { DuckEventKind.Got,   new[] { "Got it!", "Gotcha!", "Mine now!" } },
+            { DuckEventKind.Drop,  new[] { "Here you go!", "For you!", "Ta-da!" } },
+            { DuckEventKind.Bed,   new[] { "Boing boing!", "Bouncy!", "Wheee, bed!" } },
+            { DuckEventKind.Water, new[] { "Splashy!", "Puddle!", "Splish splash!" } },
+            { DuckEventKind.Tile,  new[] { "Wheee, slippery!", "Sliiide!", "Whoa, tiles!" } },
+        };
+
+        /// <summary>States and events share the repeat timer per duck: a state is its own number, an event this plus its number.</summary>
+        const int EventTopic = 100;
 
         class Bubble
         {
@@ -45,8 +52,8 @@ namespace MicroduckVR.Flock
         }
 
         readonly List<Bubble> pool = new List<Bubble>();
-        readonly Dictionary<DuckBrain, string> lastIntent = new Dictionary<DuckBrain, string>();
-        readonly Dictionary<(DuckBrain, string), float> lastSaid = new Dictionary<(DuckBrain, string), float>();
+        readonly Dictionary<DuckBrain, (AiState, string)> lastIntent = new Dictionary<DuckBrain, (AiState, string)>();
+        readonly Dictionary<(DuckBrain, int), float> lastSaid = new Dictionary<(DuckBrain, int), float>();
         readonly System.Random rng = new System.Random(5);
         TMP_FontAsset fontAsset;
         Material slabMat, inkMat;
@@ -84,11 +91,22 @@ namespace MicroduckVR.Flock
             return b;
         }
 
-        public void Say(DuckBrain d, string kind, string context)
+        public void Say(DuckBrain d, AiState state, string context)
         {
-            if (!showThoughts || !Lines.TryGetValue(kind, out var lines)) return;
-            if (lastSaid.TryGetValue((d, kind), out var when) && Time.time - when < REPEAT) return;
-            lastSaid[(d, kind)] = Time.time;
+            if (!showThoughts || !StateLines.TryGetValue(state, out var lines)) return;
+            Say(d, (int)state, lines, context);
+        }
+
+        public void Say(DuckBrain d, DuckEventKind kind, string context)
+        {
+            if (!showThoughts || !EventLines.TryGetValue(kind, out var lines)) return;
+            Say(d, EventTopic + (int)kind, lines, context);
+        }
+
+        void Say(DuckBrain d, int topic, string[] lines, string context)
+        {
+            if (lastSaid.TryGetValue((d, topic), out var when) && Time.time - when < REPEAT) return;
+            lastSaid[(d, topic)] = Time.time;
             string line = lines[rng.Next(lines.Length)].Replace("{room}", context).Replace("{prop}", context);
             Bubble b = null;
             foreach (var x in pool) if (x.live && x.duck == d) { b = x; break; }
@@ -100,7 +118,7 @@ namespace MicroduckVR.Flock
             Fit(b);
         }
 
-        void OnDuckEvent(DuckBrain d, string kind, string ctx) => Say(d, kind, ctx);
+        void OnDuckEvent(DuckBrain d, DuckEventKind kind, string ctx) => Say(d, kind, ctx);
 
         /// <summary>Size the bubble to its text. Dynamic font glyphs can be generated a frame late, so this runs
         /// again while the bubble is young and grows the bubble whenever the measured text got wider.</summary>
@@ -123,11 +141,11 @@ namespace MicroduckVR.Flock
             foreach (var d in DuckBrain.All)
             {
                 if (subscribed.Add(d)) d.OnEvent += OnDuckEvent;
-                string intent = d.State + ":" + d.Context;
+                var intent = (d.State, d.Context ?? "");
                 if (!lastIntent.TryGetValue(d, out var prev) || prev != intent)
                 {
                     lastIntent[d] = intent;
-                    if (d.State == "toy" && string.IsNullOrEmpty(d.Context)) continue;
+                    if (d.State == AiState.Toy && string.IsNullOrEmpty(d.Context)) continue;
                     Say(d, d.State, d.Context);
                 }
             }

@@ -61,7 +61,7 @@ namespace MicroduckVR.Net
         public void AddSample(double t, PlayerSample s) => track.Add(t, s);
 
         public void Quack() { if (au != null) au.Chirp(); }
-        public void Emote(string kind, float dur) { if (Body != null) Body.PlayEmote(kind, dur); }
+        public void Emote(EmoteKind kind, float dur) { if (Body != null) Body.PlayEmote(kind, dur); }
         public void Tip(Vector3 dir) { if (Body != null && !Body.Fallen) Body.StartTip(dir); }
         /// <summary>A word about the other player's duck pops up big over its head.</summary>
         public void Word(string word, string hex, float size) { if (Body != null) ComicPop.Spawn(word, Body.Pos + Vector3.up * 0.36f, hex, size); }

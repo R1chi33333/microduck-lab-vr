@@ -14,7 +14,7 @@ namespace MicroduckVR.Net
             Unhook();
             var pd = PlayerDuck.Instance; if (pd == null || pd.Body == null) return;
             hookedPlayer = pd;
-            emoteHook = (k, d) => { if (PeerReady) { var w = Begin(NetMsg.Emote); w.WriteValueSafe(k ?? ""); w.WriteValueSafe(d); Send(w, true); } };
+            emoteHook = (k, d) => { if (PeerReady) { var w = Begin(NetMsg.Emote); w.WriteValueSafe((byte)k); w.WriteValueSafe(d); Send(w, true); } };
             fallHook = dir => { if (PeerReady) { var w = Begin(NetMsg.Fall); w.WriteValueSafe(dir); Send(w, true); } };
             pd.Body.OnEmote += emoteHook;
             pd.Body.OnFall += fallHook;

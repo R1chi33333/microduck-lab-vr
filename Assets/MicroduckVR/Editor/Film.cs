@@ -299,8 +299,8 @@ namespace MicroduckVR.EditorTools
         static void Skates(bool on) { if (P.Skates.On != on) P.Skates.Toggle(P.Body.Yaw, Vector3.zero); }
         static void Click(WorldPanel p, string id) { foreach (var b in p.buttons) if (b.id == id) { WorldPanel.DebugPoint = b.t.position; WorldPanel.DebugPress = true; return; } }
         static void MoveDuck(int i, Vector3 p, float yawDeg) { if (i < DuckBrain.All.Count) DuckBrain.All[i].Teleport(p, yawDeg * Mathf.Deg2Rad); }
-        static void Emote(string kind) { P.Body.PlayEmote(kind); }
-        static void AllEmote(string kind) { P.Body.PlayEmote(kind); foreach (var d in DuckBrain.All) if (d.Body != null) d.Body.PlayEmote(kind); }
+        static void Emote(EmoteKind kind) { P.Body.PlayEmote(kind); }
+        static void AllEmote(EmoteKind kind) { P.Body.PlayEmote(kind); foreach (var d in DuckBrain.All) if (d.Body != null) d.Body.PlayEmote(kind); }
         static Vector3 Ground(float x, float z) => new Vector3(x, WorldQueries.GroundAt(x, z, 0.5f), z);
 
         /// <summary>Everything back to a calm state between shots.</summary>

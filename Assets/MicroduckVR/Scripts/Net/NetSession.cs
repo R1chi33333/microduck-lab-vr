@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using MicroduckVR.Comic;
+using MicroduckVR.Duck;
 using MicroduckVR.Games;
 using MicroduckVR.Player;
 using Unity.Netcode;
@@ -27,7 +28,7 @@ namespace MicroduckVR.Net
     public partial class NetSession : MonoBehaviour
     {
         /// <summary>Both PCs must run the same version; it is checked when joining.</summary>
-        public const string Version = "mdvr-coop-1";
+        public const string Version = "mdvr-coop-2";
         const string Channel = "microduck";
         const float PlayerRate = 1f / 30f, WorldRate = 1f / 20f, PeerTimeout = 6f, ConnectTimeout = 10f;
 
@@ -55,7 +56,7 @@ namespace MicroduckVR.Net
         string pendingEnd;
         string sentCustom = "";
         int chirps = -1;
-        PlayerDuck hookedPlayer; Action<string, float> emoteHook; Action<Vector3> fallHook;
+        PlayerDuck hookedPlayer; Action<EmoteKind, float> emoteHook; Action<Vector3> fallHook;
 
         internal RemotePlayer Remote { get; private set; }
         internal readonly NetClock Playback = new NetClock();

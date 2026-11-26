@@ -54,7 +54,7 @@ namespace MicroduckVR.Duck
             public bool landed;
         }
 
-        public class Emote { public string kind; public float t, dur; }
+        public class Emote { public EmoteKind kind; public float t, dur; }
 
         public class Look { public Vector3? target; public float weight; public float pitchDown = 0.26f; public float yawBias; public Vector3? gazeDir; }
         public class Reach { public Vector3? target; public float weight, w, err, crouch = 0.034f, bow = 0.62f; public Dictionary<string, float> sol; }
@@ -64,7 +64,7 @@ namespace MicroduckVR.Duck
         public Action<BodySound, object> OnSound;
         public Action OnGotUp;
         /// <summary>An emote started (kind, duration) and a tip-over started (direction): the network session passes them on.</summary>
-        public Action<string, float> OnEmote;
+        public Action<EmoteKind, float> OnEmote;
         public Action<Vector3> OnFall;
 
         public Transform Tilt { get; private set; }

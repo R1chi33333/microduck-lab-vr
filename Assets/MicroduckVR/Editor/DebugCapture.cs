@@ -79,7 +79,7 @@ namespace MicroduckVR.EditorTools
             Shoot("house_top_" + stamp, new Vector3(0.01f, 13f, 2.6f), new Vector3(0f, 0f, 2.6f), 1600, 1000, 62f, ~(1 << MicroduckVR.Duck.DuckSetup.LayerCeiling));
             Shoot("house_angle_" + stamp, new Vector3(-6.5f, 5.5f, 10.5f), new Vector3(0f, 0f, 1.5f), 1600, 1000, 55f, ~(1 << MicroduckVR.Duck.DuckSetup.LayerCeiling));
             var sb = new System.Text.StringBuilder("[Microduck] flock:");
-            foreach (var br in MicroduckVR.Flock.DuckBrain.All) sb.Append($" [{br.name.Split(' ')[1]} {br.State}:{br.Context} {MicroduckVR.World.HouseLayout.RoomAt(br.Pos)} v={br.Speed:F2}]");
+            foreach (var br in MicroduckVR.Flock.DuckBrain.All) sb.Append($" [{br.name.Split(' ')[1]} {MicroduckVR.Flock.AiStates.Name(br.State)}:{br.Context} {MicroduckVR.World.HouseLayout.RoomAt(br.Pos)} v={br.Speed:F2}]");
             Debug.Log(sb.ToString());
             var b = pd.Body;
             Debug.Log($"[Microduck] play views {stamp}: eye={t.position.ToString("F3")} duck={b.transform.position.ToString("F3")} yaw={b.Yaw:F2} originScale={pd.xrOrigin.localScale.x:F2} fps={1f / Time.smoothDeltaTime:F0} xr={UnityEngine.XR.XRSettings.isDeviceActive}");

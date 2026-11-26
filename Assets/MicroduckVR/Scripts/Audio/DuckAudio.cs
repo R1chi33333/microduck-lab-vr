@@ -39,9 +39,9 @@ namespace MicroduckVR.Audio
             body.OnSound += OnBodySound;
             if (brain != null) brain.OnEvent += (d, kind, ctx) =>
             {
-                if (kind == "got" || kind == "drop") Chirp();
-                else if (kind == "bed") voice.PlayOneShot(boing, volume * 0.7f);
-                else if (kind == "water") voice.PlayOneShot(splash, volume * 0.8f);
+                if (kind == DuckEventKind.Got || kind == DuckEventKind.Drop) Chirp();
+                else if (kind == DuckEventKind.Bed) voice.PlayOneShot(boing, volume * 0.7f);
+                else if (kind == DuckEventKind.Water) voice.PlayOneShot(splash, volume * 0.8f);
             };
             nextIdle = Time.time + 3f + (float)rng.NextDouble() * 10f;
         }

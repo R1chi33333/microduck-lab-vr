@@ -281,7 +281,7 @@ namespace MicroduckVR.EditorTools
 
         /// <summary>The flock out of the way (to the bedroom) for a shot of the player's duck alone.</summary>
         static void Shoo() { for (int i = 0; i < DuckBrain.All.Count; i++) MoveDuck(i, V(5.2f + 0.2f * (i % 4), 0f, -0.9f - 0.22f * (i / 4)), 0f); }
-        static void FlockEmote(string kind) { foreach (var d in DuckBrain.All) if (d.Body != null) d.Body.PlayEmote(kind); }
+        static void FlockEmote(EmoteKind kind) { foreach (var d in DuckBrain.All) if (d.Body != null) d.Body.PlayEmote(kind); }
         /// <summary>Send home the ducks earlier takes added, so every take starts with the same flock.</summary>
         static void SendHome()
         {

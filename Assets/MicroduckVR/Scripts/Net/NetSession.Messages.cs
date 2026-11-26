@@ -85,7 +85,7 @@ namespace MicroduckVR.Net
                     case NetMsg.Bye: if (mode == Mode.Hosting) RemoteGone("PLAYER 2 LEFT"); else pendingEnd = "HOST LEFT"; break;
                     case NetMsg.Custom: { r.ReadValueSafe(out string json); if (Remote != null) Remote.ApplyCustom(json); break; }
                     case NetMsg.Quack: if (Remote != null) Remote.Quack(); break;
-                    case NetMsg.Emote: { r.ReadValueSafe(out string k); r.ReadValueSafe(out float d); if (Remote != null) Remote.Emote(k, d); break; }
+                    case NetMsg.Emote: { r.ReadValueSafe(out byte k); r.ReadValueSafe(out float d); if (Remote != null) Remote.Emote((EmoteKind)k, d); break; }
                     case NetMsg.Fall: { r.ReadValueSafe(out Vector3 dir); if (Remote != null) Remote.Tip(dir); break; }
                     case NetMsg.Word: { r.ReadValueSafe(out string word); r.ReadValueSafe(out string hex); r.ReadValueSafe(out float size); if (Remote != null) Remote.Word(word, hex, size); break; }
                     case NetMsg.Pow:
