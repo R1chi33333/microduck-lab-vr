@@ -21,6 +21,7 @@ The browser version is [here](https://r1chi33333.github.io/microduck-lab-preview
 
 - Unity 6000.6.7f1, Universal Render Pipeline, OpenXR
 - Windows PC, Meta Quest Pro over Quest Link / Air Link
+- Code conventions: [docs/CODE_STYLE.md](docs/CODE_STYLE.md)
 
 ## Playing
 
