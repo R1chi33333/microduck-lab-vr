@@ -92,7 +92,7 @@ again with **Microduck > Assets > Bake Duck Moves** (the GIFs are made from the 
 | `Scripts/Flock/ThoughtBubbles.cs` | The comic speech bubbles over the AI ducks: one set of lines per behaviour. |
 | `Scripts/Audio/DuckAudio.cs` | Each duck's own chirping voice and footsteps; reacts to the brain's events. |
 | `Scripts/Flock/FlockSpawner.cs` | ADD DUCK / REMOVE DUCK in the toy bag (1 to 12 ducks). |
-| `Editor/SceneBuilderHouse.cs` | The starting flock: 6 ducks, where they stand, their colours and random seeds (**Microduck > Build House**). |
+| `Editor/Builders/SceneBuilderHouse.cs` | The starting flock: 6 ducks, where they stand, their colours and random seeds (**Microduck > Build House**). |
 | `Scripts/Net/NetFlock.cs` | Co-op: the host's brains decide, the joining PC's ducks copy them. |
 | `Scripts/Player/PlayerDuck.cs` | Your duck (the same `DuckBody`, driven by your controllers). |
 | `Scripts/Flock/WanderDuck.cs` | A very simple brain, used only by the `Duck (live)` prefab for other projects. |
@@ -148,7 +148,7 @@ water and bounce on the bed. They tell the bubbles and the voice what happened: 
 3. To let the player use it: add a button to `Actions` in `Scripts/Player/BagMenu.cs` (the grid is full at 4 × 4, so
    swap one out or add a row).
 4. Co-op needs nothing more: emotes go over the network by name. Both PCs need the new version.
-5. To get it as a clip and a GIF too: add it to `Moves()` in `Editor/AssetExport.MotionBake.cs` and run **Bake Duck Moves**.
+5. To get it as a clip and a GIF too: add it to `Moves()` in `Editor/Assets/AssetExport.MotionBake.cs` and run **Bake Duck Moves**.
 
 **A new behaviour** (for example `"nap"`):
 

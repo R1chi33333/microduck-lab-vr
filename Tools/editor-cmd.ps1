@@ -1,5 +1,5 @@
 param([string[]]$Commands, [int]$TimeoutSec = 180)
-# Sends commands to the open Unity editor (see Assets/MicroduckVR/Editor/RemoteCommands.cs) and prints its log until idle.
+# Sends commands to the open Unity editor (see Assets/MicroduckVR/Editor/Tooling/RemoteCommands.cs) and prints its log until idle.
 #   powershell -ExecutionPolicy Bypass -File Tools\editor-cmd.ps1 -Commands "refresh","method Ns.Class.Method"
 $Commands = (($Commands -join '|') -split '\|') | ForEach-Object { $_.Trim() } | Where-Object { $_ }
 $root = Split-Path -Parent $PSScriptRoot

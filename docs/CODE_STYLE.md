@@ -8,7 +8,10 @@ files to satisfy it.
 
 - Game code lives in `Assets/MicroduckVR/Scripts/<Area>/`. The areas are Audio, Comic, Custom, Dev, Duck, Flock,
   Games, Net, Player, Util and World.
-- Editor-only code (scene and asset builders, film tools, smoke tests, setup) lives in `Assets/MicroduckVR/Editor/`.
+- Editor-only code lives in `Assets/MicroduckVR/Editor/`, one subfolder per job: `Builders/` (house, scenes,
+  furniture styles), `Assets/` (asset export, rig import, TextMesh Pro setup), `Film/` (the film director),
+  `Checks/` (smoke tests, screenshots, audits), `Setup/` (project, comic, build and co-op menu setup) and `Tooling/`
+  (the editor bridge). The Editor assembly definition sits at `Editor/` and covers every subfolder.
 - Shaders are HLSL in `Assets/MicroduckVR/Shaders/`, URP-compatible and XR-safe.
 - `Reference/web/` is the browser version, read-only. `docs/` and `Reference/` sit outside `Assets/`, so Unity does
   not import them.
@@ -78,7 +81,7 @@ files to satisfy it.
 
 ## 9. Compiling and checking
 
-The editor bridge (`Editor/RemoteCommands.cs`) runs commands in the open editor and logs to `Logs/microduck_cmd.log`:
+The editor bridge (`Editor/Tooling/RemoteCommands.cs`) runs commands in the open editor and logs to `Logs/microduck_cmd.log`:
 
 ```
 powershell -ExecutionPolicy Bypass -File Tools\editor-cmd.ps1 -Commands "refresh"
