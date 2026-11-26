@@ -28,7 +28,7 @@ namespace MicroduckVR.Games
         {
             if (cam == null) cam = Camera.main;
             holdA = new InputAction("Laser", InputActionType.Value, expectedControlType: "Axis");
-            holdA.AddBinding("<XRController>{RightHand}/grip"); holdA.AddBinding("<Keyboard>/l");
+            holdA.AddBinding(InputPaths.RightGrip); holdA.AddBinding(InputPaths.KeyL);
             holdA.Enable();
             beam = new ComicBeam("Laser", "#FF5D73", 0.0028f, 0.016f);
         }

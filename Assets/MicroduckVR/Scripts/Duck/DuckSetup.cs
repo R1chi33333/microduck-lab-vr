@@ -49,7 +49,7 @@ namespace MicroduckVR.Duck
             {
                 // the player sees out of this duck: hide its shell, electronics and head, keep the legs and feet
                 SetLayer(rig.transform, LayerPlayerHead);
-                foreach (var legRoot in new[] { "body_yaw2roll", "body_bearing_roll" })
+                foreach (var legRoot in new[] { JointNames.LeftLegRoot, JointNames.RightLegRoot })
                     if (Body.Nodes.TryGetValue(legRoot, out var lr)) SetLayer(lr, LayerDuck);
             }
         }

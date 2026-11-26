@@ -14,40 +14,40 @@ namespace MicroduckVR.Player
         public DuckInput()
         {
             Move = new InputAction("Move", InputActionType.Value, expectedControlType: "Vector2");
-            Move.AddBinding("<XRController>{LeftHand}/{Primary2DAxis}");
-            Move.AddCompositeBinding("2DVector").With("Up", "<Keyboard>/w").With("Down", "<Keyboard>/s").With("Left", "<Keyboard>/a").With("Right", "<Keyboard>/d");
+            Move.AddBinding(InputPaths.LeftStick);
+            Move.AddCompositeBinding("2DVector").With("Up", InputPaths.KeyW).With("Down", InputPaths.KeyS).With("Left", InputPaths.KeyA).With("Right", InputPaths.KeyD);
 
             Turn = new InputAction("Turn", InputActionType.Value, expectedControlType: "Vector2");
-            Turn.AddBinding("<XRController>{RightHand}/{Primary2DAxis}");
-            Turn.AddCompositeBinding("2DVector").With("Left", "<Keyboard>/q").With("Right", "<Keyboard>/e").With("Up", "<Keyboard>/r").With("Down", "<Keyboard>/f");
+            Turn.AddBinding(InputPaths.RightStick);
+            Turn.AddCompositeBinding("2DVector").With("Left", InputPaths.KeyQ).With("Right", InputPaths.KeyE).With("Up", InputPaths.KeyR).With("Down", InputPaths.KeyF);
 
             Beak = new InputAction("Beak", InputActionType.Value, expectedControlType: "Axis");
-            Beak.AddBinding("<XRController>{RightHand}/trigger");
-            Beak.AddBinding("<Keyboard>/space");
+            Beak.AddBinding(InputPaths.RightTrigger);
+            Beak.AddBinding(InputPaths.KeySpace);
 
             Chirp = new InputAction("Chirp", InputActionType.Button);
-            Chirp.AddBinding("<XRController>{RightHand}/{PrimaryButton}");
-            Chirp.AddBinding("<Keyboard>/c");
+            Chirp.AddBinding(InputPaths.RightPrimary);
+            Chirp.AddBinding(InputPaths.KeyC);
 
             Skates = new InputAction("Skates", InputActionType.Button);
-            Skates.AddBinding("<XRController>{RightHand}/{SecondaryButton}");
-            Skates.AddBinding("<Keyboard>/k");
+            Skates.AddBinding(InputPaths.RightSecondary);
+            Skates.AddBinding(InputPaths.KeyK);
 
             Emote = new InputAction("Emote", InputActionType.Button);
-            Emote.AddBinding("<XRController>{LeftHand}/{PrimaryButton}");
-            Emote.AddBinding("<Keyboard>/x");
+            Emote.AddBinding(InputPaths.LeftPrimary);
+            Emote.AddBinding(InputPaths.KeyX);
 
             View = new InputAction("View", InputActionType.Button);           // first / third person
-            View.AddBinding("<XRController>{LeftHand}/{Primary2DAxisClick}");
-            View.AddBinding("<Keyboard>/v");
+            View.AddBinding(InputPaths.LeftStickClick);
+            View.AddBinding(InputPaths.KeyV);
 
             Recenter = new InputAction("Recenter", InputActionType.Button);   // third person: swing the view behind the duck
-            Recenter.AddBinding("<XRController>{RightHand}/{Primary2DAxisClick}");
-            Recenter.AddBinding("<Keyboard>/t");
+            Recenter.AddBinding(InputPaths.RightStickClick);
+            Recenter.AddBinding(InputPaths.KeyT);
 
             Menu = new InputAction("Menu", InputActionType.Button);
-            Menu.AddBinding("<XRController>{LeftHand}/{SecondaryButton}");
-            Menu.AddBinding("<Keyboard>/tab");
+            Menu.AddBinding(InputPaths.LeftSecondary);
+            Menu.AddBinding(InputPaths.KeyTab);
         }
 
         public void Enable() { foreach (var a in All) a.Enable(); }

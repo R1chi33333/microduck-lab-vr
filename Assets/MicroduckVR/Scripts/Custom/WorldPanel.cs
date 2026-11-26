@@ -34,7 +34,7 @@ namespace MicroduckVR.Custom
         void Awake()
         {
             trig = new InputAction("PanelPress", InputActionType.Value, expectedControlType: "Axis");
-            trig.AddBinding("<XRController>{RightHand}/trigger"); trig.AddBinding("<Keyboard>/enter"); trig.Enable();
+            trig.AddBinding(InputPaths.RightTrigger); trig.AddBinding(InputPaths.KeyEnter); trig.Enable();
             hiMat = Unlit("#FFE45C"); selMat = Unlit("#FF8A9A");
             laser = new ComicBeam("Panel laser", "#FF5D73", 0.0022f, 0.007f);
         }

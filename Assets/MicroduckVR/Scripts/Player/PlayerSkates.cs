@@ -56,9 +56,9 @@ namespace MicroduckVR.Player
             body = b;
             pair = new SkatePair();
             driftA = new InputAction("Drift", InputActionType.Value, expectedControlType: "Axis");
-            driftA.AddBinding("<XRController>{LeftHand}/grip"); driftA.AddBinding("<Keyboard>/leftShift");
+            driftA.AddBinding(InputPaths.LeftGrip); driftA.AddBinding(InputPaths.KeyLeftShift);
             boostA = new InputAction("Boost", InputActionType.Value, expectedControlType: "Axis");
-            boostA.AddBinding("<XRController>{LeftHand}/trigger"); boostA.AddBinding("<Keyboard>/leftCtrl");
+            boostA.AddBinding(InputPaths.LeftTrigger); boostA.AddBinding(InputPaths.KeyLeftCtrl);
             driftA.Enable(); boostA.Enable();
             pd = GetComponent<PlayerDuck>();
             ComicFX.Get();

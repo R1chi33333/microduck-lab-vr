@@ -65,7 +65,7 @@ namespace MicroduckVR.Player
                 }
                 else
                 {
-                    kind = "trash";
+                    kind = BagActions.Trash;
                     model = new GameObject("bin").transform; model.SetParent(tile, false); model.localPosition = new Vector3(0f, -0.006f, -0.012f);
                     ToyKit.Cyl(model, new Vector3(0f, 0.006f, 0f), 0.0075f, 0.014f, "#97A0AE", default, 0.0085f, 14);
                     ToyKit.Cyl(model, new Vector3(0f, 0.0145f, 0f), 0.0095f, 0.002f, "#5B6472", default, -1f, 14);

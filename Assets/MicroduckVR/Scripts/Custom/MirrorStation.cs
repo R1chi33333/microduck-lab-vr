@@ -99,7 +99,7 @@ namespace MicroduckVR.Custom
             BuildBoard(font);
             BuildPrompt(font);
             openA = new InputAction("MirrorOpen", InputActionType.Button);
-            openA.AddBinding("<XRController>{LeftHand}/{PrimaryButton}"); openA.AddBinding("<Keyboard>/x"); openA.Enable();
+            openA.AddBinding(InputPaths.LeftPrimary); openA.AddBinding(InputPaths.KeyX); openA.Enable();
             Sign(font, "MAKE YOUR DUCK!", new Vector3(MirrorCentre.x - W / 2f - 0.57f, 0.82f, MirrorCentre.z + 0.03f), Quaternion.LookRotation(Vector3.back, Vector3.up), 1.5f, "#FFC43D");
         }
 

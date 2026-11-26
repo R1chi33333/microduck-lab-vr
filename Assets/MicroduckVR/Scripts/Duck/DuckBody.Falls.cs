@@ -91,12 +91,12 @@ namespace MicroduckVR.Duck
             {
                 float u = Clamp(f.t / 1.6f, 0f, 1f), e = Smoother(u);
                 float push = Mathf.Sin(Mathf.PI * Clamp(u * 1.25f - 0.1f, 0f, 1f));
-                var P = new Dictionary<string, float> { { "left_knee", 0.9f }, { "right_knee", -0.9f }, { "left_hip_pitch", 0.45f }, { "right_hip_pitch", -0.45f }, { "left_ankle", 0.45f }, { "right_ankle", -0.45f } };
+                var P = new Dictionary<string, float> { { JointNames.LeftKnee, 0.9f }, { JointNames.RightKnee, -0.9f }, { JointNames.LeftHipPitch, 0.45f }, { JointNames.RightHipPitch, -0.45f }, { JointNames.LeftAnkle, 0.45f }, { JointNames.RightAnkle, -0.45f } };
                 foreach (var k in new List<string>(joints.Keys))
                 {
-                    if (k == "jaw") continue;
+                    if (k == JointNames.Jaw) continue;
                     float v = Lerp(limp[k], joints[k].stand, e) + (P.TryGetValue(k, out var pk) ? pk : 0f) * push;
-                    if (k == "head_roll") v += Mathf.Sin(f.t * 17f) * 0.22f * Clamp((u - 0.78f) * 5f, 0f, 1f) * (1f - u) * 4f;
+                    if (k == JointNames.HeadRoll) v += Mathf.Sin(f.t * 17f) * 0.22f * Clamp((u - 0.78f) * 5f, 0f, 1f) * (1f - u) * 4f;
                     SetQ(k, v); ApplyJoint(k);
                 }
                 float wIK = Smooth(Clamp((u - 0.25f) / 0.45f, 0f, 1f));
@@ -118,13 +118,13 @@ namespace MicroduckVR.Duck
             {
                 foreach (var k in new List<string>(joints.Keys))
                 {
-                    if (k == "jaw") continue;
+                    if (k == JointNames.Jaw) continue;
                     SetQ(k, Lerp(f.from[k], limp[k], limpW)); ApplyJoint(k);
                 }
             }
             Trunk.localPosition = Vector3.Lerp(Trunk.localPosition, trunkBase, 1f - Mathf.Exp(-10f * dt));
             Trunk.localRotation = Quaternion.Slerp(Trunk.localRotation, Quaternion.identity, 1f - Mathf.Exp(-10f * dt));
-            if (f.phase == FallPhase.Tumble) { SetQ("left_hip_roll", -0.3f + Mathf.Sin(f.t * 20f) * 0.1f); ApplyJoint("left_hip_roll"); }
+            if (f.phase == FallPhase.Tumble) { SetQ(JointNames.LeftHipRoll, -0.3f + Mathf.Sin(f.t * 20f) * 0.1f); ApplyJoint(JointNames.LeftHipRoll); }
             f.lift = 0f; PoseFall();
             if (f.phase != FallPhase.Tumble)
             {

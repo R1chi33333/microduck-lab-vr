@@ -29,20 +29,20 @@ namespace MicroduckVR.Duck
                 gaze = new Vector3(Mathf.Sin(y) * Mathf.Cos(p), -Mathf.Sin(p), Mathf.Cos(y) * Mathf.Cos(p));
             }
             float nod = Stepping ? Mathf.Sin(Phase * Mathf.PI * 4f) * 0.03f : 0f;
-            SetQ("neck_pitch", joints["neck_pitch"].stand - walkSpeed * 0.9f + nod); ApplyJoint("neck_pitch");
+            SetQ(JointNames.NeckPitch, joints[JointNames.NeckPitch].stand - walkSpeed * 0.9f + nod); ApplyJoint(JointNames.NeckPitch);
             for (int it = 0; it < Mathf.Min(2, Iters); it++)
             {
                 Vector3 f = HeadNode.rotation * headF;
-                float dYaw = SignedAngle(f, gaze, Axis("head_yaw"));
-                SetQ("head_yaw", Clamp(Q["head_yaw"] + dYaw, -1.0f, 1.0f)); ApplyJoint("head_yaw");
+                float dYaw = SignedAngle(f, gaze, Axis(JointNames.HeadYaw));
+                SetQ(JointNames.HeadYaw, Clamp(Q[JointNames.HeadYaw] + dYaw, -1.0f, 1.0f)); ApplyJoint(JointNames.HeadYaw);
                 f = HeadNode.rotation * headF;
-                Rot("head_pitch", SignedAngle(f, gaze, Axis("head_pitch")));
+                Rot(JointNames.HeadPitch, SignedAngle(f, gaze, Axis(JointNames.HeadPitch)));
                 // level the head (roll), with a little tilt when idle
                 Vector3 r = HeadNode.rotation * headLeft;
                 f = HeadNode.rotation * headF;
                 Vector3 rd = Vector3.Cross(f, Vector3.up).normalized;   // desired "left" in Unity
                 rd = Quaternion.AngleAxis(-idleTilt * Mathf.Rad2Deg, f) * rd;
-                Rot("head_roll", SignedAngle(r, rd, Axis("head_roll")));
+                Rot(JointNames.HeadRoll, SignedAngle(r, rd, Axis(JointNames.HeadRoll)));
             }
         }
 
@@ -56,7 +56,7 @@ namespace MicroduckVR.Duck
             Vector3 T = ReachState.target.Value;
             for (int it = 0; it < 8; it++)
             {
-                foreach (var jn in new[] { "head_pitch", "neck_pitch" })
+                foreach (var jn in new[] { JointNames.HeadPitch, JointNames.NeckPitch })
                 {
                     Vector3 E = BeakGap(), P = Pivot(jn);
                     float d = SignedAngle(E - P, T - P, Axis(jn));
@@ -71,7 +71,7 @@ namespace MicroduckVR.Duck
             float tgt = Mathf.Max(JawTarget, JawStop);
             const float rate = 3.2f;
             Jaw += Clamp(tgt - Jaw, -rate * dt, rate * dt);
-            SetQ("jaw", Jaw); ApplyJoint("jaw");
+            SetQ(JointNames.Jaw, Jaw); ApplyJoint(JointNames.Jaw);
         }
     }
 }

@@ -69,9 +69,9 @@ namespace MicroduckVR.Player
             if (cam == null) cam = Camera.main;
             if (font == null && bag != null) font = bag.font;
             if (font != null) fa = TMP_FontAsset.CreateFontAsset(font);
-            skipA = new InputAction("TutorialSkip", InputActionType.Button); skipA.AddBinding("<Keyboard>/escape"); skipA.Enable();
+            skipA = new InputAction("TutorialSkip", InputActionType.Button); skipA.AddBinding(InputPaths.KeyEscape); skipA.Enable();
             skipHoldA = new InputAction("TutorialSkipHold", InputActionType.Button);
-            skipHoldA.AddBinding("<XRController>{LeftHand}/menu"); skipHoldA.AddBinding("<XRController>{LeftHand}/menuButton"); skipHoldA.Enable();
+            skipHoldA.AddBinding(InputPaths.LeftMenu); skipHoldA.AddBinding(InputPaths.LeftMenuButton); skipHoldA.Enable();
             BuildCard();
             // Every step waits until you have really done the thing; nothing moves on by itself except the talking cards.
             steps = new[]

@@ -110,8 +110,8 @@ namespace MicroduckVR.Duck
 
         static readonly (string side, float s, string yaw, string roll, string pitch, string knee, string ankle, string sole)[] LegNodes =
         {
-            ("left", -1f, "body_yaw2roll", "body_hip_l", "body_upper_leg_left", "body_leg", "body_ankle_left", "marker_left_foot"),
-            ("right", 1f, "body_bearing_roll", "body_hip_l_2", "body_upper_leg_right", "body_leg_2", "body_ankle_right", "marker_right_foot"),
+            ("left", -1f, JointNames.LeftLegRoot, "body_hip_l", "body_upper_leg_left", "body_leg", "body_ankle_left", "marker_left_foot"),
+            ("right", 1f, JointNames.RightLegRoot, "body_hip_l_2", "body_upper_leg_right", "body_leg_2", "body_ankle_right", "marker_right_foot"),
         };
 
         // ------------------------------------------------------------------ setup
@@ -128,7 +128,7 @@ namespace MicroduckVR.Duck
             Trunk.localPosition = map.trunkTranslation;
             Trunk.localRotation = Quaternion.identity;
             CollectNodes(Trunk);
-            Nodes["body_trunk"] = Trunk;
+            Nodes[JointNames.TrunkNode] = Trunk;
             trunkBase = map.trunkTranslation;
             Model.localPosition = new Vector3(-trunkBase.x, 0f, -trunkBase.z);
             StandHeight = trunkBase.y;
@@ -160,7 +160,7 @@ namespace MicroduckVR.Duck
                 Legs[L.side] = leg;
             }
 
-            HeadNode = Nodes["body_jaw_soft"];
+            HeadNode = Nodes[JointNames.HeadNode];
             var hw = Quaternion.Inverse(HeadNode.rotation);
             headF = hw * Vector3.forward;
             headLeft = hw * Vector3.left;              // the duck's left is -X in Unity
@@ -173,8 +173,8 @@ namespace MicroduckVR.Duck
             limp = new Dictionary<string, float>(Q);
             // limp pose (theta values are handedness-independent)
             var lp = new Dictionary<string, float> {
-                { "left_hip_pitch", -0.05f }, { "left_knee", 0.85f }, { "left_ankle", 0.55f }, { "right_hip_pitch", 0.05f }, { "right_knee", -0.85f }, { "right_ankle", -0.55f },
-                { "left_hip_roll", -0.2f }, { "right_hip_roll", 0.2f }, { "neck_pitch", 0.1f }, { "head_pitch", 0.7f }, { "head_roll", 0.15f }, { "jaw", 0.25f } };
+                { JointNames.LeftHipPitch, -0.05f }, { JointNames.LeftKnee, 0.85f }, { JointNames.LeftAnkle, 0.55f }, { JointNames.RightHipPitch, 0.05f }, { JointNames.RightKnee, -0.85f }, { JointNames.RightAnkle, -0.55f },
+                { JointNames.LeftHipRoll, -0.2f }, { JointNames.RightHipRoll, 0.2f }, { JointNames.NeckPitch, 0.1f }, { JointNames.HeadPitch, 0.7f }, { JointNames.HeadRoll, 0.15f }, { JointNames.Jaw, 0.25f } };
             foreach (var kv in lp) limp[kv.Key] = kv.Value;
 
             renderers = Trunk.GetComponentsInChildren<Renderer>(true);
@@ -351,18 +351,18 @@ namespace MicroduckVR.Duck
             if (ReachState.w > 0.002f)
             {
                 float k = Smooth(Clamp(ReachState.w * 1.3f, 0f, 1f));
-                SetQ("head_yaw", Lerp(Q["head_yaw"], 0f, k)); SetQ("head_roll", Lerp(Q["head_roll"], 0f, k));
-                ApplyJoint("head_yaw"); ApplyJoint("head_roll");
+                SetQ(JointNames.HeadYaw, Lerp(Q[JointNames.HeadYaw], 0f, k)); SetQ(JointNames.HeadRoll, Lerp(Q[JointNames.HeadRoll], 0f, k));
+                ApplyJoint(JointNames.HeadYaw); ApplyJoint(JointNames.HeadRoll);
             }
             if (ReachState.w > 0.002f && ReachState.target.HasValue)
             {
-                float bNeck = Q["neck_pitch"], bHead = Q["head_pitch"];
-                if (ReachState.sol != null) { SetQ("neck_pitch", ReachState.sol["neck_pitch"]); SetQ("head_pitch", ReachState.sol["head_pitch"]); ApplyJoint("neck_pitch"); ApplyJoint("head_pitch"); }
+                float bNeck = Q[JointNames.NeckPitch], bHead = Q[JointNames.HeadPitch];
+                if (ReachState.sol != null) { SetQ(JointNames.NeckPitch, ReachState.sol[JointNames.NeckPitch]); SetQ(JointNames.HeadPitch, ReachState.sol[JointNames.HeadPitch]); ApplyJoint(JointNames.NeckPitch); ApplyJoint(JointNames.HeadPitch); }
                 ReachCCD();
-                ReachState.sol = new Dictionary<string, float> { { "neck_pitch", Q["neck_pitch"] }, { "head_pitch", Q["head_pitch"] } };
+                ReachState.sol = new Dictionary<string, float> { { JointNames.NeckPitch, Q[JointNames.NeckPitch] }, { JointNames.HeadPitch, Q[JointNames.HeadPitch] } };
                 float w = Smooth(Clamp(ReachState.w, 0f, 1f));
-                SetQ("neck_pitch", Lerp(bNeck, ReachState.sol["neck_pitch"], w)); SetQ("head_pitch", Lerp(bHead, ReachState.sol["head_pitch"], w));
-                ApplyJoint("neck_pitch"); ApplyJoint("head_pitch");
+                SetQ(JointNames.NeckPitch, Lerp(bNeck, ReachState.sol[JointNames.NeckPitch], w)); SetQ(JointNames.HeadPitch, Lerp(bHead, ReachState.sol[JointNames.HeadPitch], w));
+                ApplyJoint(JointNames.NeckPitch); ApplyJoint(JointNames.HeadPitch);
             }
             else ReachState.sol = null;
             UpdateJaw(dt);

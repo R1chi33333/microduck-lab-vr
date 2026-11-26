@@ -54,11 +54,11 @@ namespace MicroduckVR.Player
         {
             if (cam == null) cam = Camera.main;
             menuA = new InputAction("Bag", InputActionType.Button);
-            menuA.AddBinding("<XRController>{LeftHand}/{SecondaryButton}"); menuA.AddBinding("<Keyboard>/tab");
+            menuA.AddBinding(InputPaths.LeftSecondary); menuA.AddBinding(InputPaths.KeyTab);
             selectA = new InputAction("BagSelect", InputActionType.Value, expectedControlType: "Axis");
-            selectA.AddBinding("<XRController>{RightHand}/trigger"); selectA.AddBinding("<Keyboard>/enter");
+            selectA.AddBinding(InputPaths.RightTrigger); selectA.AddBinding(InputPaths.KeyEnter);
             navA = new InputAction("BagNav", InputActionType.Value, expectedControlType: "Vector2");
-            navA.AddCompositeBinding("2DVector").With("Up", "<Keyboard>/upArrow").With("Down", "<Keyboard>/downArrow").With("Left", "<Keyboard>/leftArrow").With("Right", "<Keyboard>/rightArrow");
+            navA.AddCompositeBinding("2DVector").With("Up", InputPaths.KeyUp).With("Down", InputPaths.KeyDown).With("Left", InputPaths.KeyLeft).With("Right", InputPaths.KeyRight);
             menuA.Enable(); selectA.Enable(); navA.Enable();
 
             ghostOk = Unlit("#8FD35A", "bag_ghost_ok"); ghostBad = Unlit("#FF5D73", "bag_ghost_bad");
