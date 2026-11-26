@@ -14,6 +14,9 @@ namespace MicroduckVR.Flock
     public class WanderDuck : MonoBehaviour
     {
         public static readonly List<WanderDuck> All = new List<WanderDuck>();
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { All.Clear(); }
+        static readonly string[] Emotes = { "look", "nod", "dance", "shake" };
         public Vector2 boundsMin = new Vector2(-2.6f, -2.1f), boundsMax = new Vector2(2.6f, 2.1f);
         public float speed = 0.1f;
         public int seed = 1;
@@ -48,7 +51,7 @@ namespace MicroduckVR.Flock
                 if (to.magnitude < 0.05f)
                 {
                     target = null; wait = R(1f, 3.5f);
-                    if (rng.NextDouble() < 0.35) body.PlayEmote(new[] { "look", "nod", "dance", "shake" }[rng.Next(4)]);
+                    if (rng.NextDouble() < 0.35) body.PlayEmote(Emotes[rng.Next(4)]);
                 }
                 else want = to.normalized * speed;
             }

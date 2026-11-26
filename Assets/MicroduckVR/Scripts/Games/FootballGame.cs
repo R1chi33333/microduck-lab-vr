@@ -13,6 +13,8 @@ namespace MicroduckVR.Games
     public class FootballGame : MonoBehaviour
     {
         public static FootballGame Instance { get; private set; }
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { Instance = null; }
         public static bool Active => Instance != null && Instance.active;
 
         // pitch (Unity space): centre, half length along z, goal mouth

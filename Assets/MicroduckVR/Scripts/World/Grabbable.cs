@@ -8,6 +8,8 @@ namespace MicroduckVR.World
     public class Grabbable : MonoBehaviour
     {
         public static readonly List<Grabbable> All = new List<Grabbable>();
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { All.Clear(); }
         public string label = "toy";
         public float gripWidth = 0.02f;            // beak opening needed to hold it
 

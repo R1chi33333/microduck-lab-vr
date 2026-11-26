@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using MicroduckVR.Comic;
-using MicroduckVR.Duck;
 using MicroduckVR.Player;
 using TMPro;
 using UnityEngine;
@@ -17,6 +16,8 @@ namespace MicroduckVR.Custom
     public class Garage : MonoBehaviour
     {
         public static Garage Instance { get; private set; }
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { Instance = null; }
         static readonly Vector3 Turntable = new Vector3(-2.2f, 0f, 1.78f);
 
         class PartDef { public string id, label, tab; public Regex re; public float rate; }

@@ -22,6 +22,10 @@ namespace MicroduckVR.Flock
 
         // ---- a card or board the player is reading: ducks do not stand between it and the player's eyes
         static Vector3 readZone; static float readRadius, readUntil; static bool readAlways;
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { All.Clear(); readZone = Vector3.zero; readRadius = 0f; readUntil = 0f; readAlways = false; }
+        static readonly string[] IdleEmotes = { "nod", "look", "dance", "shake" };
+        static readonly string[] PauseEmotes = { "look", "nod", "dance" };
         /// <summary>Call every frame while something is being read: keeps the flock out of the way between eyes and panel.
         /// 'always' also during a match or a race (filming).</summary>
         public static void ClearView(Vector3 eye, Vector3 panel, bool always = false)
@@ -114,7 +118,7 @@ namespace MicroduckVR.Flock
             if (State == "follow" && PlayerTargets.Count == 0) State = "wander";
             dur = State switch { "roam" => 40f, "follow" => R(8f, 16f), "wander" => R(7f, 13f), "toy" => 14f, "sit" => R(3f, 6f), _ => R(1.5f, 3.5f) };
             Context = "";
-            if (State == "idle" && R() < 0.5f) body.PlayEmote(new[] { "nod", "look", "dance", "shake" }[rng.Next(4)]);
+            if (State == "idle" && R() < 0.5f) body.PlayEmote(IdleEmotes[rng.Next(4)]);
         }
 
         /// <summary>Put the duck somewhere at once (race grid, duck swap): drops what it carries, stops what it was doing.</summary>
@@ -242,7 +246,7 @@ namespace MicroduckVR.Flock
                         if (target.HasValue)
                         {
                             State = "idle"; t = 0f; dur = R(1f, 3f);
-                            if (R() < 0.3f) body.PlayEmote(new[] { "look", "nod", "dance" }[rng.Next(3)]);
+                            if (R() < 0.3f) body.PlayEmote(PauseEmotes[rng.Next(3)]);
                             break;
                         }
                         target = HouseLayout.RandomSpot(Pos, 0.6f, rng);
