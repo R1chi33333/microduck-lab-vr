@@ -46,7 +46,9 @@ namespace MicroduckVR.EditorTools
                 keep.Add(d);
             }
             Directory.CreateDirectory(Path.GetDirectoryName(PackagePath));
+#pragma warning disable CS0618   // the classic export call; it still writes the same .unitypackage in Unity 6.6
             AssetDatabase.ExportPackage(keep.ToArray(), PackagePath, ExportPackageOptions.Default);
+#pragma warning restore CS0618
 
             int N(Func<string, bool> f) => keep.Count(f);
             long bytes = File.Exists(PackagePath) ? new FileInfo(PackagePath).Length : 0;
