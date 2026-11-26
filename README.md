@@ -86,20 +86,27 @@ again with **Microduck > Assets > Bake Duck Moves** (the GIFs are made from the 
 
 | File (under `Assets/MicroduckVR/`) | What it does |
 |---|---|
-| `Scripts/Flock/DuckBrain.cs` | **The AI ducks' brain.** Picks what each duck does, steers it round the house, plays the games, fetches toys. |
-| `Scripts/Duck/DuckBody.cs` | **Every animation:** walking, turning, sitting, crouching, hopping, head look, beak reach and jaw, emotes, skating, falling and getting up. |
+| `Scripts/Flock/DuckBrain.cs` | **The AI ducks' brain.** Picks what each duck does, steers it round the house, plays the games, fetches toys. Its chances, durations and spacing are named constants at the top. |
+| `Scripts/Flock/AiState.cs` | The behaviours (`AiState`: idle, follow, roam, wander, toy, sit, race, football, laser). |
+| `Scripts/Duck/DuckBody.cs` | **Every animation:** walking, turning, sitting, crouching, hopping, skating. The rest is in its parts: `DuckBody.Legs.cs` (leg IK, foot planting), `DuckBody.Head.cs` (head look, beak reach, jaw), `DuckBody.Emotes.cs` (emotes), `DuckBody.Falls.cs` (falling and getting up). |
+| `Scripts/Duck/Gait.cs` | The walking numbers from the web version (top speed, turn rate, step height). |
 | `Scripts/Duck/DuckSetup.cs` | Builds a duck when the game starts from `Models/microduck_rig.glb` and `Models/DuckJointMap.asset` (joint axes, limits, standing pose) and applies its colours. |
-| `Scripts/Flock/ThoughtBubbles.cs` | The comic speech bubbles over the AI ducks: one set of lines per behaviour. |
+| `Scripts/Duck/PropPusher.cs` | Lets a walking duck nudge toys out of its way. |
+| `Scripts/Duck/EmoteKind.cs`, `DuckEventKind.cs` | The emotes and the toy and floor events, as enums. |
+| `Scripts/Flock/ThoughtBubbles.cs` | The comic speech bubbles over the AI ducks: one set of lines per behaviour and per event. |
 | `Scripts/Audio/DuckAudio.cs` | Each duck's own chirping voice and footsteps; reacts to the brain's events. |
 | `Scripts/Flock/FlockSpawner.cs` | ADD DUCK / REMOVE DUCK in the toy bag (1 to 12 ducks). |
 | `Editor/Builders/SceneBuilderHouse.cs` | The starting flock: 6 ducks, where they stand, their colours and random seeds (**Microduck > Build House**). |
 | `Scripts/Net/NetFlock.cs` | Co-op: the host's brains decide, the joining PC's ducks copy them. |
 | `Scripts/Player/PlayerDuck.cs` | Your duck (the same `DuckBody`, driven by your controllers). |
+| `Scripts/Player/PlayerTargets.cs` | The players the ducks follow and keep clear of (you, and the other player in co-op). |
+| `Scripts/Player/PlayerSkates.cs`, `SkateTuning.cs` | Your roller skates and their feel (the numbers are the web version's). |
 | `Scripts/Dev/WanderDuck.cs` | A very simple brain, used only by the M1 test scene and the `Duck (live)` prefab for other projects. |
 
 ### What the AI ducks do
 
-When its timer runs out, a duck picks its next behaviour at random (`DuckBrain.Pick`):
+When its timer runs out, a duck picks its next behaviour at random (`DuckBrain.Pick`, with the chances and lengths
+as constants at the top of `DuckBrain.cs`):
 
 | Behaviour | Chance | How long | What it looks like |
 |---|---|---|---|
@@ -122,7 +129,7 @@ All the time: ducks keep about 19 cm apart (from each other and from you), feel 
 walk round them, get unstuck, step out of the way of a card or board you are reading, slide on tiles, slow down in
 water and bounce on the bed. They tell the bubbles and the voice what happened: `got`, `drop`, `bed`, `water`, `tile`.
 
-### What the body can do (animations in `DuckBody.cs`)
+### What the body can do (animations in `DuckBody.cs` and its parts)
 
 | Move | How it is driven |
 |---|---|
@@ -132,33 +139,38 @@ water and bounce on the bed. They tell the bubbles and the voice what happened: 
 | Look at something | `LookAt.target` / `LookAt.weight`; the head also stays steady while walking and tilts when idle |
 | Reach with the beak, open and close it | `ReachState` (neck and head bend until the beak meets the target), `JawTarget` |
 | Happy wiggle | `HappyWiggle` |
-| Emotes | `PlayEmote("nod" / "shake" / "look" / "dance")` |
+| Emotes | `PlayEmote(EmoteKind.Nod / Shake / Look / Dance)` |
 | Skating | Push strokes, leaning into turns, a wobble (set by the skates code) |
 | Falling over and getting up | `StartTip(direction)`: tips over, lies a moment, pushes itself up. `StartTumble` / `LandTumble` for a roll. Today only your duck falls (skating into things); the AI ducks never trip. |
 
 ### Adding a new move or behaviour
 
-**A new emote** (for example `"bow"` or `"spin"`):
+**A new emote** (for example `Bow` or `Spin`):
 
-1. `Scripts/Duck/DuckBody.cs`: give it a length in `PlayEmote` and a `case "bow":` in `EmoteOffsets`. Return
-   offsets for the body (`ox`, `oy`, `opitch`, `oyaw`, `oroll`) and the head (`gy` = head turn, `gp` = head nod),
-   multiplied by `env` so it eases in and out.
-2. To let the AI ducks use it: add `"bow"` to the emote lists in `DuckBrain.cs` (in `Pick` for idle ducks, in the
-   `wander` case for ducks that have arrived).
-3. To let the player use it: add a button to `Actions` in `Scripts/Player/BagMenu.cs` (the grid is full at 4 × 4, so
-   swap one out or add a row).
-4. Co-op needs nothing more: emotes go over the network by name. Both PCs need the new version.
-5. To get it as a clip and a GIF too: add it to `Moves()` in `Editor/Assets/AssetExport.MotionBake.cs` and run **Bake Duck Moves**.
+1. `Scripts/Duck/EmoteKind.cs`: add `Bow` at the end of the enum (the values go over the network, so do not reorder).
+2. `Scripts/Duck/DuckBody.Emotes.cs`: give it a length in `PlayEmote` and a `case EmoteKind.Bow:` in `EmoteOffsets`.
+   Return offsets for the body (`ox`, `oy`, `opitch`, `oyaw`, `oroll`) and the head (`gy` = head turn, `gp` = head
+   nod), multiplied by `env` so it eases in and out.
+3. To let the AI ducks use it: add `EmoteKind.Bow` to `IdleEmotes` (idle ducks) or `PauseEmotes` (ducks that have
+   arrived) in `DuckBrain.cs`, and raise the `rng.Next(n)` count next to it.
+4. To let the player use it: add a `BagActions` id, a button to `Actions` in `Scripts/Player/BagMenu.Actions.cs` and
+   its emote in the switch below it (the grid is full at 4 × 4, so swap one out or add a row).
+5. Co-op: emotes go over the network as a byte, so the new value just works; both PCs need the new version (bump
+   `NetSession.Version` when a message changes).
+6. To get it as a clip and a GIF too: add it to `Moves()` in `Editor/Assets/AssetExport.MotionBake.cs` and run **Bake Duck Moves**.
 
-**A new behaviour** (for example `"nap"`):
+**A new behaviour** (for example `Nap`):
 
-1. `Scripts/Flock/DuckBrain.cs`: add it to the chances and durations in `Pick`, then a `case "nap":` in `Think`
+1. `Scripts/Flock/AiState.cs`: add `Nap` at the end of `AiState` (sent over the network as a byte) and its name
+   (`"nap"`) in `AiStates.Name`.
+2. `Scripts/Flock/DuckBrain.cs`: add it to the chances and durations in `Pick`, then a `case AiState.Nap:` in `Think`
    that returns how fast to walk and turn, `(speed, turnRate)`, using `SteerAvoid(goal, speed, tolerance)` to walk
    somewhere and the body's controls above (`SitTarget`, `LookAt`, `PlayEmote`, ...) to pose.
-2. `Scripts/Flock/ThoughtBubbles.cs`: add lines for it to `Lines`, for example `{ "nap", new[] { "Zzz..." } }`.
-3. A sound for an event: fire `OnEvent?.Invoke(this, "kind", context)` in the brain and handle it in
-   `Scripts/Audio/DuckAudio.cs`.
-4. Something that takes over everything (a new game): add it to `Games()` in `DuckBrain.cs`, like the race.
+3. `Scripts/Flock/ThoughtBubbles.cs`: add lines for it to `StateLines`, for example
+   `{ AiState.Nap, new[] { "Zzz..." } }`.
+4. A sound for an event: add a `DuckEventKind` (at the end), raise it in the brain with `RaiseEvent(kind, context)`
+   and handle it in `Scripts/Audio/DuckAudio.cs`; its bubble lines go in `EventLines`.
+5. Something that takes over everything (a new game): add it to `Games()` in `DuckBrain.cs`, like the race.
 
 **A new kind of body pose** (for example a real jump or a bigger dance with the legs): add a weight like `SitW` or
 `CrouchW` to `DuckBody.Step` and pose the joints with `SetQ(joint, angle)` + `ApplyJoint(joint)`, or move the feet
