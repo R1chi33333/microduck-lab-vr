@@ -1,4 +1,3 @@
-using MicroduckVR.World;
 using UnityEngine;
 
 namespace MicroduckVR.Comic
