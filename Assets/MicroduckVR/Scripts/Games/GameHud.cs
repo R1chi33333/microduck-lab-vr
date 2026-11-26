@@ -20,6 +20,13 @@ namespace MicroduckVR.Games
             return inst;
         }
 
+        /// <summary>Comic sound words use the HUD's font, in play mode and in edit mode.</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+#endif
+        static void RegisterFont() { ComicPop.FontProvider = () => Get().Font; }
+
         Camera cam; Transform root, card, bigRoot, bigBurst; TextMeshPro caption, big, bigInk, arrowL, arrowR; TMP_FontAsset font;
         float bigT, bigDur, hudYaw; bool placed, glide; string capText = "";
 

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using MicroduckVR.Core;
 using MicroduckVR.Duck;
-using MicroduckVR.Games;
 using MicroduckVR.Player;
 using MicroduckVR.World;
 using TMPro;
@@ -18,6 +17,8 @@ namespace MicroduckVR.Comic
         static Mesh burst; static Material burstMat;
         /// <summary>Who the words face (filming); the main camera when not set.</summary>
         public static Camera Viewer;
+        /// <summary>The comic font for the words (the game HUD fills it, and makes the HUD on first use); none: TextMeshPro's default.</summary>
+        public static System.Func<TMP_FontAsset> FontProvider;
         float age, life, size; Transform tilt, ride; Vector3 rideOffset;
 
         /// <param name="ride">Travel with this transform (your own head): a word about yourself must not be left hanging in the
@@ -35,7 +36,7 @@ namespace MicroduckVR.Comic
             b.AddComponent<MeshFilter>().sharedMesh = Burst();
             var mr = b.AddComponent<MeshRenderer>(); mr.sharedMaterial = burstMat; mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.receiveShadows = false;
             var tg = new GameObject("text"); tg.transform.SetParent(p.tilt, false);
-            var t = tg.AddComponent<TextMeshPro>(); var f = GameHud.Get().Font; if (f != null) t.font = f;
+            var t = tg.AddComponent<TextMeshPro>(); var f = FontProvider != null ? FontProvider() : null; if (f != null) t.font = f;
             t.text = word; t.fontSize = 0.3f; t.alignment = TextAlignmentOptions.Center; t.textWrappingMode = TextWrappingModes.NoWrap;
             t.color = ComicLook.Hex(hex); t.outlineWidth = 0.25f; t.outlineColor = ComicLook.Ink;
             t.rectTransform.sizeDelta = new Vector2(0.4f, 0.08f);
