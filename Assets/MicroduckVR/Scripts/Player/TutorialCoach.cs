@@ -108,9 +108,9 @@ namespace MicroduckVR.Player
                 new Step { pic = "b", seq = Press, title = "SKATES OFF", body = "PRESS B AGAIN TO TAKE THEM OFF.", done = () => !sk.On },
                 new Step { pic = "grip_r", seq = Hold, title = "LASER DOT", offset = new Vector2(0f, 0.15f), body = "HOLD THE RIGHT GRIP AND POINT AT THE FLOOR.\nTHE OTHER DUCKS LOVE CHASING THE DOT!",
                            done = () => { heldT = LaserPointer.Active ? heldT + Time.deltaTime : heldT; return heldT > 1.5f; } },
-                new Step { pic = "click_l", seq = Press, title = "SEE YOURSELF", body = "CLICK THE LEFT STICK IN\nTO STEP OUT AND SEE YOUR DUCK.", done = () => pd.thirdPerson },
-                new Step { pic = "stick_r", seq = LeftRight, title = "LOOK AROUND", body = "OUT HERE THE RIGHT STICK\nMOVES YOUR DUCK'S HEAD. TRY IT!", done = () => pd.HeadAimAmount > 0.6f, lost = () => !pd.thirdPerson },
-                new Step { pic = "click_l", seq = Press, title = "BACK INSIDE", body = "CLICK THE LEFT STICK AGAIN\nTO SEE THROUGH YOUR DUCK'S EYES.", done = () => !pd.thirdPerson },
+                new Step { pic = "click_l", seq = Press, title = "DUCK'S-EYE VIEW", body = "CLICK THE LEFT STICK IN\nTO SEE THROUGH YOUR DUCK'S EYES.", done = () => !pd.thirdPerson },
+                new Step { title = "EVERYTHING IS GIANT!", body = "THIS IS THE HOUSE FROM DOWN HERE.\nLOOK AROUND!", max = 5f, done = () => stepT > 4.5f || pd.thirdPerson },
+                new Step { pic = "click_l", seq = Press, title = "BACK OUT", body = "CLICK THE LEFT STICK AGAIN\nTO SEE YOUR DUCK FROM BEHIND.", done = () => pd.thirdPerson },
                 new Step { title = "YOU'RE READY!", body = "FOOTBALL, RACES, DANCES, MORE DUCKS\nAND HELP ARE ALL IN THE TOY BAG (Y).", max = 7f, done = () => stepT > 6.5f },
             };
             bool done = false; try { done = PlayerPrefs.GetInt(DoneKey, 0) == 1; } catch { }
@@ -158,8 +158,8 @@ namespace MicroduckVR.Player
                  "Y: TOY BAG      B: ROLLER SKATES      X: DANCE\n" +
                  "SKATES: LEFT GRIP DRIFT, LEFT TRIGGER BOOST\n" +
                  "RIGHT GRIP: LASER DOT\n" +
-                 "LEFT STICK CLICK: FIRST / THIRD PERSON\n" +
-                 "THIRD PERSON: RIGHT STICK MOVES YOUR HEAD,\nRIGHT STICK CLICK PUTS THE VIEW BEHIND YOU",
+                 "LEFT STICK CLICK: DUCK'S-EYE VIEW / BACK OUT\n" +
+                 "RIGHT STICK CLICK: VIEW BEHIND YOUR DUCK",
                  "Y TO CLOSE");
         }
 

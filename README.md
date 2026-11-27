@@ -13,7 +13,7 @@
 ## Status
 
 All milestones of the port are in: the house, the flock, toys and the toy bag, roller skates, the laser,
-football, the house race, emotes, swapping ducks, third person, the mirror, the garage and a first-run tutorial.
+football, the house race, emotes, swapping ducks, a duck's-eye (first-person) view, the mirror, the garage and a first-run tutorial.
 The browser version is [here](https://r1chi33333.github.io/microduck-lab-preview/); the plan is in
 [docs/PORTING_PLAN.md](docs/PORTING_PLAN.md).
 
@@ -35,14 +35,14 @@ To install the game on another PC (no Unity needed), follow [docs/INSTALL.md](do
 | Control | What it does |
 |---|---|
 | Left stick | Walk towards where you look (on skates: steer) |
-| Right stick | Snap turn; in third person it aims your head (click: view behind you) |
+| Right stick | Snap turn (click: swing the view behind your duck); your duck looks where you look |
 | Right trigger | Open the beak; let go next to a toy to grab it, squeeze again to drop |
 | A | Chirp |
 | B | Roller skates on / off (left grip: drift, left trigger: boost) |
 | X | Dance (at the mirror: bring out the board to make your duck) |
 | Y | Toy bag: toys, bin, help, credits, football, race, swap duck, view, emotes |
 | Right grip | Laser dot for the ducks to chase |
-| Left stick click | First / third person |
+| Left stick click | Duck's-eye view (first person) / back to the view from behind |
 
 On the desktop without a headset: WASD walk, Q/E turn, Space beak, C chirp, K skates, Tab bag, L laser, V view.
 

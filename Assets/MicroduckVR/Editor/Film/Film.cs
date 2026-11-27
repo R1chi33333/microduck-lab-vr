@@ -307,7 +307,7 @@ namespace MicroduckVR.EditorTools
         /// <summary>Everything back to a calm state between shots.</summary>
         static void Reset()
         {
-            PlayerDuck.DebugWalk = null; PlayerDuck.DebugBeak = null; PlayerDuck.DebugChirp = false;
+            PlayerDuck.DebugWalk = null; PlayerDuck.DebugBeak = null; PlayerDuck.DebugChirp = false; PlayerDuck.DebugMove = null; PlayerDuck.DebugTurn = null;
             PlayerSkates.DebugDrift = null; PlayerSkates.DebugBoost = null; LaserPointer.DebugPoint = null; WorldPanel.DebugPoint = null;
             if (P == null) return;
             P.DropHeld();

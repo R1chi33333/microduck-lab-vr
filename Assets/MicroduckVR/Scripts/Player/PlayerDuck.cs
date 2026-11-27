@@ -44,20 +44,20 @@ namespace MicroduckVR.Player
         /// <summary>The body turns to face where you look past this many degrees.</summary>
         public float bodyFollowDeg = 55f;
 
-        /// <summary>Third-person view; left stick click or V toggles it.</summary>
+        /// <summary>Third-person view (the main view); left stick click or V toggles the duck's-eye view.</summary>
         [Header("Third person")]
         public bool thirdPerson;
+        /// <summary>Start every session in the third-person view; the duck's-eye view is the one you switch to.</summary>
+        public bool startInThirdPerson = true;
         /// <summary>Camera offset behind and above the duck (duck-scale m).</summary>
         public float thirdBack = 0.42f, thirdUp = 0.2f;
         /// <summary>Follow smoothing (s); the view never rotates by itself.</summary>
         public float thirdLag = 0.25f;
-        Vector3 thirdPos, thirdVel; bool thirdSnap = true; Vector2 headAim;
+        Vector3 thirdPos, thirdVel; bool thirdSnap = true;
 
         // what the player has done (the tutorial watches these)
         /// <summary>What the player has done so far (the tutorial watches these).</summary>
         public int SnapCount, ChirpCount, GrabCount, DropCount, ViewToggles; public float Walked, Turned;
-        /// <summary>How far the right stick is aiming the head (0..1).</summary>
-        public float HeadAimAmount => headAim.magnitude;
         /// <summary>Turn the view (not the duck) to face a heading, in one step.</summary>
         public void FaceView(float yawRad) { if (cam != null) originYaw += Mathf.DeltaAngle(cam.transform.eulerAngles.y, yawRad * Mathf.Rad2Deg); }
         [Range(0f, 1f)] public float vignetteStrength = 0.6f;
@@ -97,6 +97,10 @@ namespace MicroduckVR.Player
         public static float? DebugBeak;
         /// <summary>Editor tests: chirp once.</summary>
         public static bool DebugChirp;
+        /// <summary>Filming: the left stick, read like the real one (relative to the view, any deflection).</summary>
+        public static Vector2? DebugMove;
+        /// <summary>Filming: the right stick's sideways push (turning), read like the real one.</summary>
+        public static float? DebugTurn;
         /// <summary>Walking speed on the floor (m/s).</summary>
         public float Speed => new Vector2(vel.x, vel.z).magnitude;
         /// <summary>The duck's body.</summary>
@@ -128,6 +132,7 @@ namespace MicroduckVR.Player
             originYaw = yaw * Mathf.Rad2Deg;
             if (xrOrigin != null) xrOrigin.localScale = Vector3.one * worldScale;
             if (cam != null) cam.cullingMask &= ~(1 << Layers.PlayerHead);
+            if (startInThirdPerson) { thirdPerson = true; thirdSnap = true; if (cam != null) cam.cullingMask |= 1 << Layers.PlayerHead; }
             TrySetDeviceOrigin();
         }
 
@@ -170,7 +175,7 @@ namespace MicroduckVR.Player
         /// <summary>Switches between the first-person and the third-person view.</summary>
         public void SetThirdPerson(bool on)
         {
-            thirdPerson = on; thirdSnap = true; ViewToggles++; headAim = Vector2.zero;
+            thirdPerson = on; thirdSnap = true; ViewToggles++;
             if (cam != null) { if (on) cam.cullingMask |= 1 << Layers.PlayerHead; else cam.cullingMask &= ~(1 << Layers.PlayerHead); }
             if (vignette != null) vignette.Pulse(0.6f);
         }
@@ -190,20 +195,16 @@ namespace MicroduckVR.Player
         {
             float dt = Mathf.Min(Time.deltaTime, 1f / 30f);
 
-            // ---- right stick: in third person it aims the duck's head; otherwise it turns (smooth or snap)
+            // ---- right stick: turns the view in both views (smooth or snap); the duck's head looks where you look
             Vector2 rs = input.Turn.ReadValue<Vector2>();
-            float tx = rs.x;
-            if (thirdPerson)
+            float tx = DebugTurn ?? rs.x;
+            if (thirdPerson && input.Recenter.WasPressedThisFrame() && cam != null)
             {
-                headAim = Vector2.MoveTowards(headAim, rs.magnitude > 0.15f ? rs : Vector2.zero, 4f * dt);
-                if (input.Recenter.WasPressedThisFrame() && cam != null)
-                {
-                    // swing the view round behind the duck (a cut, not a glide)
-                    originYaw += Mathf.DeltaAngle(cam.transform.eulerAngles.y, yaw * Mathf.Rad2Deg);
-                    thirdSnap = true; if (vignette != null) vignette.Pulse(0.4f);
-                }
+                // third person, right stick click: swing the view round behind the duck (a cut, not a glide)
+                originYaw += Mathf.DeltaAngle(cam.transform.eulerAngles.y, yaw * Mathf.Rad2Deg);
+                thirdSnap = true; if (vignette != null) vignette.Pulse(0.4f);
             }
-            else if (turnMode == TurnMode.Smooth)
+            if (turnMode == TurnMode.Smooth)
             {
                 float wantTurn = Mathf.Abs(tx) > 0.2f ? Mathf.Sign(tx) * Mathf.InverseLerp(0.2f, 1f, Mathf.Abs(tx)) * smoothTurnDegPerSec : 0f;
                 turnVel = Mathf.MoveTowards(turnVel, wantTurn, smoothTurnDegPerSec * 4f * dt);   // eased start and stop
@@ -224,7 +225,7 @@ namespace MicroduckVR.Player
             }
 
             // ---- walk, relative to where the player looks
-            Vector2 stick = input.Move.ReadValue<Vector2>();
+            Vector2 stick = DebugMove ?? input.Move.ReadValue<Vector2>();
             if (stick.magnitude < 0.15f) stick = Vector2.zero;
             if (MicroduckVR.Games.RaceGame.Frozen) stick = Vector2.zero;                 // 3, 2, 1...
             float hy = HeadYaw;
@@ -254,7 +255,6 @@ namespace MicroduckVR.Player
                 // ---- body facing: walk direction, or follow the head when it looks far away
                 float targetYaw = yaw;
                 if (vel.magnitude > 0.02f) targetYaw = Mathf.Atan2(vel.x, vel.z);
-                else if (thirdPerson) { if (Mathf.Abs(headAim.x) > 0.85f) targetYaw = yaw + Mathf.Sign(headAim.x) * 0.6f; }   // full stick: the duck turns round
                 else if (Mathf.Abs(Mathf.DeltaAngle(yaw * Mathf.Rad2Deg, hy * Mathf.Rad2Deg)) > bodyFollowDeg) targetYaw = hy;
                 float dy = Mathf.DeltaAngle(yaw * Mathf.Rad2Deg, targetYaw * Mathf.Rad2Deg) * Mathf.Deg2Rad;
                 yaw += Mathf.Clamp(dy, -Gait.MaxYawRate * 1.4f * dt, Gait.MaxYawRate * 1.4f * dt);
@@ -303,8 +303,7 @@ namespace MicroduckVR.Player
             if (input.View.WasPressedThisFrame()) SetThirdPerson(!thirdPerson);
 
             // ---- gaze from the head
-            if (thirdPerson) body.LookAt.gazeDir = Quaternion.Euler(-headAim.y * 35f, yaw * Mathf.Rad2Deg + headAim.x * 75f, 0f) * Vector3.forward;
-            else if (cam != null) body.LookAt.gazeDir = cam.transform.forward;
+            if (cam != null) body.LookAt.gazeDir = cam.transform.forward;     // both views: the duck looks where you look
 
             // bed: boing boing (the body hops; the camera only follows a damped fraction of it)
             bedT = surfType == SurfaceType.Bed ? bedT + dt : 0f;
