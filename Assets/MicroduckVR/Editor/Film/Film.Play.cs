@@ -274,8 +274,10 @@ namespace MicroduckVR.EditorTools
             TutorialCoach.Restart();
             yield return Wait(0.6f);
             var mir = MirrorStation.Instance;
-            var mirrorC = MirrorStation.Centre;
-            Gaze(mirrorC + Vector3.up * 0.05f);
+            var mc = MirrorStation.Centre;
+            var mirrorC = new Vector3(mc.x, Pos.y + 0.13f, mc.z);                     // where the duck's reflection is
+            Gaze(mirrorC);
+            if (!mir.BoardOpen) { yield return Think(0.8f, 1.2f); Prompt("X", "MAKE YOUR DUCK"); mir.OpenBoard(true); yield return Wait(0.5f); }
             yield return Think(1.4f, 2.0f);                                          // oh, that's me
             yield return Glance(mir.Board.transform.position, 1.1f);
             yield return PressPanel(mir.Board, "skin_sky", 0.7f);

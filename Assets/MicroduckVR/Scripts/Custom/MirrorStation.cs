@@ -217,7 +217,9 @@ namespace MicroduckVR.Custom
             bool zone = me.magnitude < 1.1f && me.z > 0.05f;
             InZone = zone;
             if (zone && openA.WasPressedThisFrame() && !BagMenu.Busy) OpenBoard(!BoardOpen);
-            if (!zone && BoardOpen && me.magnitude > 1.4f) OpenBoard(false);
+            // walking off puts it away: measured from the duck, not the camera (a third-person camera can lag a frame behind a teleport)
+            var body = pd.Body.Pos - MirrorCentre; body.y = 0f;
+            if (!zone && BoardOpen && body.magnitude > 1.3f) OpenBoard(false);
             board.gameObject.SetActive(BoardOpen && me.magnitude < 1.5f);
             prompt.gameObject.SetActive(zone && !BoardOpen && !BagMenu.Busy);
             if (!near) return;
