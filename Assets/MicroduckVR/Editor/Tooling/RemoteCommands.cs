@@ -30,7 +30,11 @@ namespace MicroduckVR.EditorTools
             CompilationPipeline.assemblyCompilationFinished += (asm, msgs) =>
             {
                 foreach (var m in msgs)
-                    if (m.type == CompilerMessageType.Error) Log("COMPILE ERROR " + m.message);
+                    if (m.type == CompilerMessageType.Error)
+                    {
+                        Log("COMPILE ERROR " + m.message);
+                        if (SessionState.GetString(QueueKey, "").Length > 0) { SessionState.SetString(QueueKey, ""); Log("queue dropped (compile error)"); }
+                    }
             };
             CompilationPipeline.compilationFinished += _ => Log("compile finished");
             Application.logMessageReceived += (msg, stack, type) =>
