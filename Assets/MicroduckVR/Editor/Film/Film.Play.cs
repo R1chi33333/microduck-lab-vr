@@ -412,12 +412,19 @@ namespace MicroduckVR.EditorTools
             // ---------------- skates: out to the long hallway
             Chapter("skates");
             yield return ReadCard("ROLLER SKATES", 0.6f, 1.0f);
+            // the bedroom is full of toys: walk out to the long hallway first (round the play rug), then skate there
+            yield return Glance(new Vector3(5f, 0.3f, 2.6f), 0.8f);
+            yield return GoTo(new Vector3(5.6f, 0f, 0.2f), 0.8f, 0.15f, 6f);
+            yield return GoTo(new Vector3(5.85f, 0f, 1.0f), 0.8f, 0.15f, 5f);
+            yield return GoTo(new Vector3(5.45f, 0f, 1.85f), 0.8f, 0.15f, 5f);
+            yield return Travel(new Vector3(4.6f, 0f, 3.2f), 0.8f);
+            Debug.Log($"[Microduck] play: in the hallway at {Pos.ToString("F2")} ({vpT:F1}s)");
+            wantYaw = -90f; yield return Wait(0.7f);                                        // face down the hallway
             Prompt("B", "SKATES ON"); Skates(true); yield return Wait(0.9f);
             yield return ReadCard("ROLL!", 0.4f, 0.7f);
             PromptOnce("lstick_skate", "L-STICK", "SKATE", 1.4f);
-            yield return GoTo(new Vector3(5.0f, 0f, 1.6f), 0.7f, 0.25f, 8f);
-            yield return GoTo(new Vector3(5.0f, 0f, 2.9f), 0.7f, 0.25f, 5f);
-            yield return GoTo(new Vector3(3.2f, 0f, 2.95f), 1f, 0.3f, 6f);
+            yield return GoTo(new Vector3(2.6f, 0f, 3.2f), 0.7f, 0.3f, 8f);
+            Debug.Log($"[Microduck] play: rolled to {Pos.ToString("F2")} ({vpT:F1}s)");
             yield return ReadCard("BOOST", 0.2f, 0.4f);
             for (int i = 0; i < 4 && TutorialCoach.DebugTitle.StartsWith("BOOST"); i++)
             {
@@ -425,13 +432,21 @@ namespace MicroduckVR.EditorTools
                 Debug.Log($"[Microduck] play: boost try {i}: boosting {P.Skates.Boosting} on {P.Skates.On} fallen {P.Body.Fallen} card {TutorialCoach.DebugTitle}");
                 yield return Think(0.8f, 1.3f);
             }
-            yield return GoTo(new Vector3(-0.4f, 0f, 2.95f), 1f, 0.35f, 7f);
+            yield return GoTo(new Vector3(-0.6f, 0f, 3.2f), 1f, 0.35f, 7f);
+            Debug.Log($"[Microduck] play: boosted to {Pos.ToString("F2")} ({vpT:F1}s)");
             yield return ReadCard("DRIFT", 0.2f, 0.4f);
-            Prompt("L-GRIP", "HOLD + STEER: DRIFT", 1.8f); PlayerSkates.DebugDrift = 1f;
-            yield return GoTo(new Vector3(-1.3f, 0f, 3.5f), 1f, 0.3f, 2.5f);
-            yield return GoTo(new Vector3(0.2f, 0f, 3.3f), 1f, 0.35f, 2.5f);
-            PlayerSkates.DebugDrift = null;
-            yield return GoTo(new Vector3(1.4f, 0f, 3.1f), 0.6f, 0.3f, 5f);
+            for (int i = 0; i < 3 && TutorialCoach.DebugTitle.StartsWith("DRIFT"); i++)
+            {
+                // speed up along the hallway, then hold the grip and swing round
+                float dirX = Pos.x > -1f ? -1f : 1f;
+                yield return GoTo(new Vector3(Pos.x + dirX * 1.4f, 0f, 3.15f), 1f, 0.3f, 2.5f);
+                Prompt("L-GRIP", "HOLD + STEER: DRIFT", 1.8f); PlayerSkates.DebugDrift = 1f;
+                yield return GoTo(new Vector3(Pos.x + dirX * 0.5f, 0f, 3.55f), 1f, 0.25f, 1.5f);
+                yield return GoTo(new Vector3(Pos.x - dirX * 0.8f, 0f, 3.0f), 1f, 0.3f, 2f);
+                PlayerSkates.DebugDrift = null;
+                Debug.Log($"[Microduck] play: drift try {i} at {Pos.ToString("F2")}, card {TutorialCoach.DebugTitle}");
+            }
+            yield return GoTo(new Vector3(0.6f, 0f, 3.15f), 0.6f, 0.3f, 6f);
             yield return ReadCard("SKATES OFF", 0.3f, 0.6f);
             Prompt("B", "SKATES OFF"); Skates(false); yield return Wait(0.8f);
 
