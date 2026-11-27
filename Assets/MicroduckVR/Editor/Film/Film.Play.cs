@@ -247,8 +247,10 @@ namespace MicroduckVR.EditorTools
             Gaze(g.Centre);
             // come at it head-on and stop just short, so it is the thing right under the beak
             var dir = g.Centre - Pos; dir.y = 0f; dir = dir.sqrMagnitude > 1e-4f ? dir.normalized : GltfSpace.Forward(P.Body.Yaw);
-            if ((g.Centre - Pos).magnitude > 0.35f) yield return GoTo(g.Centre - dir * 0.3f, 0.7f, 0.06f, 8f);
-            yield return GoTo(g.Centre - dir * 0.13f, 0.35f, 0.03f, 4f);
+            // too close, or not facing it: a step back first (the body turns to walk), then up to it facing it
+            yield return GoTo(g.Centre - dir * 0.32f, 0.6f, 0.05f, 8f);
+            Gaze(g.Centre); yield return Think(0.2f, 0.4f);
+            yield return GoTo(g.Centre - dir * 0.12f, 0.35f, 0.025f, 4f);
             yield return Think(0.25f, 0.5f);
             for (int attempt = 0; attempt < 4 && P.Held == null; attempt++)
             {
@@ -259,7 +261,7 @@ namespace MicroduckVR.EditorTools
                     yield return Wait(0.7f); continue;                                  // chomp on air
                 }
                 float until = vpT + 1.6f, nextLog = 0f;
-                while (vpT < until && Grabbable.Nearest(P.Body.BeakGap(), 0.02f) == null)
+                while (vpT < until && Grabbable.Nearest(P.Body.BeakGap(), 0.03f) == null)
                 {
                     if (vpT > nextLog)
                     {
@@ -268,11 +270,11 @@ namespace MicroduckVR.EditorTools
                     }
                     yield return null;
                 }
-                if (Grabbable.Nearest(P.Body.BeakGap(), 0.02f) != null)
+                if (Grabbable.Nearest(P.Body.BeakGap(), 0.03f) != null)
                 {
                     yield return Think(0.1f, 0.22f); PlayerDuck.DebugBeak = 0f; Prompt("RT", "LET GO: BITE", 1.0f); yield return Wait(0.4f);
                 }
-                else { PlayerDuck.DebugBeak = 0f; yield return Think(0.3f, 0.5f); yield return GoTo(g.Centre - dir * 0.09f, 0.3f, 0.02f, 1.5f); }
+                else { PlayerDuck.DebugBeak = 0f; yield return Think(0.3f, 0.5f); dir = g.Centre - Pos; dir.y = 0f; dir.Normalize(); yield return GoTo(g.Centre - dir * 0.3f, 0.5f, 0.05f, 3f); yield return GoTo(g.Centre - dir * 0.1f, 0.3f, 0.02f, 2f); }
             }
             PlayerDuck.DebugBeak = 0f; Gaze(null);
         }
