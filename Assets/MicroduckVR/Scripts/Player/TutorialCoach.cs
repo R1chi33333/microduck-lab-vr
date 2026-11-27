@@ -64,6 +64,8 @@ namespace MicroduckVR.Player
             : inst.index >= 0 && inst.index < inst.steps.Length && inst.steps[inst.index].silent ? inst.steps[inst.index].title + " [board]" : "(none)";
         /// <summary>Starts the tutorial again from the first step.</summary>
         public static void Restart() { if (inst != null) inst.Begin(); }
+        /// <summary>Editor checks and filming: jump straight to a step (0-based).</summary>
+        public static void DebugJump(int step) { if (inst != null && step >= 0 && step < inst.steps.Length) inst.Go(step); }
         /// <summary>Editor checks: jump straight to a step.</summary>
         public static void DebugGo(int i) { if (inst != null) { inst.help = false; inst.Go(i); } }
         /// <summary>The card (kept out of the mirror's reflection).</summary>

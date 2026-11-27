@@ -294,6 +294,12 @@ namespace MicroduckVR.EditorTools
         {
             int want = System.Array.FindIndex(Cards, c => startsWith.StartsWith(c) || c.StartsWith(startsWith)) + 1;
             yield return Until(() => TutorialCoach.DebugTitle.StartsWith(startsWith) || (want > 0 && CardNo() > want), 20f);
+            if (want > 0 && CardNo() < want)
+            {
+                // the step before never finished: say so loudly, and move the tutorial on so the rest can still be checked
+                Debug.LogWarning($"[Microduck] play: FORCED to card {startsWith} (was {TutorialCoach.DebugTitle}) at {vpT:F1}s");
+                TutorialCoach.DebugJump(want - 1); yield return Wait(0.3f);
+            }
             if (!TutorialCoach.DebugTitle.StartsWith(startsWith)) yield break;
             lastCardSeen = startsWith; Debug.Log($"[Microduck] play: card {TutorialCoach.DebugTitle} at {vpT:F1}s");
             yield return Think(min, max);               // read it
