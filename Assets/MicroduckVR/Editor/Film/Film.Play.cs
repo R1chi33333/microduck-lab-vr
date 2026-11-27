@@ -260,9 +260,12 @@ namespace MicroduckVR.EditorTools
                     yield return Wait(0.35f); PlayerDuck.DebugBeak = 0f; Prompt("RT", "LET GO: BITE", 0.9f);
                     yield return Wait(0.7f); continue;                                  // chomp on air
                 }
-                float until = vpT + 1.6f, nextLog = 0f;
+                float until = vpT + 2.4f, nextLog = 0f;
+                yield return Wait(0.45f);                                             // the neck reaches down first
                 while (vpT < until && Grabbable.Nearest(P.Body.BeakGap(), 0.03f) == null)
                 {
+                    // beak open and down, still short of it: creep forward a little, the way a player nudges the stick
+                    moveGoal = g.Centre; moveSpeed = 0.18f; moveStop = 0.01f;
                     if (vpT > nextLog)
                     {
                         nextLog = vpT + 0.4f; var n26 = Grabbable.Nearest(P.Body.BeakGap(), 0.26f);
@@ -270,6 +273,7 @@ namespace MicroduckVR.EditorTools
                     }
                     yield return null;
                 }
+                moveGoal = null;
                 if (Grabbable.Nearest(P.Body.BeakGap(), 0.03f) != null)
                 {
                     yield return Think(0.1f, 0.22f); PlayerDuck.DebugBeak = 0f; Prompt("RT", "LET GO: BITE", 1.0f); yield return Wait(0.4f);
@@ -415,7 +419,12 @@ namespace MicroduckVR.EditorTools
             yield return GoTo(new Vector3(5.0f, 0f, 2.9f), 0.7f, 0.25f, 5f);
             yield return GoTo(new Vector3(3.2f, 0f, 2.95f), 1f, 0.3f, 6f);
             yield return ReadCard("BOOST", 0.2f, 0.4f);
-            Prompt("LT", "BOOST"); PlayerSkates.DebugBoost = 1f; yield return Wait(0.35f); PlayerSkates.DebugBoost = null;
+            for (int i = 0; i < 4 && TutorialCoach.DebugTitle.StartsWith("BOOST"); i++)
+            {
+                Prompt("LT", "BOOST"); PlayerSkates.DebugBoost = 1f; yield return Wait(0.35f); PlayerSkates.DebugBoost = null;
+                Debug.Log($"[Microduck] play: boost try {i}: boosting {P.Skates.Boosting} on {P.Skates.On} fallen {P.Body.Fallen} card {TutorialCoach.DebugTitle}");
+                yield return Think(0.8f, 1.3f);
+            }
             yield return GoTo(new Vector3(-0.4f, 0f, 2.95f), 1f, 0.35f, 7f);
             yield return ReadCard("DRIFT", 0.2f, 0.4f);
             Prompt("L-GRIP", "HOLD + STEER: DRIFT", 1.8f); PlayerSkates.DebugDrift = 1f;
