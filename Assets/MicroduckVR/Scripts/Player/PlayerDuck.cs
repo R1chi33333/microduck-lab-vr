@@ -53,7 +53,7 @@ namespace MicroduckVR.Player
         public float thirdBack = 0.42f, thirdUp = 0.2f;
         /// <summary>Follow smoothing (s); the view never rotates by itself.</summary>
         public float thirdLag = 0.25f;
-        Vector3 thirdPos, thirdVel; bool thirdSnap = true;
+        Vector3 thirdPos, thirdVel; bool thirdSnap = true; float mirrorBlend;
 
         // what the player has done (the tutorial watches these)
         /// <summary>What the player has done so far (the tutorial watches these).</summary>
@@ -350,7 +350,10 @@ namespace MicroduckVR.Player
             if (thirdPerson)
             {
                 // behind and above the duck, in the view's own heading (it only turns with snap turns), smoothly following
-                Vector3 back = Quaternion.Euler(0f, originYaw, 0f) * new Vector3(0f, thirdUp, -thirdBack);
+                // at the mirror the camera comes in over the shoulder, so the board and the reflection are both in view
+                mirrorBlend = Mathf.MoveTowards(mirrorBlend, MicroduckVR.Custom.MirrorStation.InZone ? 1f : 0f, 2f * dt);
+                float mb = mirrorBlend * mirrorBlend * (3f - 2f * mirrorBlend);
+                Vector3 back = Quaternion.Euler(0f, originYaw, 0f) * new Vector3(0f, Mathf.Lerp(thirdUp, 0.13f, mb), -Mathf.Lerp(thirdBack, 0.22f, mb));
                 Vector3 want = eye + back;
                 // never inside a wall: pull in towards the duck's head if something is in the way
                 Vector3 head = eye + Vector3.up * 0.02f, d = want - head;

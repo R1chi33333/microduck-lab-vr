@@ -46,7 +46,7 @@ namespace MicroduckVR.EditorTools
         // head: where the person looks (world yaw and pitch, degrees), with a person's dynamics
         static float hYaw, hPitch, hYawV, hPitchV, wantYaw, wantPitch = 10f; static Vector3? lookAt; static bool lookWhereGoing = true;
         static float headStiff = 6f;                         // rad/s: how briskly the head goes where it wants
-        static float snapCool;
+        static float snapCool; static float? pendingTurn;
         // left thumb
         static Vector2 stickL, stickLV; static Vector3? moveGoal; static float moveSpeed = 1f, moveStop = 0.08f, stuckT, sideStepT; static float sideSign = 1f;
         // right hand (pointer): a point in the world the hand aims at, moving like a wrist
@@ -114,10 +114,18 @@ namespace MicroduckVR.EditorTools
             float local = Mathf.DeltaAngle(P.ViewYaw, hYaw + ny);
             snapCool -= dt;
             PlayerDuck.DebugTurn = null;
-            if (Mathf.Abs(local) > 62f && snapCool <= 0f && Mathf.Abs(Mathf.DeltaAngle(P.ViewYaw, wantYaw)) > 55f)
+            float? turn = pendingTurn; pendingTurn = null; bool byHand = turn.HasValue;
+            if (!turn.HasValue && Mathf.Abs(local) > 62f && snapCool <= 0f && Mathf.Abs(Mathf.DeltaAngle(P.ViewYaw, wantYaw)) > 55f)
             {
-                PlayerDuck.DebugTurn = Mathf.Sign(local); snapCool = 0.42f;
-                PromptOnce("rstick", "R-STICK", "TURN", 1.0f);
+                turn = Mathf.Sign(local); PromptOnce("rstick", "R-STICK", "TURN", 1.0f);
+            }
+            if (turn.HasValue)
+            {
+                // the stick turns the whole play space: the head turns with it (it keeps its place on the shoulders)
+                PlayerDuck.DebugTurn = turn.Value; snapCool = 0.42f;
+                float step = Mathf.Sign(turn.Value) * P.snapDegrees; hYaw += step;
+                if (byHand && !lookAt.HasValue) wantYaw += step;      // a deliberate turn: what they look at turns too
+                local = Mathf.DeltaAngle(P.ViewYaw + step, hYaw + ny);
             }
             local = Mathf.Clamp(local, -85f, 85f);
             PlayerDuck.DebugHead = Quaternion.Euler(hPitch + np, local, 0f);
@@ -230,27 +238,31 @@ namespace MicroduckVR.EditorTools
             Prompt("RT", "SELECT", 0.9f); WorldPanel.DebugPress = true; yield return null;
         }
 
-        /// <summary>Waddle up to a thing with the beak open and bite when it is in reach. Early bites miss sometimes.</summary>
+        /// <summary>Walk up to a thing, open the beak (it reaches down by itself), let go to bite. The first try is too
+        /// early when asked, the way people often bite at nothing the first time; then a little shuffle closer.</summary>
         static IEnumerator GrabThing(Grabbable g, bool missFirst)
         {
             if (g == null) yield break;
-            Gaze(g.Centre); PlayerDuck.DebugBeak = 1f; Prompt("RT", "HOLD: OPEN BEAK", 1.6f);
-            moveGoal = g.Centre; moveSpeed = 0.6f; moveStop = 0.11f; bool missed = !missFirst;
-            float end = vpT + 12f;
-            while (vpT < end && P.Held == null)
+            Gaze(g.Centre);
+            yield return GoTo(g.Centre, 0.55f, 0.16f, 8f);
+            yield return Think(0.25f, 0.5f);
+            for (int attempt = 0; attempt < 4 && P.Held == null; attempt++)
             {
-                moveGoal = g.Centre;
-                bool inReach = Grabbable.Nearest(P.Body.BeakGap(), 0.02f) == g;
-                if (!missed && Vector3.Distance(P.Body.BeakGap(), g.Centre) < 0.09f)
+                PlayerDuck.DebugBeak = 1f; if (attempt == 0) Prompt("RT", "HOLD: OPEN BEAK", 1.6f);
+                if (missFirst && attempt == 0)
                 {
-                    // too eager: let go a little early, nothing in the beak; open again and shuffle closer
-                    missed = true; PlayerDuck.DebugBeak = 0f; Prompt("RT", "LET GO: BITE", 0.9f);
-                    yield return Wait(0.35f); moveStop = 0.05f; yield return Think(0.4f, 0.7f); PlayerDuck.DebugBeak = 1f; continue;
+                    yield return Wait(0.35f); PlayerDuck.DebugBeak = 0f; Prompt("RT", "LET GO: BITE", 0.9f);
+                    yield return Wait(0.7f); continue;                                  // chomp on air
                 }
-                if (missed && inReach) { moveGoal = null; yield return Think(0.12f, 0.25f); PlayerDuck.DebugBeak = 0f; Prompt("RT", "LET GO: BITE", 1.0f); yield return Wait(0.3f); }
-                yield return null;
+                float until = vpT + 1.6f;
+                while (vpT < until && Grabbable.Nearest(P.Body.BeakGap(), 0.02f) != g) yield return null;
+                if (Grabbable.Nearest(P.Body.BeakGap(), 0.02f) == g)
+                {
+                    yield return Think(0.1f, 0.22f); PlayerDuck.DebugBeak = 0f; Prompt("RT", "LET GO: BITE", 1.0f); yield return Wait(0.4f);
+                }
+                else { PlayerDuck.DebugBeak = 0f; yield return Think(0.3f, 0.5f); yield return GoTo(g.Centre, 0.35f, 0.1f, 1.5f); }
             }
-            moveGoal = null; PlayerDuck.DebugBeak = 0f; Gaze(null);
+            PlayerDuck.DebugBeak = 0f; Gaze(null);
         }
 
         static IEnumerator ReadCard(string startsWith, float min = 0.9f, float max = 1.6f)
@@ -268,6 +280,12 @@ namespace MicroduckVR.EditorTools
         }
 
         // ================================================================== the session
+        // Places (from the plan view, Microduck/Film MapShot): the mirror is on the bedroom's south wall; the bedroom has
+        // open floor at x 4.2..5.2, z -1.4..0; its door to the hallway is at (5.0, 2.56); the hallway's clear lane is
+        // z 2.95 from x 4.6 to -1.0; the living room door is at (0, 2.56), the football rug at x 1..2.5, z -0.6..2.2;
+        // the patio door at (0, 3.88), the garden pond at (-1.5, 5.4).
+        static IEnumerator SnapTurn(float sign) { pendingTurn = sign; yield return null; yield return null; }
+
         static IEnumerator Session()
         {
             // ---------------- a new player: the tutorial starts at the mirror
@@ -279,8 +297,8 @@ namespace MicroduckVR.EditorTools
             var mirrorC = new Vector3(mc.x, Pos.y + 0.13f, mc.z);                     // where the duck's reflection is
             Gaze(mirrorC);
             if (!mir.BoardOpen) { yield return Think(0.8f, 1.2f); Prompt("X", "MAKE YOUR DUCK"); mir.OpenBoard(true); yield return Wait(0.5f); }
-            yield return Think(1.4f, 2.0f);                                          // oh, that's me
-            yield return Glance(mir.Board.transform.position, 1.1f);
+            yield return Think(1.2f, 1.8f);                                          // oh, that's me
+            yield return Glance(mir.Board.transform.position, 1.0f);
             yield return PressPanel(mir.Board, "skin_sky", 0.7f);
             yield return Glance(mirrorC, 1.0f);
             yield return PressPanel(mir.Board, "skin_graphite", 0.5f);
@@ -290,34 +308,36 @@ namespace MicroduckVR.EditorTools
             yield return PressPanel(mir.Board, "paint_lavender", 0.6f);
             yield return Glance(mirrorC, 1.2f);
             yield return PressPanel(mir.Board, "voice_2", 0.5f);
-            yield return Think(0.6f, 0.9f);
+            yield return Think(0.5f, 0.8f);
             yield return PressPanel(mir.Board, "random", 0.4f);
             yield return Glance(mirrorC, 1.0f);
             yield return PressPanel(mir.Board, "random", 0.3f);
             yield return Glance(mirrorC, 1.3f);                                     // that one's good
             yield return PressPanel(mir.Board, "save", 0.6f);
             HandDown(); Gaze(null);
-            yield return Wait(1.0f);
+            yield return Wait(0.8f);
 
-            // ---------------- tutorial: getting around
+            // ---------------- tutorial: getting around (in the open part of the bedroom)
             Chapter("tutorial");
             yield return ReadCard("LOOKING GOOD", 0.6f, 1.0f);
-            yield return ReadCard("WADDLE", 1.0f, 1.6f);
+            yield return ReadCard("WADDLE", 1.0f, 1.5f);
+            wantYaw = 0f; yield return Wait(0.6f);                                  // turn the head away from the mirror...
+            yield return SnapTurn(1f); yield return Wait(0.35f); yield return SnapTurn(1f); yield return Wait(0.35f);
+            yield return SnapTurn(1f); yield return Wait(0.35f);
             PromptOnce("lstick", "L-STICK", "WALK", 1.6f);
-            var livingSpot = new Vector3(0.9f, 0f, -0.9f);
-            // turn round from the mirror and set off for the living room
-            yield return GoTo(Pos + new Vector3(-0.35f, 0f, 0.25f), 0.8f, 0.08f);
+            yield return GoTo(new Vector3(4.55f, 0f, -1.1f), 0.8f, 0.1f, 6f);
+            yield return GoTo(new Vector3(4.9f, 0f, -0.55f), 0.7f, 0.1f, 6f);
             yield return ReadCard("TURN", 0.6f, 1.0f);
-            wantYaw = hYaw + 95f; yield return Wait(0.9f);                          // looks round, the stick follows with a snap
-            yield return Travel(livingSpot, 0.9f);
-            yield return Glance(Pos + new Vector3(0.6f, 0.4f, 0.3f), 0.9f);          // a giant sofa
+            Prompt("R-STICK", "TURN", 1.2f); yield return SnapTurn(-1f); yield return Wait(0.5f); yield return SnapTurn(-1f);
+            wantYaw = P.ViewYaw; yield return Wait(0.8f);
+            yield return Glance(Pos + new Vector3(0.8f, 0.5f, 0.6f), 0.9f);          // the giant toy box
 
             yield return ReadCard("OPEN YOUR BEAK", 0.8f, 1.3f);
             Prompt("RT", "HOLD: OPEN BEAK", 1.5f); PlayerDuck.DebugBeak = 1f; yield return Wait(1.3f); PlayerDuck.DebugBeak = 0f;
             yield return ReadCard("GRAB IT", 0.8f, 1.4f);
             yield return GrabThing(NearestToy("rubber duck", Pos, 1.2f) ?? NearestToy(null, Pos, 0.8f), true);
             yield return ReadCard("DROP IT", 0.5f, 0.9f);
-            yield return GoTo(Pos + GltfSpace.Forward(P.Body.Yaw) * 0.45f + new Vector3(0.2f, 0f, 0f), 0.8f, 0.08f);
+            yield return GoTo(new Vector3(4.6f, 0f, -0.3f), 0.7f, 0.08f, 5f);
             Prompt("RT", "DROP", 1.0f); PlayerDuck.DebugBeak = 1f; yield return Wait(0.25f); PlayerDuck.DebugBeak = 0f;
             yield return ReadCard("QUACK", 0.4f, 0.8f);
             Prompt("A", "QUACK"); PlayerDuck.DebugChirp = true; yield return Think(0.5f, 0.8f);
@@ -331,7 +351,7 @@ namespace MicroduckVR.EditorTools
             yield return BrowseBag("rubber_duck_pink", "toy_car", "wicker_ball", "strawberry", "toy_car");
             yield return ReadCard("PUT IT DOWN", 0.4f, 0.8f);
             var f0 = GltfSpace.Forward(hYaw * Mathf.Deg2Rad);
-            var spot = Ground(Pos.x + f0.x * 0.42f, Pos.z + f0.z * 0.42f) + Vector3.up * 0.01f;
+            var spot = Ground(Pos.x + f0.x * 0.4f, Pos.z + f0.z * 0.4f) + Vector3.up * 0.01f;
             yield return PointAt(spot, 0.6f); yield return Think(0.3f, 0.6f);
             Prompt("RT", "PLACE"); Bag.DebugPress(); yield return Wait(0.6f);
             yield return PointAt(spot + new Vector3(0.12f, 0f, 0.06f), 0.4f); Bag.DebugPress(); yield return Wait(0.5f);
@@ -339,43 +359,39 @@ namespace MicroduckVR.EditorTools
             HandDown(); Prompt("Y", "CLOSE"); Bag.Close(); yield return Wait(0.8f);
             yield return Glance(spot, 1.2f);
 
-            // ---------------- skates, in the long hallway
+            // ---------------- skates: out to the long hallway
             Chapter("skates");
             yield return ReadCard("ROLLER SKATES", 0.6f, 1.0f);
-            yield return Travel(new Vector3(2.6f, 0f, 3.2f), 1f);
-            wantYaw = 270f; yield return Wait(0.8f);
             Prompt("B", "SKATES ON"); Skates(true); yield return Wait(0.9f);
             yield return ReadCard("ROLL!", 0.4f, 0.7f);
             PromptOnce("lstick_skate", "L-STICK", "SKATE", 1.4f);
-            yield return GoTo(new Vector3(-3.2f, 0f, 3.2f), 1f, 0.3f, 9f);
-            yield return ReadCard("BOOST", 0.3f, 0.6f);
-            // round at the end of the hallway and back, with a boost
-            yield return GoTo(new Vector3(-5.6f, 0f, 3.1f), 1f, 0.35f, 6f);
-            yield return GoTo(new Vector3(-3.5f, 0f, 3.35f), 1f, 0.4f, 6f);
+            yield return GoTo(new Vector3(5.0f, 0f, 1.6f), 0.7f, 0.25f, 8f);
+            yield return GoTo(new Vector3(5.0f, 0f, 2.9f), 0.7f, 0.25f, 5f);
+            yield return GoTo(new Vector3(3.2f, 0f, 2.95f), 1f, 0.3f, 6f);
+            yield return ReadCard("BOOST", 0.2f, 0.4f);
             Prompt("LT", "BOOST"); PlayerSkates.DebugBoost = 1f; yield return Wait(0.35f); PlayerSkates.DebugBoost = null;
-            yield return GoTo(new Vector3(1.5f, 0f, 3.2f), 1f, 0.4f, 7f);
-            yield return ReadCard("DRIFT", 0.2f, 0.5f);
+            yield return GoTo(new Vector3(-0.4f, 0f, 2.95f), 1f, 0.35f, 7f);
+            yield return ReadCard("DRIFT", 0.2f, 0.4f);
             Prompt("L-GRIP", "HOLD + STEER: DRIFT", 1.8f); PlayerSkates.DebugDrift = 1f;
-            yield return GoTo(new Vector3(3.6f, 0f, 2.9f), 1f, 0.4f, 3f);
-            yield return GoTo(new Vector3(2.2f, 0f, 3.45f), 1f, 0.4f, 3f);
+            yield return GoTo(new Vector3(-1.3f, 0f, 3.5f), 1f, 0.3f, 2.5f);
+            yield return GoTo(new Vector3(0.2f, 0f, 3.3f), 1f, 0.35f, 2.5f);
             PlayerSkates.DebugDrift = null;
-            yield return GoTo(new Vector3(0.6f, 0f, 3.2f), 0.6f, 0.3f, 5f);
+            yield return GoTo(new Vector3(1.4f, 0f, 3.1f), 0.6f, 0.3f, 5f);
             yield return ReadCard("SKATES OFF", 0.3f, 0.6f);
             Prompt("B", "SKATES OFF"); Skates(false); yield return Wait(0.8f);
 
-            // ---------------- laser dot
+            // ---------------- laser dot: the flock is somewhere near
             Chapter("laser");
             yield return ReadCard("LASER DOT", 0.6f, 1.0f);
-            yield return Travel(new Vector3(-0.2f, 0f, 1.6f), 0.9f);
             DuckBrain near = null; float nd = 9f; foreach (var b in DuckBrain.All) { float d = Vector3.Distance(b.Pos, Pos); if (d < nd) { nd = d; near = b; } }
-            var dotC = near != null ? Vector3.Lerp(Pos, near.Pos, 0.55f) : Pos + GltfSpace.Forward(P.Body.Yaw) * 0.5f;
+            var dotC = near != null && nd < 2.5f ? Vector3.Lerp(Pos, near.Pos, 0.6f) : Pos + GltfSpace.Forward(hYaw * Mathf.Deg2Rad) * 0.55f;
             dotC.y = WorldQueries.GroundNear(dotC.x, dotC.z, 0.3f);
             Prompt("R-GRIP", "HOLD: LASER", 2.2f);
             float lEnd = vpT + 6.5f;
             while (vpT < lEnd)
             {
                 float a = (vpT - lEnd) * 0.9f;
-                var p = dotC + new Vector3(Mathf.Cos(a) * 0.22f + Noise(0.6f, 2f) * 0.05f, 0f, Mathf.Sin(a * 1.3f) * 0.16f);
+                var p = dotC + new Vector3(Mathf.Cos(a) * 0.2f + Noise(0.6f, 2f) * 0.05f, 0f, Mathf.Sin(a * 1.3f) * 0.12f);
                 LaserPointer.DebugPoint = p; Gaze(p); yield return null;
             }
             LaserPointer.DebugPoint = null; Gaze(null);
@@ -387,29 +403,32 @@ namespace MicroduckVR.EditorTools
             Prompt("L-STICK CLICK", "DUCK'S-EYE VIEW", 1.8f); P.SetThirdPerson(false); yield return Wait(0.8f);
             yield return ReadCard("EVERYTHING IS GIANT", 0.3f, 0.5f);
             headStiff = 4f;
-            wantPitch = -30f; wantYaw = hYaw - 40f; yield return Wait(1.6f);   // up at the table
-            wantYaw = hYaw + 80f; yield return Wait(1.8f);
-            wantPitch = 5f; yield return Wait(1.0f);
+            wantPitch = -32f; wantYaw = hYaw - 30f; yield return Wait(1.7f);           // up at the lamps and the ceiling
+            wantYaw = hYaw + 75f; wantPitch = -20f; yield return Wait(1.8f);
+            wantPitch = 6f; yield return Wait(1.0f);
             headStiff = 6f;
             yield return ReadCard("BACK OUT", 0.3f, 0.6f);
             Prompt("L-STICK CLICK", "BACK OUT", 1.4f); P.SetThirdPerson(true); yield return Wait(0.6f);
             yield return ReadCard("YOU'RE READY", 1.5f, 2.2f);
             yield return Until(() => TutorialCoach.DebugTitle == "(none)", 8f);
 
-            // ---------------- free play: football
+            // ---------------- free play: football in the living room
             Chapter("football");
+            yield return GoTo(new Vector3(0.6f, 0f, 2.95f), 0.9f, 0.2f, 6f);
+            yield return GoTo(new Vector3(0.1f, 0f, 2.3f), 0.9f, 0.2f, 6f);
+            yield return GoTo(new Vector3(0.6f, 0f, 1.4f), 0.9f, 0.2f, 6f);
             Prompt("Y", "TOY BAG"); Bag.Open(); yield return Wait(0.6f);
             yield return BrowseBag("dance", "race", "football");
             HandDown(); yield return Wait(1.2f);
-            float fEnd = vpT + 16f;
+            float fEnd = vpT + 15f;
             var fg = FootballGame.Instance;
             while (vpT < fEnd && fg != null && FootballGame.Active)
             {
                 // come at the ball from the far side of the goal it should go into, then run through it
                 var ball = fg.BallPos; var goal = fg.GoalCentre(1); var toGoal = goal - ball; toGoal.y = 0f; toGoal.Normalize();
                 var behind = ball - toGoal * 0.12f;
-                var meToBehind = behind - Pos; meToBehind.y = 0f;
-                moveGoal = meToBehind.magnitude > 0.08f && Vector3.Dot((Pos - ball).normalized, -toGoal) < 0.6f ? behind : ball + toGoal * 0.2f;
+                bool lined = Vector3.Dot((Pos - ball).normalized, -toGoal) > 0.6f;
+                moveGoal = lined ? ball + toGoal * 0.2f : behind;
                 moveSpeed = 1f; moveStop = 0.02f; Gaze(ball);
                 yield return null;
             }
@@ -417,7 +436,7 @@ namespace MicroduckVR.EditorTools
             if (FootballGame.Active) FootballGame.Instance.StopGame();
             yield return Wait(0.6f);
 
-            // ---------------- the race
+            // ---------------- the race round the whole house
             Chapter("race");
             Prompt("Y", "TOY BAG"); Bag.Open(); yield return Wait(0.6f);
             yield return BrowseBag("football", "race");
@@ -433,13 +452,13 @@ namespace MicroduckVR.EditorTools
             moveGoal = null;
             if (RaceGame.Active) RaceGame.Ensure().StopRace();
 
-            // ---------------- outside: the garden, the puddle, more ducks, a dance
+            // ---------------- outside: the garden, the pond, more ducks, a dance
             Chapter("garden");
-            yield return Travel(new Vector3(0f, 0f, 4.6f), 1f);
+            yield return Travel(new Vector3(0.1f, 0f, 4.4f), 1f);
             yield return LookAround(2.4f, 90f);
-            yield return GoTo(new Vector3(1.2f, 0f, 5.1f), 0.9f, 0.15f, 8f);           // splash
+            yield return GoTo(new Vector3(-0.9f, 0f, 5.1f), 0.9f, 0.15f, 8f);          // into the pond: splash
             yield return Glance(Pos + Vector3.down * 0.05f + GltfSpace.Forward(P.Body.Yaw) * 0.2f, 1.0f);
-            yield return GoTo(new Vector3(2.4f, 0f, 5.6f), 0.9f, 0.15f, 8f);
+            yield return GoTo(new Vector3(-0.3f, 0f, 6.1f), 0.9f, 0.15f, 8f);
             Prompt("Y", "TOY BAG"); Bag.Open(); yield return Wait(0.5f);
             yield return BrowseBag("swap", "addduck");
             yield return Think(0.4f, 0.7f);
@@ -453,6 +472,7 @@ namespace MicroduckVR.EditorTools
             Chapter("end");
             yield return Wait(1.0f);
         }
+
 
         /// <summary>A plan view of the house (Logs/film/map.png, x -7.5..7.5, z -3..8), for laying out routes.</summary>
         public static void MapShot()
