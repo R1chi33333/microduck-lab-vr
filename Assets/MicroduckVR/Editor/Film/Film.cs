@@ -26,7 +26,7 @@ namespace MicroduckVR.EditorTools
     {
         public class Shot
         {
-            public string name, caption; public float dur, pre; public bool fp;
+            public string name, caption; public float dur, pre, stillEvery; public bool fp;
             public Action start; public Action<float> tick;
         }
 
@@ -136,7 +136,7 @@ namespace MicroduckVR.EditorTools
             Time.captureFramerate = savedCapture; ComicPop.Viewer = null;
             foreach (var tb in UnityEngine.Object.FindObjectsByType<ThoughtBubbles>()) { tb.viewer = P != null ? P.cam : null; tb.showThoughts = true; }
             Reset(); GameHud.Hidden = false;
-            manifest.Dispose();
+            manifest.Dispose(); prompts?.Dispose(); prompts = null;
             var pipe = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
             if (pipe != null) { pipe.shadowDistance = savedShadowDist; pipe.shadowCascadeCount = savedCascades; }
             QualitySettings.anisotropicFiltering = savedAniso; QualitySettings.lodBias = savedLod;
@@ -161,7 +161,7 @@ namespace MicroduckVR.EditorTools
             var s = shots[si];
             if (!started)
             {
-                started = true; elapsed = 0f; outT = 0f; outFrames = 0; sub = 0; Slow = 1f; U = 0f; fstop = 4f; LensClear = false;
+                started = true; elapsed = 0f; outT = 0f; outFrames = 0; sub = 0; Slow = 1f; U = 0f; fstop = 4f; LensClear = false; shotOver = false; promptedOnce.Clear();
                 fired.Clear(); stills.Clear(); Reset(); camInit = false; biteAt = -1f; grabPhase = 0; phaseT = 0f;
                 s.start?.Invoke();
                 if (!preview)
@@ -193,7 +193,11 @@ namespace MicroduckVR.EditorTools
             if (t >= 0f)
             {
                 bool shoot = !preview;
-                if (preview)
+                if (preview && s.stillEvery > 0f)
+                {
+                    int k = Mathf.FloorToInt(outT / s.stillEvery); shoot = !stills.Contains(k) && sub == Q.sub - 1; if (shoot) stills.Add(k);
+                }
+                else if (preview)
                 {
                     int k = outT < 1f / Q.fps ? 0 : outT >= s.dur * 0.5f && outT < s.dur * 0.5f + 1f / Q.fps ? 1 : outT >= s.dur - 2f / Q.fps ? 2 : -1;
                     shoot = k >= 0 && !stills.Contains(k); if (shoot) stills.Add(k);
@@ -211,7 +215,8 @@ namespace MicroduckVR.EditorTools
                     {
                         Graphics.Blit(accum, outRt);
                         RenderTexture.active = outRt; tex.ReadPixels(new Rect(0, 0, Q.w, Q.h), 0, 0); tex.Apply(false);
-                        if (preview) atlas.SetPixels32((stills.Count - 1) * 480, (5 - si % 6) * 270, 480, 270, tex.GetPixels32());
+                        if (preview && s.stillEvery > 0f) File.WriteAllBytes(Path.Combine(dir, $"still_{stills.Count - 1:D3}_{outT:F1}.jpg"), tex.EncodeToJPG(85));
+                        else if (preview) atlas.SetPixels32((stills.Count - 1) * 480, (5 - si % 6) * 270, 480, 270, tex.GetPixels32());
                         else enc.AddFrame(tex);
                     }
                     RenderTexture.active = prevRt;
@@ -228,7 +233,7 @@ namespace MicroduckVR.EditorTools
             elapsed += Dt / Mathf.Max(0.05f, Slow);
             sub = t >= 0f ? (sub + 1) % Q.sub : 0;
             Time.captureFramerate = Mathf.Max(1, Mathf.RoundToInt(Q.fps * Q.sub * Mathf.Max(0.05f, Slow)));
-            bool done = outT >= s.dur - 1e-4f;
+            bool done = outT >= s.dur - 1e-4f || shotOver;
             if (done && preview && (si % 6 == 5 || si == shots.Count - 1)) { atlas.Apply(false); File.WriteAllBytes(Path.Combine(dir, $"sheet_{si / 6}.jpg"), atlas.EncodeToJPG(78)); atlas.SetPixels32(new Color32[1440 * 270 * 6]); }
             if (done) { CloseEncoder(); Debug.Log($"[Microduck] film shot {si:D2} {s.name} ok  ({Info()})"); si++; started = false; }
         }
@@ -307,7 +312,7 @@ namespace MicroduckVR.EditorTools
         /// <summary>Everything back to a calm state between shots.</summary>
         static void Reset()
         {
-            PlayerDuck.DebugWalk = null; PlayerDuck.DebugBeak = null; PlayerDuck.DebugChirp = false; PlayerDuck.DebugMove = null; PlayerDuck.DebugTurn = null;
+            PlayerDuck.DebugWalk = null; PlayerDuck.DebugBeak = null; PlayerDuck.DebugChirp = false; PlayerDuck.DebugMove = null; PlayerDuck.DebugTurn = null; PlayerDuck.DebugHead = null;
             PlayerSkates.DebugDrift = null; PlayerSkates.DebugBoost = null; LaserPointer.DebugPoint = null; WorldPanel.DebugPoint = null;
             if (P == null) return;
             P.DropHeld();

@@ -120,7 +120,7 @@ namespace MicroduckVR.Player
         /// <summary>The tutorial opens at the mirror, so the first thing you do is choose your duck's look.</summary>
         void ToMirror()
         {
-            pd.SetThirdPerson(false);
+            if (!pd.thirdPerson) pd.SetThirdPerson(true);               // the main view: your duck in front of the mirror
             pd.Teleport(MicroduckVR.Custom.MirrorStation.StandPos, Mathf.PI);
             pd.FaceView(Mathf.PI);
             if (MicroduckVR.Custom.MirrorStation.Instance != null) MicroduckVR.Custom.MirrorStation.Instance.OpenBoard(true);

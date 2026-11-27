@@ -101,6 +101,10 @@ namespace MicroduckVR.Player
         public static Vector2? DebugMove;
         /// <summary>Filming: the right stick's sideways push (turning), read like the real one.</summary>
         public static float? DebugTurn;
+        /// <summary>Filming: the headset's rotation (local to the play space), as a person's head would move it.</summary>
+        public static Quaternion? DebugHead;
+        /// <summary>The play space's heading (degrees): snap and smooth turns move it; the head turns on top of it.</summary>
+        public float ViewYaw => originYaw;
         /// <summary>Walking speed on the floor (m/s).</summary>
         public float Speed => new Vector2(vel.x, vel.z).magnitude;
         /// <summary>The duck's body.</summary>
@@ -194,6 +198,7 @@ namespace MicroduckVR.Player
         void Update()
         {
             float dt = Mathf.Min(Time.deltaTime, 1f / 30f);
+            if (DebugHead.HasValue && cam != null) cam.transform.localRotation = DebugHead.Value;
 
             // ---- right stick: turns the view in both views (smooth or snap); the duck's head looks where you look
             Vector2 rs = input.Turn.ReadValue<Vector2>();
@@ -330,6 +335,7 @@ namespace MicroduckVR.Player
         {
             if (xrOrigin == null || cam == null) return;
             float dt = Mathf.Min(Time.deltaTime, 1f / 30f);
+            if (DebugHead.HasValue) cam.transform.localRotation = DebugHead.Value;
             xrOrigin.localScale = Vector3.one * worldScale;
             xrOrigin.rotation = Quaternion.Euler(0f, originYaw, 0f);
 
