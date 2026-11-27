@@ -272,10 +272,24 @@ namespace MicroduckVR.EditorTools
             yield return Think(min, max);               // read it
         }
 
+        /// <summary>A bit of clear floor the player can see, near the duck and off to one side of it (not through it).</summary>
+        static Vector3 FloorSpot(float dist)
+        {
+            var eye = P.cam.transform.position; int mask = WorldQueries.WorldMask | (1 << MicroduckVR.Core.Layers.Prop);
+            foreach (float a in new[] { 35f, -35f, 55f, -55f, 20f, -20f, 75f, -75f })
+            {
+                var f = GltfSpace.Forward((hYaw + a) * Mathf.Deg2Rad); var p = Ground(Pos.x + f.x * dist, Pos.z + f.z * dist);
+                if (Physics.Raycast(eye, (p - eye).normalized, out var hit, 3f, mask, QueryTriggerInteraction.Ignore) && hit.normal.y > 0.8f
+                    && Vector3.Distance(hit.point, p) < 0.03f && !Physics.CheckSphere(p + Vector3.up * 0.03f, 0.03f, mask & ~WorldQueries.WorldMask, QueryTriggerInteraction.Ignore))
+                    return p;
+            }
+            return Ground(Pos.x, Pos.z) + GltfSpace.Forward(hYaw * Mathf.Deg2Rad) * dist;
+        }
+
         static Grabbable NearestToy(string label, Vector3 near, float within)
         {
             Grabbable best = null; float bd = within;
-            foreach (var g in Grabbable.All) { if (label != null && g.label != label) continue; float d = Vector3.Distance(g.Centre, near); if (d < bd) { bd = d; best = g; } }
+            foreach (var g in Grabbable.All) { if (label != null && (g.label == null || !g.label.ToLowerInvariant().Contains(label))) continue; float d = Vector3.Distance(g.Centre, near); if (d < bd) { bd = d; best = g; } }
             return best;
         }
 
@@ -350,11 +364,10 @@ namespace MicroduckVR.EditorTools
             yield return ReadCard("PICK A TOY", 0.4f, 0.8f);
             yield return BrowseBag("rubber_duck_pink", "toy_car", "wicker_ball", "strawberry", "toy_car");
             yield return ReadCard("PUT IT DOWN", 0.4f, 0.8f);
-            var f0 = GltfSpace.Forward(hYaw * Mathf.Deg2Rad);
-            var spot = Ground(Pos.x + f0.x * 0.4f, Pos.z + f0.z * 0.4f) + Vector3.up * 0.01f;
+            var spot = FloorSpot(0.38f) + Vector3.up * 0.005f;
             yield return PointAt(spot, 0.6f); yield return Think(0.3f, 0.6f);
             Prompt("RT", "PLACE"); Bag.DebugPress(); yield return Wait(0.6f);
-            yield return PointAt(spot + new Vector3(0.12f, 0f, 0.06f), 0.4f); Bag.DebugPress(); yield return Wait(0.5f);
+            if (TutorialCoach.DebugTitle.StartsWith("PUT IT DOWN")) { var s2 = FloorSpot(0.3f) + Vector3.up * 0.005f; yield return PointAt(s2, 0.5f); Bag.DebugPress(); yield return Wait(0.6f); }
             yield return ReadCard("CLOSE THE BAG", 0.3f, 0.6f);
             HandDown(); Prompt("Y", "CLOSE"); Bag.Close(); yield return Wait(0.8f);
             yield return Glance(spot, 1.2f);

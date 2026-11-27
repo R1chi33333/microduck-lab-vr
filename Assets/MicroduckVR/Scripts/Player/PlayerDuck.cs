@@ -355,10 +355,15 @@ namespace MicroduckVR.Player
                 float mb = mirrorBlend * mirrorBlend * (3f - 2f * mirrorBlend);
                 Vector3 back = Quaternion.Euler(0f, originYaw, 0f) * new Vector3(0f, Mathf.Lerp(thirdUp, 0.13f, mb), -Mathf.Lerp(thirdBack, 0.22f, mb));
                 Vector3 want = eye + back;
-                // never inside a wall: pull in towards the duck's head if something is in the way
+                // never inside a wall or a piece of furniture: first try rising over it (looking down a little more,
+                // like most third-person cameras), and only pull in towards the duck's head if that is blocked too
                 Vector3 head = eye + Vector3.up * 0.02f, d = want - head;
                 if (Physics.SphereCast(head, 0.03f, d.normalized, out var hit, d.magnitude, WorldQueries.WorldMask, QueryTriggerInteraction.Ignore))
-                    want = head + d.normalized * Mathf.Max(0.06f, hit.distance - 0.01f);
+                {
+                    Vector3 high = eye + Quaternion.Euler(0f, originYaw, 0f) * new Vector3(0f, thirdUp + 0.22f, -thirdBack * 0.75f), dh = high - head;
+                    if (!Physics.SphereCast(head, 0.03f, dh.normalized, out var hit2, dh.magnitude, WorldQueries.WorldMask, QueryTriggerInteraction.Ignore)) want = high;
+                    else want = head + d.normalized * Mathf.Max(0.06f, Mathf.Max(hit.distance, hit2.distance * d.magnitude / dh.magnitude) - 0.01f);
+                }
                 if (thirdSnap) { thirdPos = want; thirdVel = Vector3.zero; thirdSnap = false; }
                 else thirdPos = Vector3.SmoothDamp(thirdPos, want, ref thirdVel, thirdLag, Mathf.Infinity, dt);
                 eye = thirdPos;
