@@ -14,6 +14,7 @@ namespace MicroduckVR.EditorTools
     ///   method Namespace.Class.Method run a static method with no arguments
     ///   menu Microduck/...            run a menu item
     ///   play / stop                   enter or leave Play mode
+    /// Commands run one at a time, each once the editor has settled (no compile, no play mode change on its way).
     /// Results go to Logs/microduck_cmd.log; compile errors are listed there too.
     /// </summary>
     [InitializeOnLoad]
@@ -40,28 +41,47 @@ namespace MicroduckVR.EditorTools
             };
         }
 
+        const string QueueKey = "microduck_cmd_queue";
+
         static void Tick()
         {
             if (EditorApplication.timeSinceStartup < next) return;
             next = EditorApplication.timeSinceStartup + 0.5;
-            if (!File.Exists(CmdPath)) return;
+            if (File.Exists(CmdPath)) Read();
+            // one command at a time, and only once the editor has settled: "stop" then "refresh" must not compile
+            // while the game is still running, and "play" must not undo a "stop" still on its way
+            string queue = SessionState.GetString(QueueKey, "");
+            if (queue.Length == 0) return;
+            if (EditorApplication.isCompiling || EditorApplication.isUpdating) return;
+            if (EditorApplication.isPlaying != EditorApplication.isPlayingOrWillChangePlaymode) return;
+            int nl = queue.IndexOf('\n');
+            string line = nl < 0 ? queue : queue.Substring(0, nl);
+            SessionState.SetString(QueueKey, nl < 0 ? "" : queue.Substring(nl + 1));    // saved first: a reload must not run it twice
+            try { Run(line); }
+            catch (Exception e) { Log("FAILED " + line + " : " + (e.InnerException ?? e)); }
+            if (line == "refresh") next = EditorApplication.timeSinceStartup + 1.5;       // let a compile it started begin
+        }
+
+        static void Read()
+        {
             string[] lines;
             try { lines = File.ReadAllLines(CmdPath); File.Delete(CmdPath); }
             catch (IOException) { return; }
-            // a batch carries an id; a batch already run (seen again after a domain reload) is skipped
+            // a batch carries an id; a batch already queued (seen again after a domain reload) is skipped
             if (lines.Length > 0 && lines[0].StartsWith("#id "))
             {
                 string id = lines[0].Substring(4).Trim();
                 if (SessionState.GetString("microduck_cmd_last", "") == id) return;
                 SessionState.SetString("microduck_cmd_last", id);
             }
+            var queue = SessionState.GetString(QueueKey, "");
             foreach (var raw in lines)
             {
                 var line = raw.Trim();
                 if (line.Length == 0 || line.StartsWith("#")) continue;
-                try { Run(line); }
-                catch (Exception e) { Log("FAILED " + line + " : " + (e.InnerException ?? e)); }
+                queue = queue.Length == 0 ? line : queue + "\n" + line;
             }
+            SessionState.SetString(QueueKey, queue);
         }
 
         static void Run(string line)
