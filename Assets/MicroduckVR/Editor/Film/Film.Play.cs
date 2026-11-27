@@ -33,7 +33,7 @@ namespace MicroduckVR.EditorTools
         static List<Shot> PlayShots() => new List<Shot>
         {
             new Shot { name = "play", dur = 420f, pre = 1.5f, fp = true, stillEvery = 2f, caption = "Playthrough",
-                start = () => VpStart(Playthrough()), tick = VpTick },
+                start = () => VpStart(Session()), tick = VpTick },
         };
 
         // ================================================================== the virtual player
@@ -267,7 +267,7 @@ namespace MicroduckVR.EditorTools
         }
 
         // ================================================================== the session
-        static IEnumerator Playthrough()
+        static IEnumerator Session()
         {
             // ---------------- a new player: the tutorial starts at the mirror
             Chapter("mirror");
