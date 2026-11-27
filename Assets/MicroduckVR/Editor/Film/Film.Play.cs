@@ -10,6 +10,7 @@ using MicroduckVR.Player;
 using MicroduckVR.World;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace MicroduckVR.EditorTools
 {
@@ -451,6 +452,19 @@ namespace MicroduckVR.EditorTools
             Prompt("A", "QUACK", 1.0f); PlayerDuck.DebugChirp = true; yield return Wait(2.0f);
             Chapter("end");
             yield return Wait(1.0f);
+        }
+
+        /// <summary>A plan view of the house (Logs/film/map.png, x -7.5..7.5, z -3..8), for laying out routes.</summary>
+        public static void MapShot()
+        {
+            var go = new GameObject("map cam"); var c = go.AddComponent<Camera>(); c.enabled = false; c.orthographic = true;
+            c.orthographicSize = 5.5f; c.aspect = 15f / 11f; c.transform.SetPositionAndRotation(new Vector3(0f, 2.4f, 2.5f), Quaternion.Euler(90f, 0f, 0f));
+            c.nearClipPlane = 0.01f; c.farClipPlane = 10f; c.clearFlags = CameraClearFlags.SolidColor; c.backgroundColor = Color.black;
+            var rtm = new RenderTexture(1500, 1100, 24) { antiAliasing = 4 }; c.targetTexture = rtm; c.Render();
+            var t2 = new Texture2D(1500, 1100, TextureFormat.RGB24, false); RenderTexture.active = rtm; t2.ReadPixels(new Rect(0, 0, 1500, 1100), 0, 0); t2.Apply(); RenderTexture.active = null;
+            Directory.CreateDirectory("Logs/film"); File.WriteAllBytes("Logs/film/map.png", t2.EncodeToPNG());
+            c.targetTexture = null; Object.DestroyImmediate(rtm); Object.DestroyImmediate(t2); Object.DestroyImmediate(go);
+            Debug.Log("[Microduck] map: Logs/film/map.png");
         }
     }
 }
