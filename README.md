@@ -10,6 +10,14 @@
 
 ---
 
+## Gameplay
+
+<a href="https://github.com/R1chi33333/microduck-lab-vr/releases/download/v0.2.0/Microduck_Lab_VR_Gameplay.mp4"><img src="docs/images/gameplay.jpg" alt="Gameplay video" width="100%"></a>
+
+A three-minute playthrough, from the view behind the duck: dressing up at the mirror, the tutorial, the toy bag,
+roller skates, the laser dot, the duck's-eye view, football, the house race and the garden
+(from release [v0.2.0](https://github.com/R1chi33333/microduck-lab-vr/releases/tag/v0.2.0)).
+
 ## Status
 
 All milestones of the port are in: the house, the flock, toys and the toy bag, roller skates, the laser,
