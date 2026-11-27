@@ -244,7 +244,10 @@ namespace MicroduckVR.EditorTools
         {
             if (g == null) yield break;
             Gaze(g.Centre);
-            yield return GoTo(g.Centre, 0.55f, 0.16f, 8f);
+            // come at it head-on and stop just short, so it is the thing right under the beak
+            var dir = g.Centre - Pos; dir.y = 0f; dir = dir.sqrMagnitude > 1e-4f ? dir.normalized : GltfSpace.Forward(P.Body.Yaw);
+            if ((g.Centre - Pos).magnitude > 0.35f) yield return GoTo(g.Centre - dir * 0.3f, 0.7f, 0.06f, 8f);
+            yield return GoTo(g.Centre - dir * 0.13f, 0.35f, 0.03f, 4f);
             yield return Think(0.25f, 0.5f);
             for (int attempt = 0; attempt < 4 && P.Held == null; attempt++)
             {
@@ -255,19 +258,32 @@ namespace MicroduckVR.EditorTools
                     yield return Wait(0.7f); continue;                                  // chomp on air
                 }
                 float until = vpT + 1.6f;
-                while (vpT < until && Grabbable.Nearest(P.Body.BeakGap(), 0.02f) != g) yield return null;
-                if (Grabbable.Nearest(P.Body.BeakGap(), 0.02f) == g)
+                while (vpT < until && Grabbable.Nearest(P.Body.BeakGap(), 0.02f) == null) yield return null;
+                if (Grabbable.Nearest(P.Body.BeakGap(), 0.02f) != null)
                 {
                     yield return Think(0.1f, 0.22f); PlayerDuck.DebugBeak = 0f; Prompt("RT", "LET GO: BITE", 1.0f); yield return Wait(0.4f);
                 }
-                else { PlayerDuck.DebugBeak = 0f; yield return Think(0.3f, 0.5f); yield return GoTo(g.Centre, 0.35f, 0.1f, 1.5f); }
+                else { PlayerDuck.DebugBeak = 0f; yield return Think(0.3f, 0.5f); yield return GoTo(g.Centre - dir * 0.09f, 0.3f, 0.02f, 1.5f); }
             }
             PlayerDuck.DebugBeak = 0f; Gaze(null);
         }
 
+        static readonly string[] Cards = { "MAKE YOUR DUCK", "LOOKING GOOD", "WADDLE", "TURN", "OPEN YOUR BEAK", "GRAB IT", "DROP IT", "QUACK",
+            "TOY BAG", "PICK A TOY", "PUT IT DOWN", "CLOSE THE BAG", "ROLLER SKATES", "ROLL!", "BOOST", "DRIFT", "SKATES OFF", "LASER DOT",
+            "DUCK'S-EYE VIEW", "EVERYTHING IS GIANT", "BACK OUT", "YOU'RE READY" };
+        /// <summary>Which tutorial card is up (1-based), from its "[n/22]" counter; 0 when none.</summary>
+        static int CardNo()
+        {
+            var t = TutorialCoach.DebugTitle; int a = t.LastIndexOf('['), b = t.IndexOf('/', a + 1);
+            if (a < 0 || b < 0) return t.EndsWith("[board]") ? 1 : 0;
+            return int.TryParse(t.Substring(a + 1, b - a - 1), out int n) ? n : 0;
+        }
+        /// <summary>Wait for a tutorial card and read it. If the game is already past it (done on the way), go straight on.</summary>
         static IEnumerator ReadCard(string startsWith, float min = 0.9f, float max = 1.6f)
         {
-            yield return Until(() => TutorialCoach.DebugTitle.StartsWith(startsWith), 20f);
+            int want = System.Array.FindIndex(Cards, c => startsWith.StartsWith(c) || c.StartsWith(startsWith)) + 1;
+            yield return Until(() => TutorialCoach.DebugTitle.StartsWith(startsWith) || (want > 0 && CardNo() > want), 20f);
+            if (!TutorialCoach.DebugTitle.StartsWith(startsWith)) yield break;
             lastCardSeen = startsWith; Debug.Log($"[Microduck] play: card {TutorialCoach.DebugTitle} at {vpT:F1}s");
             yield return Think(min, max);               // read it
         }
