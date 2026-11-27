@@ -147,7 +147,7 @@ namespace MicroduckVR.EditorTools
                     var w = new Vector3(Mathf.Sin(ang), 0f, Mathf.Cos(ang));
                     float hy = P.cam.transform.eulerAngles.y * Mathf.Deg2Rad;
                     var fwd = new Vector3(Mathf.Sin(hy), 0f, Mathf.Cos(hy)); var right = new Vector3(fwd.z, 0f, -fwd.x);
-                    float mag = moveSpeed * (0.9f + 0.1f * Noise(0.7f, 5.5f)) * Mathf.Clamp(dist / 0.3f, 0.45f, 1f)
+                    float mag = moveSpeed * (0.9f + 0.1f * Noise(0.7f, 5.5f)) * Mathf.Clamp(dist / 0.3f, 0.45f, 1f);
                     mag = Mathf.Max(mag, 0.22f);                                   // past the stick's dead zone (0.15), or the duck never arrives
                     want = new Vector2(Vector3.Dot(w, right), Vector3.Dot(w, fwd)) * mag;
                 }
