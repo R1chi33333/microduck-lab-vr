@@ -242,7 +242,8 @@ namespace MicroduckVR.EditorTools
         /// early when asked, the way people often bite at nothing the first time; then a little shuffle closer.</summary>
         static IEnumerator GrabThing(Grabbable g, bool missFirst)
         {
-            if (g == null) yield break;
+            if (g == null) { Debug.Log("[Microduck] play: grab: nothing to grab"); yield break; }
+            Debug.Log($"[Microduck] play: grab {g.label} at {g.Centre.ToString("F2")}, duck {Pos.ToString("F2")}");
             Gaze(g.Centre);
             // come at it head-on and stop just short, so it is the thing right under the beak
             var dir = g.Centre - Pos; dir.y = 0f; dir = dir.sqrMagnitude > 1e-4f ? dir.normalized : GltfSpace.Forward(P.Body.Yaw);
@@ -257,8 +258,16 @@ namespace MicroduckVR.EditorTools
                     yield return Wait(0.35f); PlayerDuck.DebugBeak = 0f; Prompt("RT", "LET GO: BITE", 0.9f);
                     yield return Wait(0.7f); continue;                                  // chomp on air
                 }
-                float until = vpT + 1.6f;
-                while (vpT < until && Grabbable.Nearest(P.Body.BeakGap(), 0.02f) == null) yield return null;
+                float until = vpT + 1.6f, nextLog = 0f;
+                while (vpT < until && Grabbable.Nearest(P.Body.BeakGap(), 0.02f) == null)
+                {
+                    if (vpT > nextLog)
+                    {
+                        nextLog = vpT + 0.4f; var n26 = Grabbable.Nearest(P.Body.BeakGap(), 0.26f);
+                        Debug.Log($"[Microduck] play: grab try {attempt}: beak {P.Body.BeakGap().ToString("F3")} toy {g.Centre.ToString("F3")} near26 {(n26 != null ? n26.label : "-")} jaw {P.Body.JawTarget:F2} aimed {WorldPanel.AnyAimed} busy {BagMenu.Busy} held {(P.Held != null)}");
+                    }
+                    yield return null;
+                }
                 if (Grabbable.Nearest(P.Body.BeakGap(), 0.02f) != null)
                 {
                     yield return Think(0.1f, 0.22f); PlayerDuck.DebugBeak = 0f; Prompt("RT", "LET GO: BITE", 1.0f); yield return Wait(0.4f);

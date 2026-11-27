@@ -360,7 +360,7 @@ namespace MicroduckVR.Player
                 Vector3 head = eye + Vector3.up * 0.02f, d = want - head;
                 if (Physics.SphereCast(head, 0.03f, d.normalized, out var hit, d.magnitude, WorldQueries.WorldMask, QueryTriggerInteraction.Ignore))
                 {
-                    Vector3 high = eye + Quaternion.Euler(0f, originYaw, 0f) * new Vector3(0f, thirdUp + 0.22f, -thirdBack * 0.75f), dh = high - head;
+                    Vector3 high = eye + Quaternion.Euler(0f, originYaw, 0f) * new Vector3(0f, thirdUp + 0.13f, -thirdBack * 0.8f), dh = high - head;
                     if (!Physics.SphereCast(head, 0.03f, dh.normalized, out var hit2, dh.magnitude, WorldQueries.WorldMask, QueryTriggerInteraction.Ignore)) want = high;
                     else want = head + d.normalized * Mathf.Max(0.06f, Mathf.Max(hit.distance, hit2.distance * d.magnitude / dh.magnitude) - 0.01f);
                 }
